@@ -1,0 +1,50 @@
+@typeparam T
+@implements IDisposable
+
+<div class="autocomplete-container position-relative">
+    <input type="text"
+           class="@Class"
+           value="@SearchText"
+           placeholder="@Placeholder"
+           @oninput="HandleInput"
+           @onkeydown="HandleKeyDown"
+           @onfocus="ShowSuggestions"
+           @onblur="HideSuggestionsWithDelay" />
+
+    @if (string.IsNullOrEmpty(SearchText))
+    {
+        <span class="input-icon position-absolute top-50 end-0 translate-middle-y me-3 text-muted">
+            <i class="bi bi-search"></i>
+        </span>
+    }
+    else if (Clearable)
+    {
+        <button type="button"
+                class="btn-clear position-absolute top-50 end-0 translate-middle-y me-2"
+                style="z-index: 10; background: #f8d7da; border: none; color: #dc3545; font-size: 1.2rem; line-height: 1; padding: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; border-radius: 50%;"
+                onmouseover="this.style.color='#b02a37'; this.style.backgroundColor='#e2b6bb';"
+                onmouseout="this.style.color='#dc3545'; this.style.backgroundColor='#f8d7da';"
+                @onclick="ClearSearch"
+                aria-label="Limpiar búsqueda">
+            &times;
+        </button>
+    }
+
+    @if (IsDropdownVisible)
+    {
+        <ul class="dropdown-menu show position-absolute"
+            style="min-width: 100%; width: auto; white-space: nowrap;">
+            @for (int index = 0; index < Items.Count(); index++)
+            {
+                T option = Items.ElementAt(index);
+                <li>
+                    <button class="dropdown-item @(index == SelectedIndex ? "active" : "")"
+                            @onclick="() => SelectOption(option)">
+                        @DisplayItem(option)
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+</div>
+

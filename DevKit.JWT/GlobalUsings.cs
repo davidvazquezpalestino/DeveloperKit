@@ -1,0 +1,9 @@
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using Microsoft.IdentityModel.JsonWebTokens;
+global using Microsoft.IdentityModel.Tokens;
+global using System.Security.Claims;
+global using System.Text;
+global using DevKit.JWT.Interfaces;
+global using DevKit.JWT.Options;
+global using DevKit.JWT.Services;

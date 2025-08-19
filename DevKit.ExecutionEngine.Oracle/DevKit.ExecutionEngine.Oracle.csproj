@@ -1,0 +1,84 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+	
+	<PropertyGroup>
+		<Company>David Vázquez Palestino</Company>
+		<Product>CoreOracleDatabase</Product>
+		<LangVersion>latest</LangVersion>
+		<Copyright>Copyright David Vázquez Palestino</Copyright>
+		<AssemblyVersion>2025.07.24</AssemblyVersion>
+		<FileVersion>2025.07.24</FileVersion>
+		<Version>2025.07.24</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<Title>CoreOracleDatabase - Biblioteca de Integración para Oracle Database</Title>
+		<Authors>David Vázquez Palestino</Authors>
+		<Description>CoreOracleDatabase es una biblioteca de extensiones y utilidades para el acceso a Oracle Database. Proporciona métodos optimizados para la conexión, consulta y manipulación de datos en bases de datos Oracle. Compatible con múltiples versiones de .NET (6.0, 7.0, 8.0 y 9.0) y utiliza Oracle.ManagedDataAccess.Core para la conexión eficiente a Oracle Database.</Description>
+		<PackageId>CoreOracleDatabase</PackageId>
+		<PackageOutputPath>C:\Github\Packages\CoreOracleDatabase</PackageOutputPath>
+		<PackageIcon>102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>oracle database oracle-database data-access orm</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="Imagenes\102042_tools_icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
+		<PackageReference Include="Oracle.ManagedDataAccess.Core" Version="23.9.1" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
+	  <ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="Imagenes\102042_tools_icon.png">
+	    <PackagePath>\</PackagePath>
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	    <Pack>True</Pack>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

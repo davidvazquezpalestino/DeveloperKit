@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>net48;net6.0;net7.0;net8.0;net9.0;</TargetFrameworks>
+		<OutputType>Library</OutputType>
+		<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+		<LangVersion>latest</LangVersion>
+		<AssemblyName>CoreInterfaces</AssemblyName>
+		<RootNamespace>CoreInterfaces</RootNamespace>
+		<PackageId>CoreInterfaces</PackageId>
+		<Company>David Vázquez Palestino</Company>
+		<Product>CoreInterfaces</Product>
+		<Title>CoreInterfaces - Biblioteca de Interfaces Genéricas para Aplicaciones .NET</Title>
+		<Description>CoreInterfaces es una biblioteca que proporciona interfaces genéricas y estándares para la implementación de patrones de diseño en aplicaciones .NET. Incluye interfaces para repositorios (IRepository), servicios (IService), validación (IValidator), manejo de eventos (IEventHandler) y patrones de comportamiento común. Compatible con .NET 8.0 y 9.0, y diseñada para facilitar la implementación de arquitecturas limpias y mantenibles.</Description>
+		<Copyright>Copyright  David Vázquez Palestino</Copyright>
+		<AssemblyVersion>2025.07.13</AssemblyVersion>
+		<FileVersion>2025.07.13</FileVersion>
+		<Version>2025.07.13</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<Authors>David Vázquez Palestino</Authors>
+		<PackageOutputPath>C:\Github\Packages\CoreInterfaces</PackageOutputPath>
+		<PackageIcon>102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="Imagenes\102042_tools_icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Imagenes\102042_tools_icon.png">
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

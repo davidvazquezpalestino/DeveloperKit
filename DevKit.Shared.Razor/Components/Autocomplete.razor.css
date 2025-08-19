@@ -1,0 +1,32 @@
+/* Contenedor permite que el menú no se recorte */
+.autocomplete-container {
+    overflow: visible;
+}
+
+    /* El menú queda siempre por encima de otros fondos */
+    .autocomplete-container .dropdown-menu {
+        z-index: 3000 !important;
+    }
+
+/* Ícono de lupa dentro del input */
+.input-icon {
+    font-size: 1.2rem;
+    pointer-events: none;
+}
+
+/* Botón de limpiar */
+.btn-clear {
+    background: transparent;
+    border: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    color: #999;
+    cursor: pointer;
+}
+
+
+/* Resalta ítem activo */
+.dropdown-item.active {
+    background-color: #0d6efd;
+    color: white;
+}

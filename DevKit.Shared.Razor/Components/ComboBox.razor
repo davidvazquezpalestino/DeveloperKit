@@ -1,0 +1,21 @@
+
+@typeparam T
+
+<select class="form-select"
+        value="@Value"
+        @onchange="HandleChange">
+    
+    @if (!string.IsNullOrEmpty(Placeholder))
+    {
+        <option value="" disabled selected>@Placeholder</option>
+    }
+    
+    @if (Items != null)
+    {
+        foreach (T item in Items)
+        {
+            <option value="@GetItemValue(item)">@GetDisplayText(item)</option>
+        }
+    }
+</select>
+

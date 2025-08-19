@@ -1,0 +1,12 @@
+global using DevKit.ExecutionEngine.Abstractions.Interfaces;
+global using DevKit.ExecutionEngine.Abstractions.Interfaces.Postgre;
+global using DevKit.ExecutionEngine.PostgreSql.Settings;
+global using Microsoft.Extensions.DependencyInjection;
+global using Microsoft.Extensions.Options;
+global using Npgsql;
+global using System;
+global using System.Collections.Generic;
+global using System.Data;
+global using System.Data.Common;
+global using System.Linq;
+global using System.Threading.Tasks;

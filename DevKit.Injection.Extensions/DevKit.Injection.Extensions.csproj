@@ -1,0 +1,78 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net48;net8.0;net9.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Company>David Vázquez Palestino</Company>
+		<Product>DotNet.Injection.Extensions</Product>
+		<LangVersion>latest</LangVersion>
+		<Copyright>Copyright David Vázquez Palestino</Copyright>
+		<AssemblyVersion>2025.08.13</AssemblyVersion>
+		<FileVersion>2025.08.13</FileVersion>
+		<Version>2025.08.13</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<Title>DotNet.DependencyInjection - Extensiones de Inversión de Control con Reflexión</Title>
+		<Authors>David Vázquez Palestino</Authors>
+		<Description>DotNet.DependencyInjection es una biblioteca que proporciona extensiones para la inyección de dependencias en .NET. Utiliza reflexión para registrar servicios automáticamente, simplificando la configuración de la inyección de dependencias. Compatible con múltiples versiones de .NET (4.8, 8.0 y 9.0) y utiliza Microsoft.Extensions.DependencyInjection.Abstractions para la implementación de DI.</Description>
+		<PackageTags>dependency-injection reflection di aspnetcore registration</PackageTags>
+		<PackageId>DependencyInjection.ReflectionExtensions</PackageId>
+		<PackageOutputPath>C:\Github\Packages\DotNet.Injection.Extensions</PackageOutputPath>
+		<PackageIcon>102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Imagenes\102042_tools_icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Imagenes\102042_tools_icon.png">
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

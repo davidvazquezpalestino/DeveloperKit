@@ -1,0 +1,137 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<OutputType>Library</OutputType>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Title>CoreControlesUsuario - Biblioteca de Extensiones para Controles DevExpress</Title>
+		<Product>CoreControlesUsuario</Product>
+		<Authors>David Vázquez Palestino</Authors>
+		<Description>CoreControlesUsuario es una biblioteca de extensiones y componentes personalizados para DevExpress WinForms. Proporciona herramientas optimizadas para el desarrollo de aplicaciones Windows Forms, incluyendo extensiones para GridControl, LookUpEdit y otros controles populares de DevExpress. Compatible con .NET 9.0 y Windows Forms.</Description>
+		<Copyright>Copyright  David Vázquez Palestino</Copyright>
+		<Company>David Vázquez Palestino</Company>
+		<PackageId>CoreControlesUsuario</PackageId>
+		<Version>2025.07.13</Version>
+		<FileVersion>2025.07.13</FileVersion>
+		<AssemblyVersion>2025.07.13</AssemblyVersion>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<PackageOutputPath>C:\Github\Packages\CoreControlesUsuario</PackageOutputPath>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+		<PackageIcon>102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="Imagenes\102042_tools_icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+		<OutputPath>bin\x64\Debug\</OutputPath>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+		<OutputPath>bin\x64\Release\</OutputPath>
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+		<LangVersion>latest</LangVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+		<DebugType>none</DebugType>
+		<LangVersion>latest</LangVersion>
+		<Optimize>False</Optimize>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+		<Compile Update="Properties\Settings.Designer.cs">
+			<DesignTimeSharedInput>True</DesignTimeSharedInput>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Settings.settings</DependentUpon>
+		</Compile>
+		<Compile Update="UI\Login.cs" />
+		<Compile Update="UI\UserControlCheckEdit.cs" />
+		<Compile Update="UI\UserControlComboBoxEdit.cs" />
+		<Compile Update="UI\UserControlConsulta.cs" />
+		<Compile Update="UI\UserControlDateEdit.cs" />
+		<Compile Update="UI\UserControlMemoEdit.cs" />
+		<Compile Update="UI\UserControlPictureEdit.cs" />
+		<Compile Update="UI\UserControlSpinEdit.cs" />
+		<Compile Update="UI\UserControlTextEdit.cs" />
+		<Compile Update="UI\UserControlConsultaExtendida.cs" />
+		<Compile Update="UI\UserControlButtonEdit.cs" />
+		<EmbeddedResource Include="Properties\licenses.licx" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<ProjectReference Include="..\DevKit.CoreInterfaces\DevKit.CoreInterfaces.csproj" />
+		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="DevExpress.Win.Design" Version="24.2.7" />
+		<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.8" />
+		<PackageReference Include="System.Text.Json" Version="9.0.8" />
+	</ItemGroup>
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>PublicResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+	<ItemGroup>
+		<None Update="Imagenes\102042_tools_icon.png">
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+		</None>
+		<None Update="Properties\Settings.settings">
+			<Generator>SettingsSingleFileGenerator</Generator>
+			<LastGenOutput>Settings.Designer.cs</LastGenOutput>
+		</None>
+	</ItemGroup>
+
+	<PropertyGroup>
+		<NoWarn>$(NoWarn);WFO1000</NoWarn>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

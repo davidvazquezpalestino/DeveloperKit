@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net48;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Authors>Edgar Palma</Authors>
+    <Company>Edgar Palma</Company>
+    <Description>Provides a MySQL implementation for the DevKit Execution Engine, enabling data access and manipulation for MySQL databases.</Description>
+    <Copyright>Edgar Palma</Copyright>
+    <PackageProjectUrl>https://github.com/edgarpalma/DeveloperKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/edgarpalma/DeveloperKit</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MySqlConnector" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
+    <ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
+  </ItemGroup>
+
+</Project>

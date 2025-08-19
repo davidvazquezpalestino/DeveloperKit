@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net48;net6.0;net7.0;net8.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>		
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Company>David Vázquez Palestino</Company>
+		<Product>CoreExcelPackage</Product>
+		<LangVersion>latest</LangVersion>
+		<Copyright>Copyright © David Vázquez Palestino</Copyright>
+		<AssemblyName>CoreExcelPackage</AssemblyName>
+		<AssemblyVersion>2024.09.05</AssemblyVersion>
+		<FileVersion>2024.09.05</FileVersion>
+		<Version>2024.09.05</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<Title>CoreExcelPackage</Title>
+		<Authors>David Vázquez Palestino</Authors>
+		<Description>El paquete contiene extensiones y utilerias para Excel</Description>
+		<PackageId>CoreExcelPackage</PackageId>
+		<PackageOutputPath>C:\Github\Packages\CoreExcelPackage</PackageOutputPath>
+		
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
+	  <PackageReference Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\CoreUtilerias\DotNet.CoreUtilerias.csproj" />
+	</ItemGroup>
+
+
+<ItemGroup>
+  <None Update="images\mi_imagen.png">
+    <Pack>true</Pack>
+    <PackagePath>content\images\</PackagePath>
+  </None>
+</ItemGroup>
+												<ItemGroup>
+  <None Update="Imágenes\102042_tools_icon.png">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+  </None>
+</ItemGroup>								
+	<ItemGroup>
+	  <Folder Include="NewFolder\" />
+	</ItemGroup>
+
+</Project>

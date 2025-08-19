@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net8.0;net9.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<Company>David Vázquez Palestino</Company>
+		<Product>AccessToken</Product>
+		<AssemblyVersion>2025.07.13</AssemblyVersion>
+		<FileVersion>2025.07.13</FileVersion>
+		<Version>2025.07.13</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<Title>CoreJsonWebToken - Biblioteca de Autenticación JWT</Title>
+		<Authors>David Vázquez Palestino</Authors>
+		<PackageId>CoreJsonWebToken</PackageId>
+		<Description>CoreJsonWebToken es una biblioteca para la generación y validación de tokens JWT (JSON Web Token) en aplicaciones .NET. Proporciona métodos optimizados para la creación, firma y verificación de tokens JWT, incluyendo soporte para diferentes algoritmos de firma y configuración flexible. Compatible con .NET 8.0 y 9.0, y utiliza Microsoft.IdentityModel.JsonWebTokens para la implementación segura de JWT.</Description>
+		<Copyright>Copyright  David Vázquez Palestino</Copyright>
+		<PackageOutputPath>C:\Github\Packages\CoreJsonWebToken</PackageOutputPath>
+		<PackageIcon>102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="Imagenes\102042_tools_icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
+		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Imagenes\102042_tools_icon.png">
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+		</None>
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

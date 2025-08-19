@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Title>ConsoleNet8 - Aplicación de Consola con Integración de Servicios</Title>
+    <Authors>David Vázquez Palestino</Authors>
+    <Company>David Vázquez Palestino</Company>
+    <Product>ConsoleNet8</Product>
+    <Description>ConsoleNet8 es una aplicación de consola que demuestra el uso de múltiples bibliotecas y servicios en .NET. Proporciona funcionalidades para la manipulación de Excel, envío de correos electrónicos, gestión de bases de datos (SQL Server y Oracle), autenticación JWT y exportación de datos. Utiliza Microsoft.Extensions.Hosting para la configuración y gestión de servicios, y ExcelDataReader para la lectura de archivos Excel. Compatible con .NET 8.0 y diseñada para mostrar las capacidades de integración entre diferentes servicios y tecnologías.</Description>
+    <Copyright>Copyright © David Vázquez Palestino</Copyright>
+    <PackageId>ConsoleNet8</PackageId>
+    <PackageOutputPath>C:\Github\Packages\ConsoleNet8</PackageOutputPath>
+    <PackageIcon>102042_tools_icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\DevKit.ExecutionEngine.MySql\DevKit.ExecutionEngine.MySQL.csproj" />
+    <ProjectReference Include="..\DevKit.ExecutionEngine.PostgreSql\DevKit.ExecutionEngine.PostgreSQL.csproj" />
+    <ProjectReference Include="..\DevKit.ExecutionEngine.SqlServer\DevKit.ExecutionEngine.SQLServer.csproj" />
+    <ProjectReference Include="..\DevKit.Exporter\DevKit.Exporter.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="appsettings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>appsettings.json</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>appsettings.Designer.cs</LastGenOutput>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

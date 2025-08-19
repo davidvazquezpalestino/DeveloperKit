@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0;</TargetFrameworks>
+		<OutputType>Library</OutputType>
+		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+		<Company>David Vázquez Palestino</Company>
+		<Product>CoreComponentExporter</Product>
+		<AssemblyVersion>2025.07.13</AssemblyVersion>
+		<FileVersion>2025.07.13</FileVersion>
+		<Version>2025.07.13</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<Title>CoreComponentExporter - Biblioteca de Exportación de Datos a Excel para .NET</Title>
+		<Authors>David Vázquez Palestino</Authors>
+		<PackageId>CoreComponentExporter</PackageId>
+		<Description>CoreComponentExporter es una biblioteca de código abierto que proporciona métodos optimizados y fáciles de usar para exportar datos de DataTable e IEnumerable a archivos Excel (.xlsx, .xlsm, .xlsb, .xltx, .xltm). Utiliza NPOI para la generación eficiente de archivos Excel y SixLabors.ImageSharp para el manejo de imágenes. Compatible con múltiples versiones de .NET (6.0, 7.0, 8.0 y 9.0), lo que la convierte en una herramienta ideal para desarrolladores que buscan una solución de exportación de datos flexible y escalable.</Description>
+		<Copyright>Copyright  David Vázquez Palestino</Copyright>
+		<PackageOutputPath>C:\Github\Packages\CoreComponentExporter</PackageOutputPath>
+		<PackageIcon>102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+
+
+	<ItemGroup>
+		<PackageReference Include="NPOI" Version="2.7.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+
+		<None Include="Imagenes\102042_tools_icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+
+		<None Update="Imagenes\102042_tools_icon.png">
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+		</None>
+
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>

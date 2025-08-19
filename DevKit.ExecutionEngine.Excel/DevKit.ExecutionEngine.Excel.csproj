@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>net48;net8.0;net9.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Company>David Vázquez Palestino</Company>
+		<Product>CoreExcelPackage</Product>
+		<LangVersion>latest</LangVersion>
+		<Copyright>Copyright © David Vázquez Palestino</Copyright>
+		<AssemblyName>CoreExcelPackage</AssemblyName>
+		<AssemblyVersion>2025.08.07</AssemblyVersion>
+		<FileVersion>2025.08.07</FileVersion>
+		<Version>2025.08.07</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<Title>CoreExcelPackage - Biblioteca de Manipulación de Excel para .NET</Title>
+		<Authors>David Vázquez Palestino</Authors>
+		<Description>CoreExcelPackage es una biblioteca de extensiones y utilidades para la manipulación de archivos Excel en .NET. Proporciona métodos optimizados para la lectura, escritura y procesamiento de datos en archivos Excel, incluyendo importación/exportación de datos, formateo y generación de informes. Compatible con múltiples versiones de .NET (4.8, 6.0, 7.0, 8.0 y 9.0) y utiliza ExcelDataReader para la lectura eficiente de archivos.</Description>
+		<PackageId>CoreExcelPackage</PackageId>
+		<PackageOutputPath>C:\Github\Packages\CoreExcelPackage</PackageOutputPath>
+		<PackageIcon>102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <None Include="Imagenes\102042_tools_icon.png">
+	    <Pack>True</Pack>
+	    <PackagePath>\</PackagePath>
+	  </None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
+		<PackageReference Include="System.Text.Encoding.CodePages" Version="9.0.8" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
+		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+</Project>
