@@ -12,9 +12,9 @@
 		<Company>David Vázquez Palestino</Company>
 		<Product>CoreMessage</Product>
 		<Description>CoreMessageBox es una biblioteca que proporciona componentes y métodos optimizados para mostrar mensajes personalizados en aplicaciones Windows Forms. Incluye extensiones para MessageBox, cuadros de diálogo personalizados y notificaciones. Compatible con .NET Framework 4.8 y proporciona una interfaz de usuario moderna y consistente para la comunicación con los usuarios.</Description>
-		<Version>2025.07.13</Version>
-		<AssemblyVersion>2025.07.13</AssemblyVersion>
-		<FileVersion>2025.07.13</FileVersion>
+		<Version>2025.08.19</Version>
+		<AssemblyVersion>2025.08.19</AssemblyVersion>
+		<FileVersion>2025.08.19</FileVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

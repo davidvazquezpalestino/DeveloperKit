@@ -10,9 +10,9 @@
 		<Copyright>Copyright  David Vázquez Palestino</Copyright>
 		<Company>David Vázquez Palestino</Company>
 		<PackageId>CoreControlesUsuario</PackageId>
-		<Version>2025.07.13</Version>
-		<FileVersion>2025.07.13</FileVersion>
-		<AssemblyVersion>2025.07.13</AssemblyVersion>
+		<Version>2025.08.19</Version>
+		<FileVersion>2025.08.19</FileVersion>
+		<AssemblyVersion>2025.08.19</AssemblyVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

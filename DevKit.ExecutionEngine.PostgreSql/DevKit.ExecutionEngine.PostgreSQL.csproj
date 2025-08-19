@@ -7,7 +7,7 @@
 
 	<PropertyGroup>
 		<Company>David Vázquez Palestino</Company>
-		<Product>CorePostgreSqlDatabase</Product>
+		<Product>ExecutionEnginePostgreSQL</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
 		<AssemblyVersion>2025.08.14</AssemblyVersion>
@@ -16,11 +16,11 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-		<Title>CorePostgreSqlDatabase - Biblioteca de Integración para PostgreSQL y Npgsql</Title>
+		<Title>ExecutionEnginePostgreSQL - Biblioteca de Integración para PostgreSQL y Npgsql</Title>
 		<Authors>David Vázquez Palestino</Authors>
-		<Description>CorePostgreSqlDatabase es una biblioteca de extensiones y utilidades para Npgsql y PostgreSQL. Proporciona métodos optimizados para la conexión, consulta y manipulación de datos en bases de datos PostgreSQL. Compatible con múltiples versiones de .NET (4.8, 8.0 y 9.0).</Description>
-		<PackageId>CorePostgreSqlDatabase</PackageId>
-		<PackageOutputPath>C:\Github\Packages\CorePostgreSqlDatabase</PackageOutputPath>
+		<Description>ExecutionEnginePostgreSQL es una biblioteca de extensiones y utilidades para Npgsql y PostgreSQL. Proporciona métodos optimizados para la conexión, consulta y manipulación de datos en bases de datos PostgreSQL. Compatible con múltiples versiones de .NET (4.8, 8.0 y 9.0).</Description>
+		<PackageId>ExecutionEnginePostgreSQL</PackageId>
+		<PackageOutputPath>C:\Github\Packages\ExecutionEnginePostgreSQL</PackageOutputPath>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageTags>postgresql npgsql database orm data-access</PackageTags>
 	</PropertyGroup>
@@ -36,5 +36,50 @@
 	  <ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
 	  <ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Imagenes\102042_tools_icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Imagenes\102042_tools_icon.png">
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
 
 </Project>

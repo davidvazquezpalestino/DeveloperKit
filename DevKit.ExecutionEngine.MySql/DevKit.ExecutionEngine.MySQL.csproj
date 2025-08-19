@@ -1,26 +1,85 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>net48;net9.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Authors>Edgar Palma</Authors>
-    <Company>Edgar Palma</Company>
-    <Description>Provides a MySQL implementation for the DevKit Execution Engine, enabling data access and manipulation for MySQL databases.</Description>
-    <Copyright>Edgar Palma</Copyright>
-    <PackageProjectUrl>https://github.com/edgarpalma/DeveloperKit</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/edgarpalma/DeveloperKit</RepositoryUrl>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0;</TargetFrameworks>
+		<ImplicitUsings>enable</ImplicitUsings>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="MySqlConnector" Version="2.4.0" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
-  </ItemGroup>
+	<PropertyGroup>
+		<Company>David Vázquez Palestino</Company>
+		<Product>ExecutionEngineMySQL</Product>
+		<LangVersion>latest</LangVersion>
+		<Copyright>Copyright David Vázquez Palestino</Copyright>
+		<AssemblyVersion>2025.08.14</AssemblyVersion>
+		<FileVersion>2025.08.14</FileVersion>
+		<Version>2025.08.14</Version>
+		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<Title>ExecutionEngineMySQL - Biblioteca de Integración para MySQL y ADO.NET</Title>
+		<Authors>David Vázquez Palestino</Authors>
+		<Description>ExecutionEngineMySQL es una biblioteca de extensiones y utilidades para ADO.NET</Description>
+		<PackageId>ExecutionEngineMySQL</PackageId>
+		<PackageOutputPath>C:\Github\Packages\ExecutionEngineMySQL</PackageOutputPath>
+		<PackageIcon>102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>sql-server ado-net database orm data-access</PackageTags>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
-    <ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="MySqlConnector" Version="2.4.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
+		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Imagenes\102042_tools_icon.png">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Imagenes\102042_tools_icon.png">
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="LICENSE">
+			<Pack>True</Pack>
+		</None>
+	</ItemGroup>
+
+
+
+	<ItemGroup>
+		<None Update="LICENSE">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
 
 </Project>

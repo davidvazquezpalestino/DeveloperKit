@@ -14,9 +14,9 @@
 		<Product>CoreReportes</Product>
 		<Description>CoreCrystalReports es una biblioteca de utilidades y extensiones para Crystal Reports que proporciona herramientas optimizadas para la generación, visualización y exportación de reportes Crystal en aplicaciones .NET Framework 4.8. Incluye métodos de extensión para la manipulación de reportes, gestión de parámetros y exportación a múltiples formatos. Compatible con Crystal Reports Runtime 13.0.2000.0.</Description>
 		<Copyright>Copyright 2025 David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2025.07.13</AssemblyVersion>
-		<FileVersion>2025.07.13</FileVersion>
-		<Version>2025.07.13</Version>
+		<AssemblyVersion>2025.08.19</AssemblyVersion>
+		<FileVersion>2025.08.19</FileVersion>
+		<Version>2025.08.19</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -46,24 +46,6 @@
 		<PackageReference Include="System.Drawing.Common">
 			<Version>6.0.0</Version>
 		</PackageReference>
-	</ItemGroup>
-
-	<ItemGroup>
-		<Reference Include="CrystalDecisions.CrystalReports.Engine">
-			<HintPath>..\..\..\Librerias\CrystalReports\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
-		</Reference>
-		<Reference Include="CrystalDecisions.ReportSource">
-			<HintPath>..\..\..\Librerias\CrystalReports\CrystalDecisions.ReportSource.dll</HintPath>
-		</Reference>
-		<Reference Include="CrystalDecisions.Shared">
-			<HintPath>..\..\..\Librerias\CrystalReports\CrystalDecisions.Shared.dll</HintPath>
-		</Reference>
-		<Reference Include="CrystalDecisions.Windows.Forms">
-			<HintPath>..\..\..\Librerias\CrystalReports\CrystalDecisions.Windows.Forms.dll</HintPath>
-		</Reference>
-		<Reference Include="log4net">
-			<HintPath>..\..\..\Librerias\CrystalReports\log4net.dll</HintPath>
-		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -106,6 +88,24 @@
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="CrystalDecisions.CrystalReports.Engine">
+	    <HintPath>..\..\Librerias\CrystalReports\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
+	  </Reference>
+	  <Reference Include="CrystalDecisions.ReportSource">
+	    <HintPath>..\..\Librerias\CrystalReports\CrystalDecisions.ReportSource.dll</HintPath>
+	  </Reference>
+	  <Reference Include="CrystalDecisions.Shared">
+	    <HintPath>..\..\Librerias\CrystalReports\CrystalDecisions.Shared.dll</HintPath>
+	  </Reference>
+	  <Reference Include="CrystalDecisions.Windows.Forms">
+	    <HintPath>..\..\Librerias\CrystalReports\CrystalDecisions.Windows.Forms.dll</HintPath>
+	  </Reference>
+	  <Reference Include="log4net">
+	    <HintPath>..\..\Librerias\CrystalReports\log4net.dll</HintPath>
+	  </Reference>
 	</ItemGroup>
 
 	<ItemGroup>
