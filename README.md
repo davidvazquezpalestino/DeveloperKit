@@ -42,20 +42,20 @@ DeveloperKit V2 es un conjunto integral de bibliotecas y utilidades reutilizable
 ## ⚙️ Instalación
 
 1. **Clonar el repositorio**:
-   ```bash
-   git clone https://github.com/Desarrollos/DeveloperKit.git
+```bash
+   git clone https://github.com/davidvazquezpalestino/DeveloperKit.git
    cd DeveloperKit
-   ```
+```
 
 2. **Restaurar dependencias**:
-   ```bash
+```bash
    dotnet restore
-   ```
+```
 
 3. **Compilar la solución**:
-   ```bash
+```bash
    dotnet build
-   ```
+```
 
 ## 🛠 Uso Básico
 

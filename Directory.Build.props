@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <!-- NuGet package metadata shared across all projects -->
+    <RepositoryUrl>https://github.com/davidvazquezpalestino/DeveloperKit.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/davidvazquezpalestino/DeveloperKit</PackageProjectUrl>
+    <!-- Optional: publish repo URL into the nupkg and enable better source link info -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+</Project>

@@ -1,4 +1,4 @@
-# DotNet.ExtensionsToolkit
+# DevKit.Extensions
 
 [![.NET](https://img.shields.io/badge/.NET-6.0%20%7C%207.0%20%7C%208.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Licencia](https://img.shields.io/badge/Licencia-MIT-blue.svg)](LICENSE)
@@ -19,7 +19,7 @@ Extensión de utilidades para .NET que simplifica el manejo de datos, incluyendo
 
 ### 🧩 DataReaderExtensions
 
-Extensiones para `IDataReader` que permiten acceder a columnas por nombre y convertirlas de forma segura.
+Extensiones para `IDataReader` que permiten acceder a columnas por nombre de forma segura y mapear a objetos.
 
 ```csharp
 // Ejemplo de uso básico
@@ -27,25 +27,39 @@ using (var reader = command.ExecuteReader())
 {
     while (reader.Read())
     {
-        int id = reader.GetInt32("Id");
-        string nombre = reader.GetString("Nombre");
-        DateTime fecha = reader.GetDate("FechaRegistro");
-        
+        int id = reader.GetValue<int>("Id");
+        string nombre = reader.GetValue<string>("Nombre");
+        DateTime fecha = reader.GetValue<DateTime>("FechaRegistro");
+
         // O convertir directamente a un objeto
         var usuario = reader.GetItem<Usuario>();
     }
 }
 ```
 
+### 🧠 JsonExtensions
+
+Extensiones para trabajar con JSON de manera segura y conveniente.
+
+```csharp
+// Cadena JSON a diccionario (nivel superior)
+Dictionary<string, object> dict = jsonString.ToDictionary();
+
+// Cadena JSON (array) a lista de diccionarios
+IEnumerable<Dictionary<string, object>> rows = jsonArrayString.ToDictionaryList();
+
+// Deserializar a tipo fuerte
+var obj = jsonString.ToObject<MiTipo>();
+```
+
+#### Notas:
+
+- Ignora mayúsculas/minúsculas de nombres de propiedad
+- Ignora valores nulos al escribir y evita ciclos de referencia
+- Normaliza `JsonElement` a tipos .NET primarios cuando es posible
+
 #### Métodos Disponibles:
-- `GetInt32(string columnName)`
-- `GetString(string columnName)`
-- `GetDecimal(string columnName)`
-- `GetDate(string columnName)`
-- `GetGuid(string columnName)`
-- `GetBoolean(string columnName)`
-- `GetDouble(string columnName)`
-- `GetBytes(string columnName)`
+- `GetValue<T>(string columnName)` - Obtiene el valor tipado (devuelve default para DBNull)
 - `GetItem<T>()` - Convierte la fila actual en un objeto del tipo `T`
 
 ---
@@ -84,14 +98,11 @@ var resultados = tablaUsuarios.FindRows(
 #### 📊 Manipulación de Columnas
 
 ```csharp
-// Añadir columna si no existe
-tablaUsuarios.AddColumnIfNotExist("FechaActualizacion", typeof(DateTime));
-
-// Seleccionar columnas específicas
+// Seleccionar columnas específicas (ignora inexistentes)
 var columnasSeleccionadas = tablaUsuarios.SelectColumns("Id", "Nombre", "Email");
 
-// Convertir a diccionario
-var diccionario = tablaUsuarios.ToDictionary();
+// Convertir a lista de diccionarios
+IEnumerable<Dictionary<string, object>> filas = tablaUsuarios.ToDictionary();
 ```
 
 #### 📈 Ordenamiento
@@ -157,14 +168,14 @@ string nombreGlobal = tablaUsuarios.GetTableNameGlobal(); // "##Usuarios"
 #### 🧪 Validación de Tipos
 
 ```csharp
-// Verificar si un tipo es primitivo
-bool esPrimitivo = typeof(int).IsPrimitive(); // true
-bool esPrimitivo2 = typeof(Usuario).IsPrimitive(); // false
+// Verificar si un tipo es "simple" (string, numéricos, bool, fecha, enum, etc.)
+bool esSimple = typeof(int).IsSimpleType(); // true
+bool esSimple2 = typeof(Usuario).IsSimpleType(); // false
 
-// Validar que un tipo no sea primitivo (útil para genéricos)
+// Validar que un tipo genérico no sea primitivo/simple para conversión a DataTable
 public void Procesar<T>()
 {
-    typeof(T).GuardIsPrimitive(); // Lanza excepción si T es primitivo
+    DataTableExtensions.GuardNotPrimitiveType<T>(); // Lanza excepción si T es primitivo/simple
     // ...
 }
 ```
@@ -173,10 +184,10 @@ public void Procesar<T>()
 
 ```csharp
 // Exportar a CSV
-string csv = tablaUsuarios.ToCsv(delimiter: ";");
+string csv = tablaUsuarios.WriteToCsv(delimiter: ";");
 
-// Exportar a JSON (usando System.Text.Json)
-string json = JsonSerializer.Serialize(tablaUsuarios);
+// Exportar a JSON (formato pretty)
+string json = tablaUsuarios.WriteToJson();
 ```
 
 ---
@@ -190,9 +201,9 @@ Extensiones para acceder de manera segura a los datos de una fila `DataRow`, man
 DataRow fila = tablaUsuarios.Rows[0];
 
 // Acceso seguro a los datos
-int id = fila.GetInt32("Id");
-string nombre = fila.GetString("Nombre");
-DateTime? fechaNacimiento = fila.GetDate("FechaNacimiento"); // Devuelve DateTime?
+int id = fila.GetValue<int>("Id");
+string nombre = fila.GetValue<string>("Nombre");
+DateTime? fechaNacimiento = fila.GetValue<DateTime?>("FechaNacimiento");
 
 // Conversión directa a objeto
 var usuario = fila.GetItem<Usuario>();
@@ -200,64 +211,35 @@ var usuario = fila.GetItem<Usuario>();
 
 #### Métodos Disponibles:
 
-- `GetInt32(string columnName)` - Obtiene un entero de 32 bits
-- `GetString(string columnName)` - Obtiene una cadena (maneja DBNull)
-- `GetDecimal(string columnName)` - Obtiene un valor decimal
-- `GetDate(string columnName)` - Obtiene un DateTime? (nullable)
-- `GetGuid(string columnName)` - Obtiene un Guid
-- `GetBoolean(string columnName)` - Obtiene un valor booleano
-- `GetDouble(string columnName)` - Obtiene un número de punto flotante
-- `GetBytes(string columnName)` - Obtiene un array de bytes
+- `GetValue<T>(string columnName)` - Obtiene el valor tipado (devuelve default para DBNull)
 - `GetItem<T>()` - Mapea automáticamente la fila a un objeto del tipo `T`
-
-#### Manejo de Valores Nulos:
-
-```csharp
-// Valor predeterminado personalizado
-int edad = fila.GetInt32("Edad", -1); // Retorna -1 si es nulo
-
-// Valor predeterminado genérico
-DateTime fecha = fila.GetDate("FechaRegistro") ?? DateTime.MinValue;
-```
 
 ---
 
 ### 🔐 SecurityAes
 
-Implementación de cifrado simétrico AES (Advanced Encryption Standard) para proteger datos sensibles.
+Utilidades estáticas de cifrado simétrico AES para proteger datos sensibles.
 
 ```csharp
-// Inicialización con clave personalizada
-var crypto = new SecurityAes("clave-secreta-32-caracteres");
-
 // Cifrar datos
 string textoPlano = "Información confidencial";
-string textoCifrado = crypto.Encrypt(textoPlano);
+string textoCifrado = SecurityAes.Encrypt(textoPlano);
 
 // Descifrar datos
-string textoDescifrado = crypto.Decrypt(textoCifrado);
+string textoDescifrado = SecurityAes.Decrypt(textoCifrado);
 ```
 
 #### Características:
 
-- **Tamaños de clave soportados**: 128, 192 y 256 bits
-- **Modo de operación**: CBC (Cipher Block Chaining)
-- **Relleno**: PKCS7
-- **IV (Vector de Inicialización)**: Generado aleatoriamente e incluido en el resultado
+- Clave interna de 32 bytes (256-bit)
+- Modo de operación: CBC
+- Relleno: PKCS7
+- IV generado aleatoriamente e incluido en el resultado (prefijo)
 
-#### Mejores Prácticas:
+#### Consideraciones de Seguridad:
 
-1. **Almacenamiento seguro de claves**:
-   ```csharp
-   // En producción, usa un gestor de secretos
-   var keyVaultUrl = "https://tu-keyvault.vault.azure.net/";
-   var secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
-   string encryptionKey = (await secretClient.GetSecretAsync("EncryptionKey")).Value.Value;
-   ```
-
-2. **Rotación de claves**: Implementa un sistema para rotar las claves periódicamente
-
-3. **Validación de datos**: Siempre valida los datos antes de cifrarlos/descifrarlos
+1. La clave está embebida en código para simplicidad; en escenarios reales, considera administrar la clave externamente.
+2. Valida y controla excepciones de descifrado (texto corrupto o clave incompatible).
 
 #### Manejo de Errores:
 
@@ -278,7 +260,7 @@ catch (CryptographicException ex)
 
 ### 🌐 QueryStringExtensions
 
-Utilidad para generar cadenas de consulta (query strings) a partir de objetos, ideal para construir URLs de API.
+Utilidad para proyectar objetos simples a un diccionario clave-valor para query strings.
 
 #### Uso Básico:
 
@@ -289,52 +271,30 @@ var filtros = new
     Nombre = "Juan Pérez",
     Edad = 30,
     Activo = true,
-    FechaNacimiento = new DateTime(1990, 5, 15),
-    Intereses = new[] { "programación", "música", "deportes" }
+    FechaNacimiento = new DateTime(1990, 5, 15)
 };
 
-// Generar query string
-var queryString = QueryStringExtensions.BindFrom(filtros);
+// Generar diccionario clave-valor
+IDictionary<string,string> qs = QueryStringExtensions.BindFrom(filtros);
 
-// Resultado: "Nombre=Juan%20P%C3%A9rez&Edad=30&Activo=true&FechaNacimiento=1990-05-15&Intereses=programaci%C3%B3n&Intereses=m%C3%BAsica&Intereses=deportes"
+// Si necesitas la cadena, constrúyela manualmente
+string queryString = string.Join("&", qs.Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value)}"));
 ```
 
 #### Características:
 
-- **Tipos soportados**:
-  - Tipos primitivos (int, string, bool, etc.)
-  - DateTime (formateado como "yyyy-MM-dd")
-  - Enumeraciones (usando el valor numérico)
-  - Arrays y colecciones (se repite el parámetro para cada valor)
-  - Objetos anidados (usando notación de puntos)
-
-- **Personalización de formato de fecha**:
-  ```csharp
-  // Especificar formato personalizado
-  var opciones = new QueryStringOptions 
-  { 
-      DateTimeFormat = "yyyy/MM/dd HH:mm:ss" 
-  };
-  
-  var queryString = QueryStringExtensions.BindFrom(filtros, opciones);
-  ```
-
-- **Exclusión de propiedades**:
-  ```csharp
-  // Excluir propiedades específicas
-  var opciones = new QueryStringOptions
-  {
-      ExcludeProperties = new[] { "Token", "Contraseña" }
-  };
-  ```
+- Tipos soportados: primitivos, `string`, `bool`, `DateTime`/`DateTimeOffset` (formato "yyyy-MM-dd")
+- Omite valores nulos
+- No soporta: arrays/colecciones, objetos anidados, exclusiones ni formatos personalizados (puedes extenderlo si lo necesitas)
 
 #### Uso con HttpClient:
 
 ```csharp
 // Crear URL con parámetros
 var baseUrl = "https://api.ejemplo.com/usuarios";
-var queryParams = QueryStringExtensions.BindFrom(new { Pagina = 1, TamañoPagina = 10 });
-var urlCompleta = $"{baseUrl}?{queryParams}";
+var qs = QueryStringExtensions.BindFrom(new { Pagina = 1, TamanoPagina = 10 });
+var query = string.Join("&", qs.Select(kv => $"{Uri.EscapeDataString(kv.Key)}={Uri.EscapeDataString(kv.Value)}"));
+var urlCompleta = $"{baseUrl}?{query}";
 
 // Realizar petición HTTP
 using var httpClient = new HttpClient();
@@ -343,9 +303,9 @@ var respuesta = await httpClient.GetAsync(urlCompleta);
 
 #### Consideraciones de Seguridad:
 
-- **Codificación URL**: Todos los valores son correctamente codificados para URL
-- **Datos sensibles**: No incluir nunca contraseñas o tokens en query strings (usar headers HTTP en su lugar)
-- **Tamaño de URL**: Las URLs tienen un límite de longitud (alrededor de 2000 caracteres en la mayoría de navegadores)
+- Codifica siempre con `Uri.EscapeDataString`
+- Evita incluir datos sensibles en query strings
+- Considera límites de longitud de URL
 
 #### Pruebas Unitarias:
 
@@ -416,5 +376,5 @@ Para reportar problemas o solicitar características, por favor abre un [issue](
 
 <div align="center">
   <p>Hecho con ❤️ por el equipo de desarrollo</p>
-  <p>Última actualización: Julio 2025</p>
+  <p>Última actualización: Agosto 2025</p>
 </div>
