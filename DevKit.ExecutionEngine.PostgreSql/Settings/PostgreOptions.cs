@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.PostgreSql.Settings;
+namespace DevKit.ExecutionEngine.PostgreSQL.Settings;
 
 /// <summary>
 /// Provides configuration options for the PostgreSQL database provider.

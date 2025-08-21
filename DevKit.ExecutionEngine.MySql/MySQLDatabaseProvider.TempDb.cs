@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.MySql;
+namespace DevKit.ExecutionEngine.MySQL;
 
 /// <summary>
 /// Provides methods for temporary table management in MySQL.

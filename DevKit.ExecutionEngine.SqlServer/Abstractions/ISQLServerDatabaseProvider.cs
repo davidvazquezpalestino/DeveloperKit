@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.Abstractions.Interfaces.SqlServer;
+namespace DevKit.ExecutionEngine.SQLServer.Abstractions;
 
 /// <summary>
 /// Interfaz principal para el repositorio de Oracle que define operaciones básicas de base de datos.

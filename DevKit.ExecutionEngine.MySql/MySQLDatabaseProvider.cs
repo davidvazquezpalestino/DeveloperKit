@@ -1,7 +1,7 @@
-namespace DevKit.ExecutionEngine.MySql;
+namespace DevKit.ExecutionEngine.MySQL;
 
 /// <inheritdoc/>
-public partial class MySqlDatabaseProvider : IMySqlDatabaseProvider
+public partial class MySqlDatabaseProvider : IMySQLDatabaseProvider
 {
     private readonly MySqlOptions Options;
     private readonly MySqlConnection Connection;

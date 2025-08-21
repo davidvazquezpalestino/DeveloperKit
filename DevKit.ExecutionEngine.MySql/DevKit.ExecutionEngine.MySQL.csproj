@@ -33,7 +33,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
 		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
 	</ItemGroup>
 

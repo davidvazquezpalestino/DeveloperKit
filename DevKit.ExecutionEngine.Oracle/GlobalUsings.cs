@@ -1,11 +1,9 @@
-global using System;
-global using System.Collections.Generic;
-global using Microsoft.Extensions.DependencyInjection;
-global using Oracle.ManagedDataAccess.Client;
-global using System.Data;
-global using System.Data.Common;
-global using System.Reflection;
-global using DevKit.ExecutionEngine.Abstractions.Interfaces.Oracle;
+global using DevKit.ExecutionEngine.Oracle.Abstractions;
 global using DevKit.ExecutionEngine.Oracle.Settings;
 global using DevKit.Extensions;
 global using Microsoft.Extensions.Options;
+global using Oracle.ManagedDataAccess.Client;
+global using System;
+global using System.Data;
+global using System.Data.Common;
+global using System.Reflection;

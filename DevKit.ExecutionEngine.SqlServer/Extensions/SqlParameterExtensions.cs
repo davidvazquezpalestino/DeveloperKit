@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.SqlServer.Extensions;
+namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
 /// <summary>Proporciona métodos de extensión para trabajar con parámetros SQL.</summary>
 public static class SqlParameterExtensions

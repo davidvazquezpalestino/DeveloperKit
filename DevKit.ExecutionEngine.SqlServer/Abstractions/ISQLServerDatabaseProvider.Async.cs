@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.Abstractions.Interfaces.SqlServer;
+namespace DevKit.ExecutionEngine.SQLServer.Abstractions;
 
 /// <summary>
 /// Interfaz que extiende IOracleRepository con operaciones asíncronas.
