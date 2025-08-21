@@ -1,6 +1,6 @@
 using System.Threading;
 
-namespace DevKit.ExecutionEngine.PostgreSql;
+namespace DevKit.ExecutionEngine.PostgreSQL;
 
 public partial class PostgreSqlDatabaseProvider
 {

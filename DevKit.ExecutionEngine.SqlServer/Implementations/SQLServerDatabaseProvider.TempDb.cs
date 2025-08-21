@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.SqlServer.Implementations;
+namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 
 /// <summary>Funciones relacionadas con tablas temporales para <see cref="SQLServerDatabaseProvider"/>.</summary>
 public partial class SQLServerDatabaseProvider

@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.MySql;
+namespace DevKit.ExecutionEngine.MySQL;
 
 /// <summary>
 /// Provides asynchronous methods for the MySQL database provider.

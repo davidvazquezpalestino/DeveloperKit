@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.SqlServer.Settings;
+namespace DevKit.ExecutionEngine.SQLServer.Settings;
 
 /// <summary>
 /// Opciones de configuración para SQL Server Repository.

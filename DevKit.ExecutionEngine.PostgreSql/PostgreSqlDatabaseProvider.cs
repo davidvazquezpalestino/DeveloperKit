@@ -1,5 +1,4 @@
-namespace DevKit.ExecutionEngine.PostgreSql;
-
+namespace DevKit.ExecutionEngine.PostgreSQL;
 /// <summary>
 /// Provides a data access layer for PostgreSQL, implementing the <see cref="IPostgreSqlDatabaseProvider"/> interface.
 /// </summary>

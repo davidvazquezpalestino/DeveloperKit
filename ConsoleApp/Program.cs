@@ -2,15 +2,15 @@
 
 //cargar DI
 
-using DevKit.ExecutionEngine.Abstractions.Interfaces.MySql;
-using DevKit.ExecutionEngine.Abstractions.Interfaces.Postgre;
-using DevKit.ExecutionEngine.Abstractions.Interfaces.SqlServer;
-using DevKit.ExecutionEngine.MySql;
-using DevKit.ExecutionEngine.MySql.Settings;
-using DevKit.ExecutionEngine.PostgreSql;
-using DevKit.ExecutionEngine.PostgreSql.Settings;
-using DevKit.ExecutionEngine.SqlServer.Implementations;
-using DevKit.ExecutionEngine.SqlServer.Settings;
+using DevKit.ExecutionEngine.MySQL;
+using DevKit.ExecutionEngine.MySQL.Abstractions;
+using DevKit.ExecutionEngine.MySQL.Settings;
+using DevKit.ExecutionEngine.PostgreSQL;
+using DevKit.ExecutionEngine.PostgreSQL.Abstractions;
+using DevKit.ExecutionEngine.PostgreSQL.Settings;
+using DevKit.ExecutionEngine.SQLServer.Abstractions;
+using DevKit.ExecutionEngine.SQLServer.Implementations;
+using DevKit.ExecutionEngine.SQLServer.Settings;
 using Microsoft.Extensions.Options;
 using System.Data;
 
@@ -27,7 +27,7 @@ Console.WriteLine("Consultando SQL Sever");
 DataTable table = await infomexDataBase.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
 table.TableName = "Asentamientos";
 
-IMySqlDatabaseProvider mySqlDatabase = host.Services.GetRequiredService<IMySqlDatabaseProvider>();
+IMySQLDatabaseProvider mySqlDatabase = host.Services.GetRequiredService<IMySQLDatabaseProvider>();
 await mySqlDatabase.ExecuteBulkInsertToTableAsync(table, table.TableName);
 
 Console.WriteLine("consultando MySQL");
@@ -82,7 +82,7 @@ static IHostBuilder CreateHostBuilder()
                 return new SQLServerDatabaseProvider(Options.Create(options));
             });
 
-            services.AddScoped<IMySqlDatabaseProvider>(provider =>
+            services.AddScoped<IMySQLDatabaseProvider>(provider =>
             {
                 RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
                 MySqlOptions options = new MySqlOptions

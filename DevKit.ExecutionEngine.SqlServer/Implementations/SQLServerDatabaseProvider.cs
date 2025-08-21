@@ -1,4 +1,5 @@
-namespace DevKit.ExecutionEngine.SqlServer.Implementations;
+
+namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 
 /// <summary>Implementación de <see cref="ISQLServerDatabaseProvider"/> para SQL Server.</summary>
 public partial class SQLServerDatabaseProvider : ISQLServerDatabaseProvider

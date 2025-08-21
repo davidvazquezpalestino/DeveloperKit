@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.SqlServer.Implementations;
+namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 
 /// <summary>Métodos asíncronos de <see cref="SQLServerDatabaseProvider"/>.</summary>
 public partial class SQLServerDatabaseProvider

@@ -9,9 +9,9 @@
 		<Product>CoreDatabase</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2025.08.19</AssemblyVersion>
-		<FileVersion>2025.08.19</FileVersion>
-		<Version>2025.08.19</Version>
+		<AssemblyVersion>2025.08.20</AssemblyVersion>
+		<FileVersion>2025.08.20</FileVersion>
+		<Version>2025.08.20</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -34,7 +34,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
 		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
 	</ItemGroup>
 

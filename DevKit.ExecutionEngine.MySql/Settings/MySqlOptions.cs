@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.MySql.Settings;
+namespace DevKit.ExecutionEngine.MySQL.Settings;
 
 /// <summary>
 /// Provides configuration options for the MySQL database provider.
