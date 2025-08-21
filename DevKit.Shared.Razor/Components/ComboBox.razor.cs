@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace DevKit.Shared.Razor.Components;
 
 /// <summary>
@@ -10,6 +8,12 @@ namespace DevKit.Shared.Razor.Components;
 public partial class ComboBox<T>
 {
     private string CurrentValue;
+
+    /// <summary>
+    /// Clases CSS personalizadas para el campo de entrada.
+    /// Se combinarán con las clases por defecto: 'form-control pe-5'.
+    /// </summary>
+    [Parameter] public string Class { get; set; } = "form-select";
 
     /// <summary>
     /// Valor seleccionado en el ComboBox.
@@ -65,7 +69,6 @@ public partial class ComboBox<T>
         }
         base.OnParametersSet();
     }
-
     private string GetDisplayText(T item)
     {
         if (item == null) return string.Empty;
@@ -73,7 +76,6 @@ public partial class ComboBox<T>
         PropertyInfo prop = typeof(T).GetProperty(TextField);
         return prop?.GetValue(item)?.ToString() ?? item.ToString();
     }
-
     private string GetItemValue(T item)
     {
         if (item == null) return string.Empty;
