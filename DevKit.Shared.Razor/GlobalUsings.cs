@@ -1,5 +1,6 @@
 // Global using directives
 
+global using System.Reflection;
 global using DevKit.Shared.Razor.Toasts;
 global using Microsoft.AspNetCore.Components;
 global using Microsoft.AspNetCore.Components.Web;
