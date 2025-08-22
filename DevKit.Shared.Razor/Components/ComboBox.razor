@@ -1,21 +1,18 @@
+@typeparam TItem
+@typeparam TValue
 
-@typeparam T
-
-<select class="@Class"
-        value="@Value"
-        @onchange="HandleChange">
+<select class="@Class" value="@SelectedKey" @onchange="HandleChange">
     
     @if (!string.IsNullOrEmpty(Placeholder))
     {
-        <option value="" disabled selected>@Placeholder</option>
+        <option value="">@Placeholder</option>
     }
     
     @if (Items != null)
     {
-        foreach (T item in Items)
+        foreach (TItem item in Items)
         {
-            <option value="@GetItemValue(item)">@GetDisplayText(item)</option>
+            <option value="@GetItemKey(item)">@GetDisplayText(item)</option>
         }
     }
 </select>
-
