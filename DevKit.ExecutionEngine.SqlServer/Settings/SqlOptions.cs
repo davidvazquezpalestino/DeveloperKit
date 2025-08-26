@@ -6,6 +6,16 @@ namespace DevKit.ExecutionEngine.SQLServer.Settings;
 public class SqlOptions
 {
     /// <summary>
+    /// Constructor por defecto que inicializa las opciones anidadas para evitar nulls.
+    /// </summary>
+    public SqlOptions()
+    {
+        BulkCopy = new BulkCopyOptions();
+        ConnectionPooling = new ConnectionPoolingOptions();
+        SqlAuth = new SqlAuthOptions();
+    }
+
+    /// <summary>
     /// Cadena de conexión a la base de datos SQL Server.
     /// </summary>
     public string ConnectionString { get; set; }
@@ -23,17 +33,73 @@ public class SqlOptions
     /// <summary>
     /// Configuración para operaciones Bulk Copy.
     /// </summary>
-    public BulkCopyOptions BulkCopy { get; set; } = new BulkCopyOptions();
+    public BulkCopyOptions BulkCopy { get; set; }
 
     /// <summary>
     /// Configuración de pooling de conexiones. Por defecto: habilitado.
     /// </summary>
-    public ConnectionPoolingOptions ConnectionPooling { get; set; } = new ConnectionPoolingOptions();
+    public ConnectionPoolingOptions ConnectionPooling { get; set; }
 
     /// <summary>
     /// Configuración de pooling de nombre de aplicación.
     /// </summary>
     public Func<string> ConfigureApplication { get; set; }
+
+    /// <summary>
+    /// Opción alternativa para construir la cadena de conexión indicando servidor, base de datos, usuario y contraseña.
+    /// Si <see cref="ConnectionString"/> está vacío, se construirá con estos valores.
+    /// </summary>
+    public SqlAuthOptions SqlAuth { get; set; }
+
+    /// <summary>
+    /// Obtiene la cadena de conexión efectiva usando <see cref="ConnectionString"/>,
+    /// o la construye desde <see cref="SqlAuth"/> si es válida.
+    /// </summary>
+    public string GetConnectionString()
+    {
+        if (!string.IsNullOrWhiteSpace(ConnectionString))
+            return ConnectionString;
+
+        if (SqlAuth.IsConfigured())
+        {
+            // Construcción básica; se agregan opciones comunes si están configuradas
+            List<string> parts = new List<string>
+            {
+                $"Server={SqlAuth.Server}",
+                $"Database={SqlAuth.Database}",
+                $"User Id={SqlAuth.UserId}",
+                $"Password={SqlAuth.Password}"
+            };
+
+            // Solo agregar estas claves si están habilitadas para evitar problemas con versiones antiguas
+            if (SqlAuth.TrustServerCertificate)
+                parts.Add("TrustServerCertificate=True");
+
+            if (SqlAuth.MultipleActiveResultSets)
+                parts.Add("MultipleActiveResultSets=True");
+
+            if (ConnectionTimeout > 0)
+                parts.Add($"Connect Timeout={ConnectionTimeout}");
+
+            if (ConnectionPooling.Pooling)
+                parts.Add("Pooling=True");
+            else
+                parts.Add("Pooling=False");
+            if (ConnectionPooling.MinPoolSize > 0)
+                parts.Add($"Min Pool Size={ConnectionPooling.MinPoolSize}");
+            if (ConnectionPooling.MaxPoolSize > 0)
+                parts.Add($"Max Pool Size={ConnectionPooling.MaxPoolSize}");
+
+            string appName = ConfigureApplication?.Invoke();
+            if (!string.IsNullOrWhiteSpace(appName))
+                parts.Add($"Application Name={appName}");
+
+            ConnectionString = string.Join(";", parts);
+            return ConnectionString;
+        }
+
+        return string.Empty;
+    }
 
 }
 
@@ -89,3 +155,51 @@ public class ConnectionPoolingOptions
     public int MaxPoolSize { get; set; } = 100;
 
 }
+
+/// <summary>
+/// Datos mínimos para construir una cadena de conexión con autenticación SQL (usuario/contraseña).
+/// </summary>
+public class SqlAuthOptions
+{
+    /// <summary>
+    /// Nombre o dirección del servidor SQL Server.
+    /// </summary>
+    public string Server { get; set; }
+
+    /// <summary>
+    /// Nombre de la base de datos.
+    /// </summary>
+    public string Database { get; set; }
+
+    /// <summary>
+    /// Usuario de SQL Server.
+    /// </summary>
+    public string UserId { get; set; }
+
+    /// <summary>
+    /// Contraseña del usuario de SQL Server.
+    /// </summary>
+    public string Password { get; set; }
+
+    /// <summary>
+    /// Indica si se debe confiar en el certificado del servidor.
+    /// Por defecto: true.
+    /// </summary>
+    public bool TrustServerCertificate { get; set; } = true;
+
+    /// <summary>
+    /// Habilita Multiple Active Result Sets (MARS).
+    /// Por defecto: true.
+    /// </summary>
+    public bool MultipleActiveResultSets { get; set; } = true;
+
+    /// <summary>
+    /// Indica si los campos necesarios están completos para construir la cadena.
+    /// </summary>
+    public bool IsConfigured()
+        => !string.IsNullOrWhiteSpace(Server)
+           && !string.IsNullOrWhiteSpace(Database)
+           && !string.IsNullOrWhiteSpace(UserId)
+           && !string.IsNullOrWhiteSpace(Password);
+}
+

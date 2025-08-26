@@ -288,10 +288,18 @@ public partial class SQLServerDatabaseProvider : ISQLServerDatabaseProvider
     {
         using (SqlBulkCopy bulkCopy = new SqlBulkCopy(Connection, SqlBulkCopyOptions.Default, Transaccion))
         {
+            int defaultBatchSize = source.Rows.Count;
+
             bulkCopy.DestinationTableName = target;
-            bulkCopy.BatchSize = Options?.BulkCopy?.BatchSize ?? source.Rows.Count;
-            bulkCopy.NotifyAfter = Options?.BulkCopy?.NotifyAfter ?? source.Rows.Count;
-            bulkCopy.BulkCopyTimeout = Options?.BulkCopy?.BulkCopyTimeout ?? 0;
+            bulkCopy.BatchSize = defaultBatchSize;
+            bulkCopy.NotifyAfter = defaultBatchSize;
+            bulkCopy.BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout;
+
+            if (Options.BulkCopy.BatchSize > 0)
+                bulkCopy.BatchSize = Options.BulkCopy.BatchSize;
+
+            if (Options.BulkCopy.NotifyAfter > 0)
+                bulkCopy.NotifyAfter = Options.BulkCopy.NotifyAfter;
 
             foreach (DataColumn column in source.Columns)
             {

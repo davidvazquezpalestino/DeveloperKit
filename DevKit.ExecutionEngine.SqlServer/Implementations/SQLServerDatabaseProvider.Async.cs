@@ -331,8 +331,12 @@ public partial class SQLServerDatabaseProvider
                     using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction))
                     {
                         bulkCopy.DestinationTableName = target;
-                        bulkCopy.BatchSize = Options?.BulkCopy?.BatchSize ?? source.Rows.Count;
-                        bulkCopy.BulkCopyTimeout = Options?.BulkCopy?.BulkCopyTimeout ?? 0;
+                        int defaultBatchSize = source.Rows.Count;
+                        bulkCopy.BatchSize = defaultBatchSize;
+                        if (Options.BulkCopy.BatchSize > 0)
+                            bulkCopy.BatchSize = Options.BulkCopy.BatchSize;
+
+                        bulkCopy.BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout;
 
                         foreach (DataColumn column in source.Columns)
                         {
@@ -358,8 +362,12 @@ public partial class SQLServerDatabaseProvider
             using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, Transaccion))
             {
                 bulkCopy.DestinationTableName = target;
-                bulkCopy.BatchSize = Options?.BulkCopy?.BatchSize ?? source.Rows.Count;
-                bulkCopy.BulkCopyTimeout = Options?.BulkCopy?.BulkCopyTimeout ?? 0;
+                int defaultBatchSize = source.Rows.Count;
+                bulkCopy.BatchSize = defaultBatchSize;
+                if (Options.BulkCopy.BatchSize > 0)
+                    bulkCopy.BatchSize = Options.BulkCopy.BatchSize;
+
+                bulkCopy.BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout;
 
                 foreach (DataColumn column in source.Columns)
                 {
@@ -486,8 +494,10 @@ public partial class SQLServerDatabaseProvider
             {
                 DestinationTableName = tableName,
                 BatchSize = batchSize,
-                BulkCopyTimeout = Options?.BulkCopy?.BulkCopyTimeout ?? 300
+                BulkCopyTimeout = 300
             };
+            if (Options.BulkCopy.BulkCopyTimeout > 0)
+                configuration.BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout;
 
             await ExecuteBulkInsertAsync(dataTable, configuration);
         }

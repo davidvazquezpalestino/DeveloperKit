@@ -9,9 +9,9 @@
 		<Product>CoreDatabase</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2025.08.20</AssemblyVersion>
-		<FileVersion>2025.08.20</FileVersion>
-		<Version>2025.08.20</Version>
+		<AssemblyVersion>2025.08.26</AssemblyVersion>
+		<FileVersion>2025.08.26</FileVersion>
+		<Version>2025.08.26</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -72,8 +72,6 @@
 			<PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
-
-
 
 	<ItemGroup>
 		<None Update="LICENSE">

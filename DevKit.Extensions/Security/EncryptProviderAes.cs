@@ -1,7 +1,7 @@
 namespace DevKit.Extensions.Security;
 
 /// <summary>Proporciona métodos para cifrar y descifrar texto usando el algoritmo AES.</summary>
-public static class SecurityAes
+public class EncryptProviderAes
 {
     private static readonly string CypherPattern = "T9dWq7FhJ2nPxYB6zKcLmVrX5uG8QeAt";
     /// <summary>Cifra una cadena de texto usando el algoritmo AES.</summary>
