@@ -1,7 +1,11 @@
 global using System.Net;
-global using System.Net.Mail;
+global using System.Threading;
+global using System.Threading.Tasks;
 global using CoreMailKit.Entities;
 global using CoreMailKit.Interfaces;
 global using CoreMailKit.Services;
+global using MailKit.Net.Smtp;
+global using MimeKit;
+global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Options;

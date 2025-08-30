@@ -74,9 +74,13 @@ namespace DevKit.Shared.Razor.Toasts
         public async Task ShowSuccessAsync(string message, bool asToast = false)
         {
             if (asToast)
+            {
                 await ShowToastAsync(message);
+            }
             else
+            {
                 await ShowAlertAsync(message, SweetAlertIcon.Success);
+            }
         }
 
         /// <summary>
@@ -85,9 +89,13 @@ namespace DevKit.Shared.Razor.Toasts
         public async Task ShowErrorAsync(string message, bool asToast = false)
         {
             if (asToast)
+            {
                 await ShowToastAsync(message, SweetAlertIcon.Error);
+            }
             else
+            {
                 await ShowAlertAsync(message, SweetAlertIcon.Error);
+            }
         }
 
         /// <summary>
@@ -96,9 +104,13 @@ namespace DevKit.Shared.Razor.Toasts
         public async Task ShowWarningAsync(string message, bool asToast = true)
         {
             if (asToast)
+            {
                 await ShowToastAsync(message, SweetAlertIcon.Warning);
+            }
             else
+            {
                 await ShowAlertAsync(message, SweetAlertIcon.Warning);
+            }
         }
 
         /// <summary>
@@ -107,9 +119,13 @@ namespace DevKit.Shared.Razor.Toasts
         public async Task ShowInfoAsync(string message, bool asToast = true)
         {
             if (asToast)
+            {
                 await ShowToastAsync(message, SweetAlertIcon.Info);
+            }
             else
+            {
                 await ShowAlertAsync(message, SweetAlertIcon.Info);
+            }
         }
 
         private async ValueTask EnsureInitializedAsync()

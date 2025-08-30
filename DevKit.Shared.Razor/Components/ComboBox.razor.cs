@@ -113,7 +113,10 @@ public partial class ComboBox<TItem, TValue>
     /// <returns>Valor del elemento en el tipo <typeparamref name="TValue"/>.</returns>
     private TValue GetItemValue(TItem item)
     {
-        if (item == null) return default;
+        if (item == null)
+        {
+            return default;
+        }
 
         if (ValueSelector != null)
         {

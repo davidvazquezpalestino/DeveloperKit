@@ -116,7 +116,10 @@ public partial class Autocomplete<T>
 
     private async void DebounceElapsed(object sender, System.Timers.ElapsedEventArgs e)
     {
-        if (Disposed) return;
+        if (Disposed)
+        {
+            return;
+        }
 
         CancellationTokenSource?.Cancel();
         CancellationTokenSource = new CancellationTokenSource();
@@ -153,27 +156,40 @@ public partial class Autocomplete<T>
 
     private void HandleKeyDown(KeyboardEventArgs e)
     {
-        if (!IsDropdownVisible || !Items.Any()) return;
+        if (!IsDropdownVisible || !Items.Any())
+        {
+            return;
+        }
 
         if (e.Key == "ArrowDown")
+        {
             SelectedIndex = (SelectedIndex + 1) % Items.Count();
+        }
         else if (e.Key == "ArrowUp")
+        {
             SelectedIndex = (SelectedIndex - 1 + Items.Count()) % Items.Count();
+        }
         else if (e.Key == "Enter" && SelectedIndex >= 0)
+        {
             _ = SelectOption(Items.ElementAt(SelectedIndex));
+        }
     }
 
     private void ShowSuggestions()
     {
         if (SearchText.Length >= MinCharacters && Items.Any())
+        {
             IsDropdownVisible = true;
+        }
     }
 
     private async Task HideSuggestionsWithDelay()
     {
         await Task.Delay(200);
         if (!Disposed)
+        {
             IsDropdownVisible = false;
+        }
     }
 
     private async Task SelectOption(T option)
@@ -186,7 +202,9 @@ public partial class Autocomplete<T>
         await UpdateValueAsync(option);
 
         if (OnSelected.HasDelegate)
+        {
             await OnSelected.InvokeAsync(option);
+        }
     }
 
     private async Task ClearSearch()
@@ -197,7 +215,9 @@ public partial class Autocomplete<T>
         SelectedIndex = -1;
 
         if (ResetValueOnEmptyText)
+        {
             await UpdateValueAsync(default);
+        }
     }
 
     private async Task UpdateValueAsync(T val)

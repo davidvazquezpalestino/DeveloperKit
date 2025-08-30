@@ -5,7 +5,26 @@
     <RepositoryUrl>https://github.com/davidvazquezpalestino/DeveloperKit.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageProjectUrl>https://github.com/davidvazquezpalestino/DeveloperKit</PackageProjectUrl>
-    <!-- Optional: publish repo URL into the nupkg and enable better source link info -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    
+    <!-- Standardized package output path -->
+    <PackageOutputPath>$(MSBuildThisFileDirectory)packages\$(MSBuildProjectName)</PackageOutputPath>
+    
+    <!-- Common package metadata -->
+    <Authors>David Vázquez Palestino</Authors>
+    <Company>David Vázquez Palestino</Company>
+    <Copyright>Copyright © David Vázquez Palestino</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>102042_tools_icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    
+    <!-- Version management -->
+    <VersionPrefix>2025.8.29</VersionPrefix>
+    <VersionSuffix Condition="'$(Configuration)' == 'Debug'">preview</VersionSuffix>
+    
+    <!-- Common build settings -->
+    <LangVersion>latest</LangVersion>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
   </PropertyGroup>
 </Project>

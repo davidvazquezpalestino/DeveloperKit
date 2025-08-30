@@ -1,53 +1,250 @@
-# DevKit.ExecutionEngine.SqlServer
+# SQL Server Database Provider for DeveloperKit
 
-Biblioteca de acceso a datos para SQL Server que proporciona una capa de abstracción robusta, segura y fácil de usar sobre ADO.NET, con soporte completo para operaciones síncronas y asíncronas. Incluye configuración moderna vía Options Pattern e inserciones masivas (Bulk).
+[![NuGet](https://img.shields.io/nuget/v/DevKit.ExecutionEngine.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/DevKit.ExecutionEngine.SqlServer/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![.NET Standard](https://img.shields.io/badge/.NET%20Standard-2.1-blue)](https://dotnet.microsoft.com/)
+[![SQL Server](https://img.shields.io/badge/SQL%20Server-2012%2B-red)](https://www.microsoft.com/sql-server/)
 
-## Características
+High-performance SQL Server database provider for .NET applications, built on top of ADO.NET with a clean, consistent API for both synchronous and asynchronous operations.
 
-- Conexión segura a SQL Server con soporte para autenticación integrada y SQL.
-- Manejo de transacciones (commit/rollback).
-- Ejecución de consultas SQL y procedimientos almacenados.
-- Soporte completo para parámetros SQL con tipado fuerte.
-- Manejo de errores robusto con mensajes descriptivos.
-- Operaciones asíncronas para mejor rendimiento.
-- Manejo automático de conexiones (abre/cierra según sea necesario).
-- Integración con inyección de dependencias (`Microsoft.Extensions.DependencyInjection`).
-- Binding automático de objetos a parámetros SQL para inserciones.
-- Operaciones bulk para inserción masiva de datos (`SqlBulkCopy`).
-- Soporte para múltiples formatos de retorno (DataTable, List<T>, Diccionarios, objetos fuertemente tipados).
-- Creación y eliminación dinámica de tablas.
-- Soporte para múltiples conjuntos de resultados.
+## ✨ Features
 
-## Instalación
+- **Unified API**: Consistent method naming across all database operations
+- **Full Async Support**: All operations have async/await variants
+- **Bulk Operations**: High-performance bulk inserts with `SqlBulkCopy`
+- **Transaction Support**: Comprehensive transaction management
+- **Stored Procedures**: Full support for executing stored procedures
+- **Type Safety**: Strongly-typed result mapping
+- **Dependency Injection**: First-class support for .NET Core DI
+- **Configurable**: Fine-grained control over connection and command behavior
+- **Multiple Result Sets**: Support for queries returning multiple result sets
+- **Dynamic Table Operations**: Runtime table creation and management
 
-Actualmente este proyecto forma parte del repositorio DeveloperKit. Si se publica como paquete NuGet, reemplaza este bloque con el nombre del paquete correspondiente.
+## 🚀 Getting Started
 
-## Requisitos
+### Prerequisites
 
-- SQL Server 2012 o superior.
-- .NET 6.0 o superior (compatible con .NET Standard 2.1+).
-- .NET Framework 4.8 (soporte heredado).
-- Visual Studio 2022 o superior (recomendado).
-- `Microsoft.Data.SqlClient`.
+- .NET 6.0+ or .NET Standard 2.1+
+- SQL Server 2012 or later
+- Microsoft.Data.SqlClient NuGet package (automatically referenced)
 
-## Configuración (Options Pattern)
+### Installation
 
-La configuración se realiza exclusivamente mediante Options Pattern. Usa los métodos de extensión en `DependencyContainer`:
+```bash
+dotnet add package DevKit.ExecutionEngine.SqlServer
+```
+
+## 🛠 Configuration
+
+### Basic Setup
 
 ```csharp
-using DevKit.ExecutionEngine.SqlServer.Settings;
-using DevKit.ExecutionEngine.Abstractions.Interfaces;
+using DevKit.ExecutionEngine.SqlServer;
+using Microsoft.Extensions.DependencyInjection;
 
-// Registro normal (scoped por defecto)
+var services = new ServiceCollection();
+
+// Basic configuration
+services.AddSQLServerProvider(options =>
+{
+    options.ConnectionString = "Server=localhost;Database=myapp;User ID=user;Password=password;";
+    options.CommandTimeout = 30; // seconds
+});
+```
+
+### Advanced Configuration
+
+```csharp
 services.AddSQLServerProvider((provider, options) =>
 {
     var configuration = provider.GetRequiredService<IConfiguration>();
+    
     options.ConnectionString = configuration.GetConnectionString("SqlServer");
-    options.CommandTimeout = 60; // segundos
-    options.ConfigureApplication = () => "MiAplicacion";
-    options.ConnectionPooling = new ConnectionPoolingOptions
-    {
+    options.CommandTimeout = 30;
+    options.ApplicationName = "MyApplication";
+    
+    // Connection pooling
+    options.ConnectionPooling = new ConnectionPoolingOptions 
+    { 
         MaxPoolSize = 200,
+        MinPoolSize = 10,
+        ConnectionLifetime = 300 // seconds
+    };
+    
+    // Bulk copy options
+    options.BulkCopy = new BulkCopyOptions 
+    { 
+        BatchSize = 1000,
+        BulkCopyTimeout = 0, // no timeout
+        EnableStreaming = true,
+        UseInternalTransaction = false
+    };
+});
+```
+
+## 💻 Usage Examples
+
+### Basic Query
+
+```csharp
+public class Customer
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+// Using dependency injection
+public class CustomerService
+{
+    private readonly ISQLServerDatabaseProvider _db;
+    
+    public CustomerService(ISQLServerDatabaseProvider db)
+    {
+        _db = db;
+    }
+    
+    public async Task<IEnumerable<Customer>> GetActiveCustomersAsync()
+    {
+        return await _db.ExecuteQueryAsListAsync<Customer>(
+            "SELECT * FROM customers WHERE is_active = @isActive",
+            parameters: new { isActive = true });
+    }
+}
+```
+
+### Parameterized Queries
+
+```csharp
+// Using anonymous types for parameters
+var customers = await _db.ExecuteQueryAsListAsync<Customer>(
+    "SELECT * FROM customers WHERE created_at > @minDate AND status = @status",
+    parameters: new { minDate = DateTime.UtcNow.AddDays(-30), status = "active" });
+
+// Using dictionary for parameters
+var parameters = new Dictionary<string, object>
+{
+    ["minDate"] = DateTime.UtcNow.AddDays(-30),
+    ["status"] = "active"
+};
+
+var customers = await _db.ExecuteQueryAsListAsync<Customer>(
+    "SELECT * FROM customers WHERE created_at > @minDate AND status = @status",
+    parameters: parameters);
+```
+
+### Stored Procedures
+
+```csharp
+// Executing a stored procedure
+var result = await _db.ExecuteStoredProcedureAsListAsync<CustomerReport>(
+    "sp_GetCustomerReport",
+    parameters: new 
+    {
+        startDate = new DateTime(2023, 1, 1),
+        endDate = DateTime.Now,
+        status = "active"
+    });
+```
+
+### Bulk Operations
+
+```csharp
+// Bulk insert from DataTable
+DataTable customerData = GetCustomerData();
+await _db.ExecuteBulkInsertAsync(customerData, "customers");
+
+// Bulk insert from list of objects
+List<Customer> customers = GetCustomers();
+await _db.ExecuteBulkInsertToTableAsync(customers, "customers");
+```
+
+## 📚 API Reference
+
+### Key Methods
+
+| Method | Description |
+|--------|-------------|
+| `ExecuteQueryAsList<T>` | Executes a query and maps results to a list of strongly-typed objects |
+| `ExecuteQueryAsTable` | Executes a query and returns results as a DataTable |
+| `ExecuteNonQuery` | Executes a command and returns the number of rows affected |
+| `ExecuteScalar<T>` | Executes a command and returns the first column of the first row |
+| `ExecuteStoredProcedure*` | Methods for executing stored procedures |
+| `ExecuteBulkInsert*` | Methods for bulk data operations |
+| `CreateTable` | Creates a table at runtime |
+| `TableExists` | Checks if a table exists |
+
+### Async Variants
+
+All methods have async counterparts with the `Async` suffix (e.g., `ExecuteQueryAsListAsync`).
+
+## ⚙️ Advanced Topics
+
+### Transaction Management
+
+```csharp
+using (var transaction = await _db.BeginTransactionAsync())
+try
+{
+    // Perform multiple operations within the same transaction
+    await _db.ExecuteNonQueryAsync(
+        "UPDATE accounts SET balance = balance - @amount WHERE id = @id", 
+        parameters: new { id = 1, amount = 100 });
+        
+    await _db.ExecuteNonQueryAsync(
+        "UPDATE accounts SET balance = balance + @amount WHERE id = @id", 
+        parameters: new { id = 2, amount = 100 });
+        
+    await transaction.CommitAsync();
+}
+catch
+{
+    await transaction.RollbackAsync();
+    throw;
+}
+```
+
+### Dynamic Table Operations
+
+```csharp
+// Create a table dynamically
+await _db.CreateTableAsync("DynamicTable", new[]
+{
+    new ColumnDefinition("Id", "INT", isPrimaryKey: true, isIdentity: true),
+    new ColumnDefinition("Name", "NVARCHAR(100)", isNullable: false),
+    new ColumnDefinition("CreatedAt", "DATETIME", defaultValue: "GETDATE()")
+});
+
+// Check if table exists
+bool exists = await _db.TableExistsAsync("DynamicTable");
+```
+
+## 📊 Performance Tips
+
+1. **Use Connection Pooling**: Enabled by default with sensible defaults
+2. **Batch Operations**: Use bulk operations for large data imports/exports
+3. **Parameterized Queries**: Always use parameters to prevent SQL injection and improve query plan caching
+4. **Async/Await**: Use async methods for I/O-bound operations to improve scalability
+5. **Connection Management**: Let the provider manage connections unless you have specific requirements
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## 📫 Support
+
+For support, please open an issue in our [issue tracker](https://github.com/davidvazquezpalestino/DeveloperKit/issues).
+
+---
+
+<div align="center">
+  Made with ❤️ by the DeveloperKit Team
+</div>
         MinPoolSize = 10,
         Pooling = true
     };
@@ -308,6 +505,225 @@ La biblioteca soporta todos los tipos de datos de SQL Server, incluyendo tipos e
 - Tipos de fecha: DATETIME, DATETIME2, DATE, TIME, DATETIMEOFFSET
 - Tipos binarios: VARBINARY, IMAGE
 - Tipos especiales: UNIQUEIDENTIFIER, XML, JSON, GEOMETRY, GEOGRAPHY
+
+## 🔍 Constructor de Consultas SQL Server (SqlQueryBuilderSimple)
+
+El módulo `SqlQueryBuilderSimple` proporciona una forma fluida y fuertemente tipada para construir y ejecutar consultas SQL Server de manera segura y eficiente.
+
+### Características Principales
+
+- **Consulta Fuertemente Tipada**: Usa expresiones lambda para filtros seguros en tiempo de compilación
+- **Fluent API**: Permite encadenar métodos para construir consultas complejas de manera legible
+- **Soporte para Operaciones CRUD**: Incluye métodos para SELECT, INSERT, UPDATE, DELETE
+- **Paginación**: Métodos integrados para paginación de resultados
+- **Mapeo Automático**: Convierte automáticamente los resultados a objetos fuertemente tipados
+- **Async/Await**: Todos los métodos tienen versiones asíncronas
+
+### Uso Básico
+
+#### Configuración Inicial
+
+```csharp
+using DevKit.ExecutionEngine.SqlServer.Extensions;
+
+// Obtener el proveedor de base de datos (normalmente inyectado por DI)
+ISQLServerDatabaseProvider dbProvider = ...;
+```
+
+#### Consultas SELECT
+
+```csharp
+// Consulta simple con filtro
+var clientes = dbProvider
+    .From<Cliente>()
+    .Where(c => c.Activo && c.FechaRegistro > DateTime.Now.AddMonths(-1))
+    .ToList();
+
+// Con ordenamiento y paginación
+var clientesPaginados = await dbProvider
+    .From<Cliente>()
+    .Where(c => c.Pais == "México")
+    .OrderBy(c => c.Nombre)
+    .Skip(10)
+    .Take(5)
+    .ToListAsync();
+
+// Consulta con proyección
+var nombresClientes = await dbProvider
+    .From<Cliente>()
+    .Select(c => new { c.Id, c.Nombre })
+    .Where(c => c.Nombre.StartsWith("A"))
+    .ToListAsync();
+```
+
+#### Inserción de Datos
+
+```csharp
+// Insertar un solo registro
+var nuevoCliente = new Cliente 
+{ 
+    Nombre = "Juan Pérez", 
+    Email = "juan@example.com",
+    FechaRegistro = DateTime.Now,
+    Activo = true
+};
+
+int id = await dbProvider
+    .From<Cliente>()
+    .InsertAsync(nuevoCliente);
+
+// Insertar múltiples registros
+var nuevosClientes = new List<Cliente> { /* ... */ };
+int registrosAfectados = await dbProvider
+    .From<Cliente>()
+    .InsertRangeAsync(nuevosClientes);
+```
+
+#### Actualización de Datos
+
+```csharp
+// Actualizar con filtro
+int actualizados = await dbProvider
+    .From<Cliente>()
+    .Where(c => c.Pais == "España")
+    .UpdateAsync(new { Descuento = 15 });
+
+// Actualizar con expresión
+int actualizados = await dbProvider
+    .From<Cliente>()
+    .Where(c => c.UltimaCompra < DateTime.Now.AddYears(-1))
+    .UpdateAsync(c => new Cliente { Activo = false });
+```
+
+#### Eliminación de Datos
+
+```csharp
+// Eliminar con filtro
+int eliminados = await dbProvider
+    .From<Cliente>()
+    .Where(c => !c.Activo && c.FechaRegistro < DateTime.Now.AddYears(-5))
+    .DeleteAsync();
+```
+
+#### Consultas Avanzadas
+
+```csharp
+// Consulta con joins implícitos
+var pedidos = await dbProvider
+    .From<Pedido>()
+    .Join<Cliente>((p, c) => p.ClienteId == c.Id)
+    .Where((p, c) => c.Pais == "México" && p.Fecha.Year == 2023)
+    .Select((p, c) => new { 
+        p.Id, 
+        Cliente = c.Nombre,
+        p.Fecha,
+        p.Total 
+    })
+    .OrderByDescending(x => x.Total)
+    .ToListAsync();
+
+// Agregaciones
+var resumen = await dbProvider
+    .From<Pedido>()
+    .GroupBy(p => p.ClienteId)
+    .Select(g => new {
+        ClienteId = g.Key,
+        TotalPedidos = g.Count(),
+        MontoTotal = g.Sum(p => p.Total),
+        Promedio = g.Average(p => p.Total)
+    })
+    .ToListAsync();
+```
+
+### Métodos Disponibles
+
+#### Métodos de Configuración
+- `From<T>()`: Inicia una nueva consulta para la entidad T
+- `Select<TResult>()`: Especifica las columnas a seleccionar
+- `Where(Expression<Func<T, bool>>)`: Filtra los resultados
+- `OrderBy/OrderByDescending`: Ordena los resultados
+- `ThenBy/ThenByDescending`: Ordenación adicional
+- `Skip/Take`: Paginación de resultados
+- `GroupBy`: Agrupa los resultados
+- `Having`: Filtra grupos
+- `Distinct`: Elimina duplicados
+
+#### Métodos de Ejecución
+- `ToList()`: Ejecuta la consulta y devuelve una lista
+- `FirstOrDefault()`: Devuelve el primer elemento o valor por defecto
+- `Count()`: Cuenta los registros
+- `Any()`: Verifica si hay algún registro
+- `ExecuteNonQuery()`: Ejecuta la consulta y devuelve el número de filas afectadas
+- `ExecuteScalar<T>()`: Ejecuta la consulta y devuelve el primer valor
+- `ToDataTable()`: Devuelve los resultados como DataTable
+
+#### Métodos de Modificación
+- `Insert(T)`: Inserta un nuevo registro
+- `InsertRange(IEnumerable<T>)`: Inserta múltiples registros
+- `Update(object)`: Actualiza registros
+- `Update(Expression<Func<T, T>>)`: Actualiza con expresión
+- `Delete()`: Elimina registros
+
+### Buenas Prácticas
+
+1. **Usar parámetros**: Siempre usa expresiones lambda en lugar de cadenas SQL para evitar inyección SQL
+2. **Selectivo con las columnas**: Usa `Select()` para obtener solo las columnas necesarias
+3. **Paginación**: Usa `Skip()` y `Take()` para consultas que podrían devolver muchos registros
+4. **Transacciones**: Envuelve operaciones relacionadas en transacciones
+5. **Async/Await**: Usa métodos asíncronos para operaciones de E/S
+6. **Manejo de errores**: Implementa try-catch para manejar excepciones de base de datos
+
+### Ejemplo Completo
+
+```csharp
+try
+{
+    using (var transaction = await dbProvider.BeginTransactionAsync())
+    {
+        try
+        {
+            // Insertar nuevo cliente
+            var nuevoCliente = new Cliente
+            {
+                Nombre = "Empresa Ejemplo",
+                Email = "contacto@ejemplo.com",
+                FechaRegistro = DateTime.Now,
+                Activo = true
+            };
+
+            int clienteId = await dbProvider
+                .From<Cliente>()
+                .InsertAsync(nuevoCliente);
+
+            // Crear pedido para el cliente
+            var nuevoPedido = new Pedido
+            {
+                ClienteId = clienteId,
+                Fecha = DateTime.Now,
+                Total = 1500.50m,
+                Estado = "Pendiente"
+            };
+
+            await dbProvider
+                .From<Pedido>()
+                .InsertAsync(nuevoPedido);
+
+            // Confirmar transacción
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
+    }
+}
+catch (Exception ex)
+{
+    // Manejar error
+    Console.WriteLine($"Error al procesar la transacción: {ex.Message}");
+}
+```
 
 ## Manejo de errores
 

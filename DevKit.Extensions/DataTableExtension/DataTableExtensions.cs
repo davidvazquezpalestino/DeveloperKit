@@ -101,7 +101,9 @@ public static partial class DataTableExtensions
         List<Dictionary<string, object>> rawRows = json.ToDictionaryList().ToList();
 
         if (rawRows.Count == 0)
+        {
             return table;
+        }
 
         // Normalizar valores (JsonElement -> .NET, Null/Undefined -> null)
         List<Dictionary<string, object>> normalized = new List<Dictionary<string, object>>(rawRows.Count);

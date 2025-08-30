@@ -13,7 +13,7 @@ public static class OracleParametersExtensions
     /// <param name="direction">Dirección del parámetro (Input/Output/ReturnValue) (opcional)</param>
     /// <param name="log">Delegado para registrar mensajes (opcional)</param>
     /// <returns>Parámetro Oracle configurado</returns>
-    public static OracleParameter CreateOracleParam(string parameterName, object value, OracleDbType? oracleDbType = null,
+    public static OracleParameter CreateOracleParameter(string parameterName, object value, OracleDbType? oracleDbType = null,
         int? size = null, byte? precision = null, byte? scale = null, ParameterDirection? direction = null,
         Action<string> log = null)
     {
@@ -74,8 +74,9 @@ public static class OracleParametersExtensions
             throw;
         }
     }
+
     /// <summary>Agrega un parámetro Oracle a la colección especificada.</summary>
-    /// <param name="parameterCollection">Colección de parámetros a la que se agregará el nuevo parámetro</param>
+    /// <param name="collection">Colección de parámetros a la que se agregará el nuevo parámetro</param>
     /// <param name="parameterName">Nombre del parámetro</param>
     /// <param name="value">Valor del parámetro</param>
     /// <param name="oracleDbType">Tipo de dato Oracle (opcional)</param>
@@ -85,7 +86,7 @@ public static class OracleParametersExtensions
     /// <param name="direction">Dirección del parámetro (opcional)</param>
     /// <param name="log">Delegado para registrar mensajes (opcional)</param>
     /// <returns>La misma colección de parámetros para permitir el encadenamiento de métodos</returns>
-    public static IDataParameterCollection AddOracleParam(this IDataParameterCollection parameterCollection, string parameterName, object value,
+    public static IDataParameterCollection AddOracleParameter(this IDataParameterCollection collection, string parameterName, object value,
         OracleDbType? oracleDbType = null, int? size = null, byte? precision = null, byte? scale = null,
         ParameterDirection? direction = null, Action<string> log = null)
     {
@@ -93,14 +94,16 @@ public static class OracleParametersExtensions
         {
             log?.Invoke($"Agregando parámetro a la colección: {parameterName}");
 
-            if (parameterCollection == null)
-                throw new ArgumentNullException(nameof(parameterCollection));
+            if (collection == null)
+            {
+                throw new ArgumentNullException(nameof(collection));
+            }
 
-            OracleParameter parameter = CreateOracleParam(parameterName, value, oracleDbType, size, precision, scale, direction, log);
-            parameterCollection.Add(parameter);
+            OracleParameter parameter = CreateOracleParameter(parameterName, value, oracleDbType, size, precision, scale, direction, log);
+            collection.Add(parameter);
 
             log?.Invoke($"Parámetro {parameterName} agregado exitosamente a la colección");
-            return parameterCollection;
+            return collection;
         }
         catch (Exception ex)
         {
@@ -108,23 +111,29 @@ public static class OracleParametersExtensions
             throw;
         }
     }
+
     /// <summary>Convierte las propiedades de un objeto en una colección de parámetros Oracle.</summary>
     /// <typeparam name="T">Tipo del objeto a convertir</typeparam>
-    /// <param name="parameterCollection">Colección de parámetros a la que se agregarán los parámetros</param>
+    /// <param name="collection">Colección de parámetros a la que se agregarán los parámetros</param>
     /// <param name="item">Objeto cuyas propiedades se convertirán en parámetros</param>
     /// <param name="log">Delegado para registrar mensajes (opcional)</param>
     /// <returns>La misma colección de parámetros para permitir el encadenamiento de métodos</returns>
-    public static IDataParameterCollection AsOracleParams<T>(this IDataParameterCollection parameterCollection, T item, Action<string> log = null)
+    public static IDataParameterCollection AsOracleParameters<T>(this IDataParameterCollection collection, T item, Action<string> log = null)
     {
         try
         {
             log?.Invoke("Iniciando conversión de objeto a parámetros Oracle");
 
-            if (parameterCollection == null)
-                throw new ArgumentNullException(nameof(parameterCollection));
+            if (collection == null)
+            {
+                throw new ArgumentNullException(nameof(collection));
+            }
 
             if (item == null)
-                throw new ArgumentNullException(nameof(item), "El objeto no puede ser nulo.");
+            {
+                log?.Invoke("El objeto no puede ser nulo.");
+                return collection;
+            }
 
             PropertyInfo[] properties = item.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
             log?.Invoke($"Procesando {properties.Length} propiedades del objeto");
@@ -142,43 +151,49 @@ public static class OracleParametersExtensions
 
                     log?.Invoke($"Tipo Oracle inferido para {propertyName}: {dbType}");
 
-                    parameterCollection.AddOracleParam(paramName, value ?? DBNull.Value, dbType, log: log);
+                    collection.AddOracleParameter(paramName, value ?? DBNull.Value, dbType, log: log);
                 }
                 catch (Exception ex)
                 {
                     string errorMsg = $"Error al procesar la propiedad '{property.Name}': {ex.Message}";
                     log?.Invoke($"ERROR: {errorMsg}");
                     if (log == null) // Solo lanzar Console si no hay logger configurado
+                    {
                         Console.Error.WriteLine(errorMsg);
+                    }
                 }
             }
 
             log?.Invoke("Conversión de objeto a parámetros Oracle completada exitosamente");
-            return parameterCollection;
+            return collection;
         }
         catch (Exception ex)
         {
-            log?.Invoke($"ERROR en AsOracleParams: {ex.Message}");
+            log?.Invoke($"ERROR en AsOracleParameters: {ex.Message}");
             throw;
         }
     }
     /// <summary>Convierte un diccionario en una colección de parámetros Oracle.</summary>
-    /// <param name="parameterCollection">Colección de parámetros a la que se agregarán los parámetros</param>
+    /// <param name="collection">Colección de parámetros a la que se agregarán los parámetros</param>
     /// <param name="dictionary">Diccionario con los parámetros a convertir</param>
     /// <param name="log">Delegado para registrar mensajes (opcional)</param>
     /// <returns>La misma colección de parámetros para permitir el encadenamiento de métodos</returns>
-    public static IDataParameterCollection AsOracleParamsFromDict(this IDataParameterCollection parameterCollection,
+    public static IDataParameterCollection AsOracleParameters(this IDataParameterCollection collection,
         Dictionary<string, object> dictionary, Action<string> log = null)
     {
         try
         {
             log?.Invoke("Iniciando conversión de diccionario a parámetros Oracle");
 
-            if (parameterCollection == null)
-                throw new ArgumentNullException(nameof(parameterCollection));
+            if (collection == null)
+            {
+                throw new ArgumentNullException(nameof(collection));
+            }
 
             if (dictionary == null)
-                throw new ArgumentNullException(nameof(dictionary), "El diccionario no puede ser nulo.");
+            {
+                return collection;
+            }
 
             List<KeyValuePair<string, object>> validParameters = dictionary.Where(pair => string.IsNullOrWhiteSpace(pair.Key) == false).ToList();
             log?.Invoke($"Procesando {validParameters.Count} parámetros del diccionario");
@@ -195,19 +210,21 @@ public static class OracleParametersExtensions
 
                     log?.Invoke($"Tipo Oracle inferido para {kvp.Key}: {dbType}");
 
-                    parameterCollection.AddOracleParam(paramName, kvp.Value ?? DBNull.Value, dbType, log: log);
+                    collection.AddOracleParameter(paramName, kvp.Value ?? DBNull.Value, dbType, log: log);
                 }
                 catch (Exception ex)
                 {
                     string errorMsg = $"Error al procesar el parámetro '{kvp.Key}': {ex.Message}";
                     log?.Invoke($"ERROR: {errorMsg}");
                     if (log == null) // Solo lanzar Console si no hay logger configurado
+                    {
                         Console.Error.WriteLine(errorMsg);
+                    }
                 }
             }
 
             log?.Invoke("Conversión de diccionario a parámetros Oracle completada exitosamente");
-            return parameterCollection;
+            return collection;
         }
         catch (Exception ex)
         {

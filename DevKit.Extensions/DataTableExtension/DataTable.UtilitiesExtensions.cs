@@ -6,7 +6,11 @@ public static partial class DataTableExtensions
     public static bool IsSimpleType(this Type type)
     {
         Type underlyingType = Nullable.GetUnderlyingType(type) ?? type;
-        if (underlyingType.IsEnum) return true;
+        if (underlyingType.IsEnum)
+        {
+            return true;
+        }
+
         return underlyingType.IsPrimitive ||
                underlyingType == typeof(string) ||
                underlyingType == typeof(DateTime) ||
@@ -32,7 +36,11 @@ public static partial class DataTableExtensions
     /// <summary>Convierte una secuencia de DataRow en DataTable, devolviendo una tabla vacía si no hay filas.</summary>
     public static DataTable ToDataTable(this IEnumerable<DataRow> rows, DataTable schema)
     {
-        if (rows == null) return schema?.Clone() ?? new DataTable();
+        if (rows == null)
+        {
+            return schema?.Clone() ?? new DataTable();
+        }
+
         using (IEnumerator<DataRow> enumerator = rows.GetEnumerator())
         {
             if (!enumerator.MoveNext())
@@ -71,15 +79,30 @@ public static partial class DataTableExtensions
             switch (jsonElement.ValueKind)
             {
                 case JsonValueKind.Number:
-                    if (jsonElement.TryGetInt64(out long longValue)) return longValue;
-                    if (jsonElement.TryGetDecimal(out decimal decimalValue)) return decimalValue;
+                    if (jsonElement.TryGetInt64(out long longValue))
+                    {
+                        return longValue;
+                    }
+
+                    if (jsonElement.TryGetDecimal(out decimal decimalValue))
+                    {
+                        return decimalValue;
+                    }
+
                     return jsonElement.GetDouble();
                 case JsonValueKind.String:
                     string stringValue = jsonElement.GetString();
                     if (!string.IsNullOrWhiteSpace(stringValue))
                     {
-                        if (DateTimeOffset.TryParse(stringValue, out DateTimeOffset dateTimeOffset)) return dateTimeOffset;
-                        if (DateTime.TryParse(stringValue, out DateTime dateTime)) return dateTime;
+                        if (DateTimeOffset.TryParse(stringValue, out DateTimeOffset dateTimeOffset))
+                        {
+                            return dateTimeOffset;
+                        }
+
+                        if (DateTime.TryParse(stringValue, out DateTime dateTime))
+                        {
+                            return dateTime;
+                        }
                     }
                     return stringValue;
                 case JsonValueKind.True:
@@ -100,7 +123,10 @@ public static partial class DataTableExtensions
     internal static Type DetermineColumnType(IEnumerable<object> values)
     {
         List<object> nonNullValues = values.Where(value => value != null).ToList();
-        if (nonNullValues.Count == 0) return typeof(object);
+        if (nonNullValues.Count == 0)
+        {
+            return typeof(object);
+        }
 
         bool hasString = nonNullValues.Any(value => value is string);
         bool hasBool = nonNullValues.Any(value => value is bool);
@@ -111,19 +137,44 @@ public static partial class DataTableExtensions
         bool hasDateTime = nonNullValues.Any(value => value is DateTime);
 
         if (hasString)
+        {
             return typeof(string);
+        }
 
         if ((hasBool && (hasInteger || hasDecimal || hasFloating)) || ((hasDateTime || hasDateTimeOffset) && (hasInteger || hasDecimal || hasFloating || hasBool)))
+        {
             return typeof(string);
+        }
 
-        if (hasDateTimeOffset) return typeof(DateTimeOffset);
-        if (hasDateTime) return typeof(DateTime);
+        if (hasDateTimeOffset)
+        {
+            return typeof(DateTimeOffset);
+        }
 
-        if (hasDecimal || (hasInteger && hasFloating)) return typeof(decimal);
-        if (hasFloating) return typeof(double);
-        if (hasInteger) return typeof(long);
+        if (hasDateTime)
+        {
+            return typeof(DateTime);
+        }
 
-        if (hasBool) return typeof(bool);
+        if (hasDecimal || (hasInteger && hasFloating))
+        {
+            return typeof(decimal);
+        }
+
+        if (hasFloating)
+        {
+            return typeof(double);
+        }
+
+        if (hasInteger)
+        {
+            return typeof(long);
+        }
+
+        if (hasBool)
+        {
+            return typeof(bool);
+        }
 
         return typeof(object);
     }

@@ -1,7 +1,7 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net7.0;net8.0;net9.0;</TargetFrameworks>
+		<TargetFrameworks>net6.0;net8.0;net9.0;</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 	</PropertyGroup>
 
@@ -34,6 +34,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
+		<ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -78,6 +79,12 @@
 			<Pack>True</Pack>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+	</ItemGroup>
+
+
+
+	<ItemGroup>
+	  <Folder Include="QueryBuilder\" />
 	</ItemGroup>
 
 

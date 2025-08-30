@@ -23,7 +23,7 @@ public class SqlOptions
     /// <summary>
     /// Tiempo de espera para comandos SQL en segundos. Por defecto: 30 segundos.
     /// </summary>
-    public int CommandTimeout { get; set; }
+    public int CommandTimeout { get; set; } = 30;
 
     /// <summary>
     /// Tiempo de espera para conexiones en segundos. Por defecto: 30 segundos.
@@ -58,7 +58,9 @@ public class SqlOptions
     public string GetConnectionString()
     {
         if (!string.IsNullOrWhiteSpace(ConnectionString))
+        {
             return ConnectionString;
+        }
 
         if (SqlAuth.IsConfigured())
         {
@@ -73,26 +75,44 @@ public class SqlOptions
 
             // Solo agregar estas claves si están habilitadas para evitar problemas con versiones antiguas
             if (SqlAuth.TrustServerCertificate)
+            {
                 parts.Add("TrustServerCertificate=True");
+            }
 
             if (SqlAuth.MultipleActiveResultSets)
+            {
                 parts.Add("MultipleActiveResultSets=True");
+            }
 
             if (ConnectionTimeout > 0)
+            {
                 parts.Add($"Connect Timeout={ConnectionTimeout}");
+            }
 
             if (ConnectionPooling.Pooling)
+            {
                 parts.Add("Pooling=True");
+            }
             else
+            {
                 parts.Add("Pooling=False");
+            }
+
             if (ConnectionPooling.MinPoolSize > 0)
+            {
                 parts.Add($"Min Pool Size={ConnectionPooling.MinPoolSize}");
+            }
+
             if (ConnectionPooling.MaxPoolSize > 0)
+            {
                 parts.Add($"Max Pool Size={ConnectionPooling.MaxPoolSize}");
+            }
 
             string appName = ConfigureApplication?.Invoke();
             if (!string.IsNullOrWhiteSpace(appName))
+            {
                 parts.Add($"Application Name={appName}");
+            }
 
             ConnectionString = string.Join(";", parts);
             return ConnectionString;

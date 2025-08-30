@@ -25,7 +25,7 @@ public class EmailMessage
     public string Bcc { get; private set; }
 
     /// <summary>Lista de archivos adjuntos</summary>
-    public IReadOnlyList<Attachment> Attachments { get; private set; } = new List<Attachment>();
+    public IReadOnlyList<EmailAttachment> Attachments { get; private set; } = new List<EmailAttachment>();
 
     private EmailMessage() { }
 
@@ -85,23 +85,27 @@ public class EmailMessage
     }
 
     /// <summary>Agrega un archivo adjunto al mensaje.</summary>
-    public EmailMessage WithAttachment(Attachment attachment)
+    public EmailMessage WithAttachment(EmailAttachment attachment)
     {
         if (attachment == null)
+        {
             throw new ArgumentNullException(nameof(attachment));
+        }
 
-        List<Attachment> attachments = new List<Attachment>(Attachments) { attachment };
+        List<EmailAttachment> attachments = new List<EmailAttachment>(Attachments) { attachment };
         Attachments = attachments.AsReadOnly();
         return this;
     }
 
     /// <summary>Agrega múltiples archivos adjuntos al mensaje.</summary>
-    public EmailMessage WithAttachments(IEnumerable<Attachment> attachments)
+    public EmailMessage WithAttachments(IEnumerable<EmailAttachment> attachments)
     {
         if (attachments == null)
+        {
             throw new ArgumentNullException(nameof(attachments));
+        }
 
-        List<Attachment> newAttachments = new List<Attachment>(Attachments);
+        List<EmailAttachment> newAttachments = new List<EmailAttachment>(Attachments);
         newAttachments.AddRange(attachments);
         Attachments = newAttachments.AsReadOnly();
         return this;

@@ -73,7 +73,9 @@ public static class SqlParameterExtensions
             log?.Invoke($"Agregando parámetro a la colección: {parameterName}");
 
             if (parameterCollection == null)
+            {
                 throw new ArgumentNullException(nameof(parameterCollection));
+            }
 
             SqlParameter parameter = CreateSqlParameter(parameterName, value, sqlDbType, size, precision, scale, direction, log);
             parameterCollection.Add(parameter);
@@ -88,17 +90,21 @@ public static class SqlParameterExtensions
         }
     }
     /// <summary>Convierte las propiedades de un objeto en una colección de parámetros SQL.</summary>
-    public static IDataParameterCollection AsSqlParameters<T>(this IDataParameterCollection parameterCollection, T item, Action<string> log = null)
+    public static IDataParameterCollection AddSqlParameters<T>(this IDataParameterCollection parameterCollection, T item, Action<string> log = null)
     {
         try
         {
             log?.Invoke("Iniciando conversión de objeto a parámetros SQL");
 
             if (parameterCollection == null)
+            {
                 throw new ArgumentNullException(nameof(parameterCollection));
+            }
 
             if (item == null)
+            {
                 throw new ArgumentNullException(nameof(item), "El objeto no puede ser nulo.");
+            }
 
             PropertyInfo[] properties = item.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
             log?.Invoke($"Procesando {properties.Length} propiedades del objeto");
@@ -123,7 +129,9 @@ public static class SqlParameterExtensions
                     string errorMsg = $"Error al procesar la propiedad '{property.Name}': {ex.Message}";
                     log?.Invoke($"ERROR: {errorMsg}");
                     if (log == null) // Solo lanzar Console si no hay logger configurado
+                    {
                         Console.WriteLine(errorMsg);
+                    }
                 }
             }
 
@@ -137,7 +145,7 @@ public static class SqlParameterExtensions
         }
     }
     /// <summary>Convierte un diccionario en una colección de parámetros SQL.</summary>
-    public static IDataParameterCollection AsSqlParameters(this IDataParameterCollection parameterCollection,
+    public static IDataParameterCollection AddSqlParameters(this IDataParameterCollection parameterCollection,
         Dictionary<string, object> parameters, Action<string> log = null)
     {
         try
@@ -145,10 +153,14 @@ public static class SqlParameterExtensions
             log?.Invoke("Iniciando conversión de diccionario a parámetros SQL");
 
             if (parameterCollection == null)
+            {
                 throw new ArgumentNullException(nameof(parameterCollection));
+            }
 
             if (parameters == null)
+            {
                 throw new ArgumentNullException(nameof(parameters), "El diccionario no puede ser nulo.");
+            }
 
             List<KeyValuePair<string, object>> validParameters = parameters.Where(pair => string.IsNullOrWhiteSpace(pair.Key) == false).ToList();
             log?.Invoke($"Procesando {validParameters.Count} parámetros del diccionario");
@@ -172,7 +184,9 @@ public static class SqlParameterExtensions
                     string errorMsg = $"Error al procesar el parámetro '{kvp.Key}': {ex.Message}";
                     log?.Invoke($"ERROR: {errorMsg}");
                     if (log == null) // Solo lanzar Console si no hay logger configurado
+                    {
                         Console.Error.WriteLine(errorMsg);
+                    }
                 }
             }
 

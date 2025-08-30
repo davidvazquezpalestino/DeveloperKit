@@ -111,4 +111,14 @@ public partial interface ISQLServerDatabaseProvider
     /// Obtiene la fecha y hora actuales del servidor de forma asíncrona.
     /// </summary>
     Task<DateTime> GetCurrentDateTimeAsync();
+
+    /// <summary>
+    /// Ejecuta una consulta SQL de forma asíncrona y devuelve un valor escalar.
+    /// </summary>
+    /// <typeparam name="T">Tipo del valor escalar a devolver.</typeparam>
+    /// <param name="query">Consulta SQL a ejecutar.</param>
+    /// <param name="parameter">Acción para configurar los parámetros de la consulta.</param>
+    /// <param name="cancellationToken">Token de cancelación.</param>
+    /// <returns>Valor escalar del tipo especificado.</returns>
+    Task<T> ExecuteScalarAsync<T>(string query, Action<IDataParameterCollection> parameter = null, CancellationToken cancellationToken = default);
 }

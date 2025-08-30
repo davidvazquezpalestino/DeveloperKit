@@ -136,7 +136,9 @@ public partial class Login : XtraUserControl, IReadOnly
         if (Connections != null)
         {
             foreach (Conexion item in Connections.OrderBy(conexion => conexion.Servidor))
+            {
                 comboConexiones.Properties.Items.Add(item);
+            }
         }
 
         if (Connections != null)
