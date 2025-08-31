@@ -3,7 +3,6 @@ global using CrystalDecisions.Shared;
 global using DevKit.CrystalToolkit.Abstracciones;
 global using DevKit.CrystalToolkit.Enumeraciones;
 global using DevKit.CrystalToolkit.Servicios;
-global using Microsoft.Extensions.DependencyInjection;
 global using System;
 global using System.Collections.Generic;
 global using System.Data.SqlClient;

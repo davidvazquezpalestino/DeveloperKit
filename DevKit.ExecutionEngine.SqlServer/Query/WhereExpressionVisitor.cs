@@ -1,4 +1,4 @@
-﻿namespace DevKit.ExecutionEngine.SqlServer.Query;
+namespace DevKit.ExecutionEngine.SQLServer.Query;
 
 /// <summary>
 /// Visits and processes expressions in a LINQ query to generate SQL WHERE clauses.
@@ -6,7 +6,17 @@
 public class WhereExpressionVisitor(Dictionary<string, object> parametersField, ref int paramIndex) : ExpressionVisitor
 {
     private int ParamIndex = paramIndex;
+
+    /// <summary>
+    /// Obtiene el diccionario de parámetros generados durante la construcción de la consulta.
+    /// </summary>
+    /// <value>Diccionario que asocia nombres de parámetros con sus valores</value>
     public Dictionary<string, object> Parameters => parametersField;
+
+    /// <summary>
+    /// Genera un nombre de parámetro único para consultas SQL en el formato @p{n} donde n es un número secuencial.
+    /// </summary>
+    /// <returns>Un nombre de parámetro único en formato @p{n}</returns>
     public string GetNextParameterName() => $"@p{ParamIndex++}";
 
     /// <summary>

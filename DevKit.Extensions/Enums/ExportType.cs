@@ -1,4 +1,4 @@
-namespace DevKit.Extensions.Enum;
+namespace DevKit.Extensions.Enums;
 
 /// <summary>Define los formatos de exportación disponibles para la generación de archivos.</summary>
 public enum ExportType

@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace DevKit.ExecutionEngine.MySql.Extensions
+namespace DevKit.ExecutionEngine.MySQL.Extensions
 {
     /// <summary>
     /// Extension methods for working with MySql parameters

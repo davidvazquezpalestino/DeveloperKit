@@ -5,10 +5,31 @@ namespace DevKit.ExecutionEngine.SQLServer.Abstractions;
 /// Proporciona métodos asíncronos para ejecutar consultas y procedimientos almacenados.
 /// </summary>
 public partial interface ISQLServerProvider
-{ /// <summary>
-  /// Ejecuta una consulta de forma asíncrona y retorna la entidad resultante.
-  /// </summary>
+{
+    /// <summary>
+    /// Ejecuta una consulta de forma asíncrona y retorna la entidad resultante.
+    /// </summary>
     Task<T> ExecuteQueryAsSingleAsync<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado de forma asíncrona.
+    /// </summary>
+    /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
+    /// <param name="query">Consulta SQL a ejecutar</param>
+    /// <param name="parametros">Parámetros de la consulta</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Primer elemento que cumple con la condición</returns>
+    Task<T> FirstAsync<T>(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default) where T : class, new();
+
+    /// <summary>
+    /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado o un valor predeterminado si no se encuentra ningún elemento de forma asíncrona.
+    /// </summary>
+    /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
+    /// <param name="query">Consulta SQL a ejecutar</param>
+    /// <param name="parametros">Parámetros de la consulta</param>
+    /// <param name="cancellationToken">Token de cancelación</param>
+    /// <returns>Primer elemento que cumple con la condición o valor predeterminado</returns>
+    Task<T> FirstOrDefaultAsync<T>(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default) where T : class, new();
 
     /// <summary>
     /// Ejecuta un procedimiento almacenado de forma asíncrona y retorna la entidad mapeada.
@@ -61,14 +82,14 @@ public partial interface ISQLServerProvider
     Task<int> ExecuteProcedureCommandAsync(string storedProcedure, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Copia masivamente datos de un DataTable a la tabla destino.
+    /// Realiza una copia masiva de un DataTable a la tabla destino de forma asíncrona.
     /// </summary>
+    /// <param name="source">DataTable que contiene los datos a insertar.</param>
+    /// <param name="target">Nombre de la tabla de destino.</param>
+    /// <param name="cancellationToken">Token de cancelación para la operación asíncrona.</param>
+    /// <returns>Tarea asíncrona que representa la operación.</returns>
     Task ExecuteBulkInsertToTableAsync(DataTable source, string target, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Copia masivamente datos de un DataTable a la tabla destino.
-    /// </summary>
-    Task ExecuteBulkInsertAsync(DataTable source, string target, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Ejecuta un comando de forma asíncrona sin devolver resultados.
@@ -83,22 +104,7 @@ public partial interface ISQLServerProvider
         Action<string> logger = null,
         CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Copia masivamente datos desde un IDataReader a la tabla destino.
-    /// </summary>
-    /// <summary>
-    /// Copia masivamente datos con configuración avanzada.
-    /// </summary>
-    Task ExecuteBulkInsertAsync(DataTable source, BulkOperationsConfiguration configuration, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Copia masivamente una colección de entidades con configuración avanzada.
-    /// </summary>
-    Task ExecuteBulkInsertAsync<T>(IEnumerable<T> entities, BulkOperationsConfiguration configuration, CancellationToken cancellationToken = default) where T : class;
-    /// <summary>
-    /// Copia masivamente una colección de entidades con configuración fluida.
-    /// </summary>
-    Task ExecuteBulkInsertAsync<T>(IEnumerable<T> entities, Action<BulkOperationsConfigurationBuilder> configure, CancellationToken cancellationToken = default) where T : class;
     /// <summary>
     /// Inserta una entidad en la tabla especificada.
     /// </summary>

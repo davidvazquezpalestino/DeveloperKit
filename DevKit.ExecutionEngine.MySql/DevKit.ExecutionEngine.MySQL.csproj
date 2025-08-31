@@ -33,11 +33,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
-		<ProjectReference Include="..\DevKit.ExecutionEngine.Abstractions\DevKit.ExecutionEngine.Abstractions.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Include="Imagenes\102042_tools_icon.png">
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>

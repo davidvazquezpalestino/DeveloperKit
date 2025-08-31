@@ -9,9 +9,9 @@
 		<Product>CoreDatabase</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2025.08.26</AssemblyVersion>
-		<FileVersion>2025.08.26</FileVersion>
-		<Version>2025.08.26</Version>
+		<AssemblyVersion>2025.08.30</AssemblyVersion>
+		<FileVersion>2025.08.30</FileVersion>
+		<Version>2025.08.30</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -31,10 +31,6 @@
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.1" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
 		<PackageReference Include="System.Threading.Tasks" Version="4.3.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -71,6 +67,10 @@
 			<Pack>True</Pack>
 			<PackagePath>\</PackagePath>
 		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

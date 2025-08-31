@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.SqlServer.Query
+namespace DevKit.ExecutionEngine.SQLServer.Query
 {
     /// <summary>
     /// Representa el resultado de la construcción de una consulta SQL
@@ -8,7 +8,7 @@ namespace DevKit.ExecutionEngine.SqlServer.Query
         /// <summary>
         /// Obtiene o establece la consulta SQL generada
         /// </summary>
-        public string Sql { get; set; }
+        public string SQL { get; set; }
 
         /// <summary>
         /// Obtiene o establece los parámetros de la consulta
@@ -30,7 +30,7 @@ namespace DevKit.ExecutionEngine.SqlServer.Query
         /// <param name="parameters">Parámetros de la consulta</param>
         public QueryResult(string sql, Dictionary<string, object> parameters = null)
         {
-            Sql = sql;
+            SQL = sql;
             Parameters = parameters ?? new Dictionary<string, object>();
         }
 
@@ -39,7 +39,7 @@ namespace DevKit.ExecutionEngine.SqlServer.Query
         /// </summary>
         public void Deconstruct(out string sql, out Dictionary<string, object> parameters)
         {
-            sql = Sql;
+            sql = SQL;
             parameters = Parameters;
         }
     }

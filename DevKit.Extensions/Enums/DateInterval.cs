@@ -1,4 +1,4 @@
-namespace DevKit.Extensions.Enum;
+namespace DevKit.Extensions.Enums;
 
 /// <summary>Especifica las unidades de tiempo disponibles para cálculos de diferencia de fechas.</summary>
 public enum DateInterval

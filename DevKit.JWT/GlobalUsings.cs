@@ -1,3 +1,7 @@
+global using DevKit.JWT.Entities;
+global using DevKit.JWT.Interfaces;
+global using DevKit.JWT.Options;
+global using DevKit.JWT.Services;
 global using Microsoft.AspNetCore.Authentication.JwtBearer;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +13,3 @@ global using System.Collections.Concurrent;
 global using System.Security.Claims;
 global using System.Security.Cryptography;
 global using System.Text;
-global using System.Threading;
-global using System.Threading.Tasks;
-global using DevKit.JWT.Entities;
-global using DevKit.JWT.Interfaces;
-global using DevKit.JWT.Options;
-global using DevKit.JWT.Services;

@@ -10,15 +10,15 @@ High-performance SQL Server database provider for .NET applications, built on to
 ## ✨ Features
 
 - **Unified API**: Consistent method naming across all database operations
-- **Full Async Support**: All operations have async/await variants
-- **Bulk Operations**: High-performance bulk inserts with `SqlBulkCopy`
-- **Transaction Support**: Comprehensive transaction management
-- **Stored Procedures**: Full support for executing stored procedures
-- **Type Safety**: Strongly-typed result mapping
+- **Full Async Support**: Optimized async/await patterns with proper cancellation support
+- **Bulk Operations**: High-performance bulk operations with configurable timeouts
+- **Transaction Support**: Comprehensive transaction management with async support
+- **Stored Procedures**: Full support for executing stored procedures with parameters
+- **Type Safety**: Strongly-typed result mapping and parameter handling
 - **Dependency Injection**: First-class support for .NET Core DI
-- **Configurable**: Fine-grained control over connection and command behavior
-- **Multiple Result Sets**: Support for queries returning multiple result sets
-- **Dynamic Table Operations**: Runtime table creation and management
+- **Configurable**: Fine-grained control over timeouts and connection behavior
+- **Multiple Result Sets**: Support for complex queries with multiple result sets
+- **Modern .NET Standards**: Built with .NET 6.0+ and .NET Standard 2.1+ in mind
 
 ## 🚀 Getting Started
 
@@ -60,7 +60,7 @@ services.AddSQLServerProvider((provider, options) =>
     var configuration = provider.GetRequiredService<IConfiguration>();
     
     options.ConnectionString = configuration.GetConnectionString("SqlServer");
-    options.CommandTimeout = 30;
+    options.CommandTimeout = 30; // seconds
     options.ApplicationName = "MyApplication";
     
     // Connection pooling
@@ -71,13 +71,14 @@ services.AddSQLServerProvider((provider, options) =>
         ConnectionLifetime = 300 // seconds
     };
     
-    // Bulk copy options
+    // Bulk copy options with timeout configuration
     options.BulkCopy = new BulkCopyOptions 
     { 
         BatchSize = 1000,
-        BulkCopyTimeout = 0, // no timeout
+        BulkCopyTimeout = 600, // 10 minutes
         EnableStreaming = true,
-        UseInternalTransaction = false
+        UseInternalTransaction = false,
+        NotifyAfter = 1000 // Raise event after every 1000 rows
     };
 });
 ```
@@ -98,275 +99,292 @@ public class Customer
 // Using dependency injection
 public class CustomerService
 {
-    private readonly ISQLServerDatabaseProvider _db;
-    
-    public CustomerService(ISQLServerDatabaseProvider db)
+    private readonly ISQLServerDatabaseProvider _dbProvider;
+
+    public CustomerService(ISQLServerDatabaseProvider dbProvider)
     {
-        _db = db;
+        _dbProvider = dbProvider;
     }
-    
-    public async Task<IEnumerable<Customer>> GetActiveCustomersAsync()
+
+    // Basic query with parameters
+    public async Task<Customer> GetCustomerByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _db.ExecuteQueryAsListAsync<Customer>(
-            "SELECT * FROM customers WHERE is_active = @isActive",
-            parameters: new { isActive = true });
+        const string query = "SELECT * FROM Customers WHERE Id = @Id";
+        
+        var customers = await _dbProvider.ExecuteQueryAsListAsync(query,
+            reader => new Customer
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                Name = reader.GetString(reader.GetOrdinal("Name")),
+                Email = reader.GetString(reader.GetOrdinal("Email")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+            },
+            parameters =>
+            {
+                parameters.AddWithValue("@Id", id);
+            },
+            cancellationToken);
+
+        return customers.FirstOrDefault();
     }
 }
 ```
 
-### Parameterized Queries
+### Using Query Builder
 
 ```csharp
-// Using anonymous types for parameters
-var customers = await _db.ExecuteQueryAsListAsync<Customer>(
-    "SELECT * FROM customers WHERE created_at > @minDate AND status = @status",
-    parameters: new { minDate = DateTime.UtcNow.AddDays(-30), status = "active" });
-
-// Using dictionary for parameters
-var parameters = new Dictionary<string, object>
+// Fluent query building
+public async Task<List<Customer>> SearchCustomersAsync(string searchTerm, int page = 1, int pageSize = 20)
 {
-    ["minDate"] = DateTime.UtcNow.AddDays(-30),
-    ["status"] = "active"
-};
+    return await _dbProvider
+        .From<Customer>()
+        .Where(c => c.Name.Contains(searchTerm) || c.Email.Contains(searchTerm))
+        .OrderBy(c => c.Name)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+}
+```
 
-var customers = await _db.ExecuteQueryAsListAsync<Customer>(
-    "SELECT * FROM customers WHERE created_at > @minDate AND status = @status",
-    parameters: parameters);
+### Batch Insert
+
+```csharp
+public async Task<int> ImportCustomersAsync(IEnumerable<Customer> customers, CancellationToken cancellationToken = default)
+{
+    // Using batch insert with configurable batch size
+    await _dbProvider.ExecuteInsertAsync("Customers", customers, batchSize: 1000, cancellationToken);
+    return customers.Count();
+}
+```
+
+### Transactions
+
+```csharp
+public async Task<bool> TransferFundsAsync(int fromAccountId, int toAccountId, decimal amount)
+{
+    using (var transaction = _dbProvider.BeginTransaction())
+    {
+        try
+        {
+            // Withdraw from source account
+            await _dbProvider.ExecuteNonQueryAsync(
+                "UPDATE Accounts SET Balance = Balance - @Amount WHERE Id = @Id AND Balance >= @Amount",
+                parameters =>
+                {
+                    parameters.AddWithValue("@Id", fromAccountId);
+                    parameters.AddWithValue("@Amount", amount);
+                });
+
+            // Deposit to target account
+            await _dbProvider.ExecuteNonQueryAsync(
+                "UPDATE Accounts SET Balance = Balance + @Amount WHERE Id = @Id",
+                parameters =>
+                {
+                    parameters.AddWithValue("@Id", toAccountId);
+                    parameters.AddWithValue("@Amount", amount);
+                });
+
+            transaction.Commit();
+            return true;
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+}
 ```
 
 ### Stored Procedures
 
 ```csharp
-// Executing a stored procedure
-var result = await _db.ExecuteStoredProcedureAsListAsync<CustomerReport>(
-    "sp_GetCustomerReport",
-    parameters: new 
-    {
-        startDate = new DateTime(2023, 1, 1),
-        endDate = DateTime.Now,
-        status = "active"
-    });
+public async Task<List<OrderSummary>> GetCustomerOrderSummaryAsync(int customerId, DateTime startDate, DateTime endDate)
+{
+    return await _dbProvider.ExecuteStoredProcedureAsListAsync("sp_GetCustomerOrderSummary",
+        reader => new OrderSummary
+        {
+            OrderId = reader.GetInt32(0),
+            OrderDate = reader.GetDateTime(1),
+            TotalAmount = reader.GetDecimal(2),
+            ItemCount = reader.GetInt32(3)
+        },
+        parameters =>
+        {
+            parameters.AddWithValue("@CustomerId", customerId);
+            parameters.AddWithValue("@StartDate", startDate);
+            parameters.AddWithValue("@EndDate", endDate);
+        });
+}
 ```
 
 ### Bulk Operations
 
 ```csharp
+// Bulk insert with configuration and cancellation
+public async Task BulkInsertProductsAsync(IEnumerable<Product> products, CancellationToken cancellationToken = default)
+{
+    try 
+    {
+        await _dbProvider.ExecuteBulkInsertAsync(products, config =>
+        {
+            config.BatchSize = 5000;
+            config.DestinationTableName = "Products";
+            config.ColumnMappings.Add("Id", "ProductId");
+            config.ColumnMappings.Add("Name", "ProductName");
+            config.ColumnMappings.Add("Price", "UnitPrice");
+            config.ColumnMappings.Add("Stock", "UnitsInStock");
+        }, cancellationToken);
+    }
+    catch (OperationCanceledException)
+    {
+        _logger.LogWarning("Bulk insert operation was cancelled");
+        throw;
+    }
+}
+
 // Bulk insert from DataTable
-DataTable customerData = GetCustomerData();
-await _db.ExecuteBulkInsertAsync(customerData, "customers");
-
-// Bulk insert from list of objects
-List<Customer> customers = GetCustomers();
-await _db.ExecuteBulkInsertToTableAsync(customers, "customers");
-```
-
-## 📚 API Reference
-
-### Key Methods
-
-| Method | Description |
-|--------|-------------|
-| `ExecuteQueryAsList<T>` | Executes a query and maps results to a list of strongly-typed objects |
-| `ExecuteQueryAsTable` | Executes a query and returns results as a DataTable |
-| `ExecuteNonQuery` | Executes a command and returns the number of rows affected |
-| `ExecuteScalar<T>` | Executes a command and returns the first column of the first row |
-| `ExecuteStoredProcedure*` | Methods for executing stored procedures |
-| `ExecuteBulkInsert*` | Methods for bulk data operations |
-| `CreateTable` | Creates a table at runtime |
-| `TableExists` | Checks if a table exists |
-
-### Async Variants
-
-All methods have async counterparts with the `Async` suffix (e.g., `ExecuteQueryAsListAsync`).
-
-## ⚙️ Advanced Topics
-
-### Transaction Management
-
-```csharp
-using (var transaction = await _db.BeginTransactionAsync())
-try
+public async Task BulkInsertFromDataTableAsync(DataTable data, string tableName, CancellationToken cancellationToken = default)
 {
-    // Perform multiple operations within the same transaction
-    await _db.ExecuteNonQueryAsync(
-        "UPDATE accounts SET balance = balance - @amount WHERE id = @id", 
-        parameters: new { id = 1, amount = 100 });
-        
-    await _db.ExecuteNonQueryAsync(
-        "UPDATE accounts SET balance = balance + @amount WHERE id = @id", 
-        parameters: new { id = 2, amount = 100 });
-        
-    await transaction.CommitAsync();
-}
-catch
-{
-    await transaction.RollbackAsync();
-    throw;
+    try 
+    {
+        await _dbProvider.ExecuteBulkInsertToTableAsync(data, tableName, cancellationToken);
+    }
+    catch (OperationCanceledException)
+    {
+        _logger.LogWarning("Bulk insert operation was cancelled");
+        throw;
+    }
 }
 ```
 
-### Dynamic Table Operations
+## Advanced Query Builder Examples
+
+### Complex Queries with Joins
 
 ```csharp
-// Create a table dynamically
-await _db.CreateTableAsync("DynamicTable", new[]
+public async Task<List<OrderWithCustomer>> GetRecentOrdersWithCustomersAsync(DateTime fromDate)
 {
-    new ColumnDefinition("Id", "INT", isPrimaryKey: true, isIdentity: true),
-    new ColumnDefinition("Name", "NVARCHAR(100)", isNullable: false),
-    new ColumnDefinition("CreatedAt", "DATETIME", defaultValue: "GETDATE()")
-});
-
-// Check if table exists
-bool exists = await _db.TableExistsAsync("DynamicTable");
+    return await _dbProvider
+        .From<Order>("o")
+        .Join<Customer>("c", "c.Id = o.CustomerId")
+        .Where<Order>(o => o.OrderDate >= fromDate)
+        .Select((o, c) => new OrderWithCustomer
+        {
+            OrderId = o.Id,
+            OrderDate = o.OrderDate,
+            TotalAmount = o.TotalAmount,
+            CustomerName = c.Name,
+            CustomerEmail = c.Email
+        })
+        .OrderByDescending(x => x.OrderDate)
+        .Take(50)
+        .ToListAsync();
+}
 ```
 
-## 📊 Performance Tips
+### Grouping and Aggregation
 
-1. **Use Connection Pooling**: Enabled by default with sensible defaults
-2. **Batch Operations**: Use bulk operations for large data imports/exports
-3. **Parameterized Queries**: Always use parameters to prevent SQL injection and improve query plan caching
-4. **Async/Await**: Use async methods for I/O-bound operations to improve scalability
-5. **Connection Management**: Let the provider manage connections unless you have specific requirements
+```csharp
+public async Task<List<SalesByCategory>> GetMonthlySalesByCategoryAsync(int year)
+{
+    return await _dbProvider
+        .From<Order>("o")
+        .Join<OrderDetail>("od", "o.Id = od.OrderId")
+        .Join<Product>("p", "p.Id = od.ProductId")
+        .Join<Category>("c", "c.Id = p.CategoryId")
+        .Where(o => o.OrderDate.Year == year)
+        .GroupBy(o => new { o.OrderDate.Month, c.Name })
+        .Select(g => new SalesByCategory
+        {
+            Month = g.Key.Month,
+            Category = g.Key.Name,
+            TotalSales = g.Sum(x => x.od.Quantity * x.od.UnitPrice),
+            OrderCount = g.Count()
+        })
+        .OrderBy(x => x.Month)
+        .ThenByDescending(x => x.TotalSales)
+        .ToListAsync();
+}
+```
 
-## 📝 License
+## Performance Tips
+
+1. **Connection Management**:
+   - Let the provider manage connections (they're pooled by default)
+   - Avoid opening connections manually unless necessary
+   - Use `ConfigureAwait(false)` in library code to prevent deadlocks
+
+2. **Parameterized Queries**:
+   - Always use parameters to prevent SQL injection
+   - Reuse parameterized commands when possible
+   - Use `AddWithValue` for simple parameter mapping
+
+3. **Async/Await Best Practices**:
+   - Always pass `CancellationToken` to async methods
+   - Handle `OperationCanceledException` for proper cancellation
+   - Use `ValueTask<T>` for hot paths with synchronous completion
+
+4. **Bulk Operations**:
+   - Use `ExecuteBulkInsertToTableAsync` for large datasets
+   - Configure appropriate `BatchSize` and `BulkCopyTimeout`
+   - Consider `TableLock` option for faster bulk inserts in exclusive scenarios
+
+5. **Query Optimization**:
+   - Use `Select()` to retrieve only needed columns
+   - Apply filters early with `Where()`
+   - Use `Take()` to limit result sets
+   - Consider using `AsNoTracking()` for read-only queries
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Connection Timeouts**:
+   - Increase `CommandTimeout` for long-running queries
+   - Check network latency and server load
+
+2. **Deadlocks**:
+   - Use appropriate transaction isolation levels
+   - Keep transactions short and focused
+
+3. **Performance Problems**:
+   - Check query execution plans
+   - Ensure proper indexing
+   - Consider query hints for complex queries
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Contributing
-
-Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
-
-## 📫 Support
-
-For support, please open an issue in our [issue tracker](https://github.com/davidvazquezpalestino/DeveloperKit/issues).
-
----
-
-<div align="center">
-  Made with ❤️ by the DeveloperKit Team
-</div>
-        MinPoolSize = 10,
-        Pooling = true
-    };
-    options.BulkCopy = new BulkCopyOptions
-    {
-        BatchSize = 5_000,
-        BulkCopyTimeout = 300,
-        SqlBulkCopyOptions = SqlBulkCopyOptions.TableLock | SqlBulkCopyOptions.KeepIdentity
-    };
-});
-
-// Registro keyed (si necesitas múltiples conexiones)
-services.AddSQLServerProvider("Reporting", (provider, options) =>
-{
-    var configuration = provider.GetRequiredService<IConfiguration>();
-    options.ConnectionString = configuration.GetConnectionString("ReportingDb");
-}, ServiceLifetime.Scoped);
-```
-
-Inyecta `ISQLServerDatabaseProvider` donde lo necesites:
+### Async Query with Parameters and Cancellation
 
 ```csharp
-public class CustomerService
+public async Task<Customer> GetCustomerByEmailAsync(string email, CancellationToken cancellationToken = default)
 {
-    private readonly ISQLServerDatabaseProvider _provider;
-    public CustomerService(ISQLServerDatabaseProvider provider) => _provider = provider;
-}
-```
-
-### Ejemplo de appsettings.json
-
-```json
-{
-  "ConnectionStrings": {
-    "SqlServer": "Server=.;Database=MainDb;Trusted_Connection=True;TrustServerCertificate=True;",
-    "ReportingDb": "Server=.;Database=Reporting;Trusted_Connection=True;TrustServerCertificate=True;"
-  },
-  "SqlOptions": {
-    "CommandTimeout": 60,
-    "BulkCopy": {
-      "BatchSize": 5000,
-      "BulkCopyTimeout": 300,
-      "SqlBulkCopyOptions": 17 // TableLock | KeepIdentity
-    }
-  }
-}
-```
-
-### Registro leyendo de configuración
-
-```csharp
-// Program.cs / Startup.cs
-services.AddSQLServerProvider((provider, options) =>
-{
-    var configuration = provider.GetRequiredService<IConfiguration>();
-    options.ConnectionString = configuration.GetConnectionString("SqlServer");
-    configuration.GetSection("SqlOptions").Bind(options);
-});
-```
-
-### Cómo resolver proveedores keyed
-
-```csharp
-// .NET 8+ (minimal APIs / controllers)
-public class ReportsController : ControllerBase
-{
-    private readonly ISQLServerDatabaseProvider _reportingProvider;
-
-    public ReportsController([FromKeyedServices("Reporting")] ISQLServerDatabaseProvider reportingProvider)
-    {
-        _reportingProvider = reportingProvider;
-    }
-}
-
-// Alternativa genérica (cualquier versión con Microsoft.Extensions.DependencyInjection 8+)
-public class ReportService
-{
-    private readonly ISQLServerDatabaseProvider _reportingProvider;
-
-    public ReportService(IKeyedServiceProvider provider)
-    {
-        _reportingProvider = provider.GetRequiredKeyedService<ISQLServerDatabaseProvider>("Reporting");
-    }
-}
-```
-
-## Ejemplos de Uso
-
-### Consultas básicas
-
-```csharp
-// Inyección del proveedor
-private readonly ISQLServerDatabaseProvider _provider;
-
-public CustomerService(ISQLServerDatabaseProvider provider)
-{
-    _provider = provider;
-}
-
-// Ejecutar consulta y obtener DataTable
-public async Task<DataTable> GetActiveCustomersAsync()
-{
-    var query = "SELECT * FROM CUSTOMERS WHERE ACTIVE = @active";
+    var query = "SELECT * FROM Customers WHERE Email = @Email";
     
-    return await _provider.ExecuteQueryAsTableAsync(query, parameters =>
+    try
     {
-        parameters.AddWithValue("@active", true);
-    });
-}
-
-// Ejecutar consulta y mapear a objetos fuertemente tipados
-public async Task<List<Customer>> GetCustomersAsync()
-{
-    var query = "SELECT CustomerId, Name, Email, CreatedDate FROM CUSTOMERS";
-    
-    return await _provider.ExecuteQueryAsListAsync(query, reader => new Customer
+        var customer = await _dbProvider.ExecuteQueryAsSingleAsync<Customer>(query, 
+            parameters: p => p.AddWithValue("@Email", email),
+            cancellationToken: cancellationToken);
+            
+        return customer;
+    }
+    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
     {
-        CustomerId = reader.GetInt32(0),
-        Name = reader.GetString(1),
-        Email = reader.IsDBNull(2) ? null : reader.GetString(2),
-        CreatedDate = reader.GetDateTime(3)
-    });
+        _logger.LogInformation("Customer query was cancelled");
+        throw;
+    }
 }
 ```
 
@@ -422,22 +440,47 @@ public async Task<bool> UpdateCustomerAsync(Customer customer)
 ### Operaciones con Transacciones
 
 ```csharp
-public async Task<bool> ProcessOrderAsync(Order order, List<OrderItem> items)
+public async Task<bool> ProcessOrderAsync(Order order, List<OrderItem> items, CancellationToken cancellationToken = default)
 {
-    try
+    using (var transaction = await _provider.BeginTransactionAsync(cancellationToken))
     {
-        _provider.BeginTransaction();
-        
-        // ... operaciones de base de datos ...
-        
-        _provider.CommitTransaction();
-        return true;
-    }
-    catch (Exception ex)
-    {
-        _provider.RollbackTransaction();
-        // Loggear el error
-        return false;
+        try
+        {
+            // Insertar orden
+            var orderId = await _provider.ExecuteScalarAsync<int>(
+                "INSERT INTO Orders (CustomerId, OrderDate, Total) OUTPUT INSERTED.Id VALUES (@CustomerId, @OrderDate, @Total);",
+                p =>
+                {
+                    p.AddWithValue("@CustomerId", order.CustomerId);
+                    p.AddWithValue("@OrderDate", DateTime.UtcNow);
+                    p.AddWithValue("@Total", order.Total);
+                },
+                cancellationToken);
+
+            // Insertar items
+            foreach (var item in items)
+            {
+                await _provider.ExecuteNonQueryAsync(
+                    "INSERT INTO OrderItems (OrderId, ProductId, Quantity, UnitPrice) VALUES (@OrderId, @ProductId, @Quantity, @UnitPrice)",
+                    p =>
+                    {
+                        p.AddWithValue("@OrderId", orderId);
+                        p.AddWithValue("@ProductId", item.ProductId);
+                        p.AddWithValue("@Quantity", item.Quantity);
+                        p.AddWithValue("@UnitPrice", item.UnitPrice);
+                    },
+                    cancellationToken);
+            }
+
+            await transaction.CommitAsync(cancellationToken);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            _logger.LogError(ex, "Error al procesar la orden");
+            return false;
+        }
     }
 }
 ```
@@ -445,32 +488,45 @@ public async Task<bool> ProcessOrderAsync(Order order, List<OrderItem> items)
 ### Inserción Masiva (Bulk Insert)
 
 ```csharp
-// Inserción masiva desde DataTable
-public async Task BulkInsertCustomersAsync(DataTable customersData)
+// Inserción masiva desde DataTable con cancelación
+public async Task BulkInsertCustomersAsync(DataTable customersData, CancellationToken cancellationToken = default)
 {
-    await _provider.ExecuteBulkInsertToTableAsync(customersData, "Customers");
+    try
+    {
+        await _provider.ExecuteBulkInsertToTableAsync(
+            customersData, 
+            "Customers",
+            cancellationToken);
+    }
+    catch (OperationCanceledException)
+    {
+        _logger.LogInformation("Inserción masiva cancelada");
+        throw;
+    }
 }
 
 // Inserción masiva con configuración avanzada
-public async Task BulkInsertWithAdvancedOptionsAsync(DataTable data)
+public async Task BulkInsertWithAdvancedOptionsAsync(DataTable data, CancellationToken cancellationToken = default)
 {
-    await _provider.ExecuteBulkInsertToTableAsync(data, "Customers", options =>
+    try
     {
-        options.BatchSize = 10000;
-        options.BulkCopyTimeout = 600;
-        options.SqlBulkCopyOptions = SqlBulkCopyOptions.TableLock;
-    });
-}
-```    await _sqlRepository.ExecuteBulkCopyAsync(customers, builder => builder
-        .ToTable("Customers")
-        .WithBatchSize(5000)
-        .WithTimeout(300)
-        .WithOptions(SqlBulkCopyOptions.TableLock | SqlBulkCopyOptions.CheckConstraints)
-        .MapColumn("CustomerId", "CustomerId")
-        .MapColumn("Name", "Name")
-        .MapColumn("Email", "Email")
-        .MapColumn("CreatedDate", "CreatedDate")
-    );
+        await _provider.ExecuteBulkInsertToTableAsync(
+            data, 
+            "Customers", 
+            options =>
+            {
+                options.BatchSize = 10000;
+                options.BulkCopyTimeout = 600; // 10 minutos
+                options.SqlBulkCopyOptions = SqlBulkCopyOptions.TableLock;
+                options.NotifyAfter = 1000; // Notificar cada 1000 filas
+            },
+            cancellationToken);
+    }
+    catch (OperationCanceledException)
+    {
+        _logger.LogInformation("Inserción masiva con opciones avanzadas cancelada");
+        throw;
+    }
 }
 ```
 

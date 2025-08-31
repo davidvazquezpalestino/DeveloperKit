@@ -1,63 +1,66 @@
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
 /// <summary>
-/// Extension methods for building SQL queries in a fluent manner.
+/// Métodos de extensión para construir consultas SQL de manera fluida.
 /// </summary>
-public static class SqlQueryBuilderExtensions
+public static partial class SqlQueryBuilderExtensions
 {
     /// <summary>
-    /// Starts a new query for the specified entity type.
+    /// Inicia una nueva consulta para el tipo de entidad especificado.
     /// </summary>
-    /// <typeparam name="T">The entity type to query</typeparam>
-    /// <param name="dbProvider">The database provider instance</param>
-    /// <returns>A new query builder instance</returns>
+    /// <typeparam name="T">El tipo de entidad a consultar</typeparam>
+    /// <param name="dbProvider">La instancia del proveedor de base de datos</param>
+    /// <returns>Una nueva instancia del constructor de consultas</returns>
     public static QueryState<T> From<T>(this ISQLServerProvider dbProvider) where T : class, new()
     {
         return new QueryState<T>(dbProvider);
     }
 
     /// <summary>
-    /// Starts a new query for the specified table with custom schema.
+    /// Inicia una nueva consulta para la tabla especificada con un esquema personalizado.
     /// </summary>
-    /// <typeparam name="T">The entity type to query</typeparam>
-    /// <param name="dbProvider">The database provider instance</param>
-    /// <param name="schema">The database schema name (e.g., "dbo")</param>
-    /// <param name="tableName">The table name (optional, uses class name if not provided)</param>
-    /// <returns>A new query builder instance</returns>
+    /// <typeparam name="T">El tipo de entidad a consultar</typeparam>
+    /// <param name="dbProvider">La instancia del proveedor de base de datos</param>
+    /// <param name="schema">El nombre del esquema de la base de datos (ej. "dbo")</param>
+    /// <param name="tableName">El nombre de la tabla (opcional, usa el nombre de la clase si no se proporciona)</param>
+    /// <returns>Una nueva instancia del constructor de consultas</returns>
     public static QueryState<T> From<T>(this ISQLServerProvider dbProvider, string schema, string tableName = null) where T : class, new()
     {
         return new QueryState<T>(dbProvider, schema, tableName);
     }
 
     /// <summary>
-    /// Executes the query and returns the results as a list.
+    /// Ejecuta la consulta y devuelve los resultados como una lista.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <returns>A list of entities matching the query</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <returns>Una lista de entidades que coinciden con la consulta</returns>
     public static List<T> ToList<T>(this QueryState<T> queryState) where T : class, new()
     {
         QueryResult queryResult = BuildQuery(queryState);
-        return (List<T>)queryState.Db.ExecuteQueryAsList(queryResult.Sql,
+        ICollection<T> result = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
             reader => reader.GetItem<T>(),
             collection => collection.AddSqlParameters(queryResult.Parameters));
+        return result.ToList();
     }
 
     /// <summary>
-    /// Specifies which properties to include in the query results.
+    /// Especifica qué propiedades incluir en los resultados de la consulta.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <typeparam name="TResult">The type of the result</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="selector">A lambda expression that specifies which properties to include</param>
-    /// <returns>The query state with the select expression applied</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <typeparam name="TResult">El tipo del resultado</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="selector">Una expresión lambda que especifica qué propiedades incluir</param>
+    /// <returns>El estado de la consulta con la expresión de selección aplicada</returns>
     public static QueryState<T> Select<T, TResult>(this QueryState<T> queryState, Expression<Func<T, TResult>> selector) where T : class, new()
     {
         if (selector == null)
+        {
             throw new ArgumentNullException(nameof(selector));
+        }
 
         // Create a new state to maintain immutability
-        QueryState<T> newState = new QueryState<T>(queryState.Db, queryState.Schema, queryState.TableName)
+        QueryState<T> newState = new QueryState<T>(queryState.DbProvider, queryState.Schema, queryState.TableName)
         {
             TakeField = queryState.TakeField,
             SkipField = queryState.SkipField
@@ -84,8 +87,8 @@ public static class SqlQueryBuilderExtensions
             else
             {
                 // For other expressions, try to evaluate them
-                var compiled = selector.Compile();
-                var result = compiled(default);
+                Func<T, TResult> compiled = selector.Compile();
+                TResult result = compiled(default);
                 newState.SelectExpression = _ => result;
             }
         }
@@ -101,67 +104,198 @@ public static class SqlQueryBuilderExtensions
         return newState;
     }
 
-    /// <summary>
-    /// Executes the query asynchronously and returns the results as a list.
-    /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation</param>
-    /// <returns>A task that represents the asynchronous operation, containing the list of entities</returns>
-    public static async Task<List<T>> ToListAsync<T>(this QueryState<T> queryState, CancellationToken cancellationToken = default) where T : class, new()
-    {
-        QueryResult queryResult = BuildQuery(queryState);
-
-        return (List<T>)await queryState.Db.ExecuteQueryAsListAsync(queryResult.Sql,
-            reader => reader.GetItem<T>(),
-            collection => collection.AddSqlParameters(queryResult.Parameters),
-            cancellationToken);
-    }
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
 
     /// <summary>
-    /// Executes the query and returns the first result, or null if no results are found.
+    /// Ejecuta la consulta y devuelve el primer resultado, o null si no se encuentran resultados.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <returns>The first entity that matches the query, or null</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <returns>La primera entidad que coincide con la consulta, o null</returns>
     public static T FirstOrDefault<T>(this QueryState<T> queryState) where T : class, new()
     {
+        // Limitar a un solo resultado
+        queryState.TakeField = 1;
+
+        // Construir la consulta
+        QueryResult queryResult = BuildQuery(queryState);
+
+        // Registrar la consulta que se va a ejecutar
+        QueryLogger.LogQuery(
+            queryResult.SQL,
+            queryResult.Parameters,
+            IQueryLogger.LogLevel.Debug,
+            $"Ejecutando consulta FirstOrDefault para {typeof(T).Name}");
+
+        // Ejecutar la consulta
+        ICollection<T> results = queryState.DbProvider.ExecuteQueryAsList(
+            queryResult.SQL,
+            reader => reader.GetItem<T>(),
+            collection => collection.AddSqlParameters(queryResult.Parameters));
+
+        // Obtener el primer resultado (o null)
+        T result = results.FirstOrDefault();
+
+        // Registrar el resultado
+        QueryLogger.LogQuery(
+            queryResult.SQL,
+            queryResult.Parameters,
+            IQueryLogger.LogLevel.Debug,
+            $"Consulta FirstOrDefault completada. Se encontró {(result != null ? "1 registro" : "ningún registro")} de {typeof(T).Name}");
+
+        return result;
+    }
+
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
+
+    /// <summary>
+    /// Devuelve el primer elemento de la secuencia que satisface una condición o lanza una excepción si no se encuentra ningún elemento.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <returns>El primer elemento que coincide con la consulta</returns>
+    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos</exception>
+    public static T First<T>(this QueryState<T> queryState) where T : class, new()
+    {
         queryState.TakeField = 1;
         QueryResult queryResult = BuildQuery(queryState);
 
-        ICollection<T> results = queryState.Db.ExecuteQueryAsList(queryResult.Sql,
+        ICollection<T> results = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
             reader => reader.GetItem<T>(),
             collection => collection.AddSqlParameters(queryResult.Parameters));
-        return results.FirstOrDefault();
+
+        return results.First();
     }
 
     /// <summary>
-    /// Executes the query asynchronously and returns the first result, or null if no results are found.
+    /// Devuelve el primer elemento de la secuencia que satisface una condición o lanza una excepción si no se encuentra ningún elemento.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation</param>
-    /// <returns>A task that represents the asynchronous operation, containing the first entity or null</returns>
-    public static async Task<T> FirstOrDefaultAsync<T>(this QueryState<T> queryState, CancellationToken cancellationToken = default) where T : class, new()
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición</param>
+    /// <returns>El primer elemento que coincide con la condición</returns>
+    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos que cumplan la condición</exception>
+    public static T First<T>(this QueryState<T> queryState, Expression<Func<T, bool>> predicate) where T : class, new()
     {
-        queryState.TakeField = 1;
-        (string sql, Dictionary<string, object> parameters) = BuildQuery(queryState);
+        return queryState.Where(predicate).First();
+    }
 
-        ICollection<T> results = await queryState.Db.ExecuteQueryAsListAsync<T>(sql,
-            reader => reader.GetItem<T>(),
-            collection => collection.AddSqlParameters(parameters),
-            cancellationToken);
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
 
-        return results.FirstOrDefault();
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
+
+    /// <summary>
+    /// Devuelve el número total de elementos en la secuencia.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <returns>El número total de elementos en la secuencia</returns>
+    public static int Count<T>(this QueryState<T> queryState) where T : class, new()
+    {
+        // Guardar el estado original para no afectar a la consulta original
+        int? originalTake = queryState.TakeField;
+        int? originalSkip = queryState.SkipField;
+        Expression<Func<T, object>> originalSelect = queryState.SelectExpression;
+
+        try
+        {
+            // Modificar la consulta para contar
+            queryState.TakeField = null;
+            queryState.SkipField = 0;
+            queryState.SelectExpression = null;
+
+            QueryResult queryResult = BuildQuery(queryState);
+            string countQuery = $"SELECT COUNT(*) FROM ({queryResult.SQL}) AS CountQuery";
+
+            return queryState.DbProvider.ExecuteScalar<int>(countQuery,
+                collection => collection.AddSqlParameters(queryResult.Parameters));
+        }
+        finally
+        {
+            // Restaurar el estado original
+            queryState.TakeField = originalTake;
+            queryState.SkipField = originalSkip;
+            queryState.SelectExpression = originalSelect;
+        }
     }
 
     /// <summary>
-    /// Filters the query results based on a predicate.
+    /// Devuelve el número de elementos de la secuencia que satisfacen una condición.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="predicate">A function to test each element for a condition</param>
-    /// <returns>The query state with the filter applied</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición</param>
+    /// <returns>El número de elementos de la secuencia que satisfacen la condición</returns>
+    public static int Count<T>(this QueryState<T> queryState, Expression<Func<T, bool>> predicate) where T : class, new()
+    {
+        return queryState.Where(predicate).Count();
+    }
+
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
+
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
+
+    /// <summary>
+    /// Determina si una secuencia contiene elementos.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <returns>true si la secuencia contiene elementos; de lo contrario, false</returns>
+    public static bool Any<T>(this QueryState<T> queryState) where T : class, new()
+    {
+        // Optimización: Usamos TOP 1 en lugar de COUNT para mayor eficiencia
+        int? originalTake = queryState.TakeField;
+        try
+        {
+            queryState.TakeField = 1;
+            QueryResult queryResult = BuildQuery(queryState);
+            string existsQuery = $"SELECT CASE WHEN EXISTS ({queryResult.SQL}) THEN 1 ELSE 0 END";
+
+            return queryState.DbProvider.ExecuteScalar<int>(existsQuery,
+                collection => collection.AddSqlParameters(queryResult.Parameters)) == 1;
+        }
+        finally
+        {
+            queryState.TakeField = originalTake;
+        }
+    }
+
+    /// <summary>
+    /// Determina si algún elemento de una secuencia satisface una condición.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición</param>
+    /// <returns>true si algún elemento de la secuencia supera la prueba en el predicado especificado; de lo contrario, false</returns>
+    public static bool Any<T>(this QueryState<T> queryState, Expression<Func<T, bool>> predicate) where T : class, new()
+    {
+        return queryState.Where(predicate).Any();
+    }
+
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
+
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
+
+    /// <summary>
+    /// Ejecuta la consulta y devuelve los resultados como un arreglo.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <returns>Un arreglo de entidades que coinciden con la consulta</returns>
+    public static T[] ToArray<T>(this QueryState<T> queryState) where T : class, new()
+    {
+        return queryState.ToList().ToArray();
+    }
+
+    // Los métodos asíncronos han sido movidos a SqlQueryBuilderExtensions.Async.cs
+
+    /// <summary>
+    /// Filtra los resultados de la consulta según un predicado.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="predicate">Una función para probar cada elemento para una condición</param>
+    /// <returns>El estado de la consulta con el filtro aplicado</returns>
     public static QueryState<T> Where<T>(this QueryState<T> queryState, Expression<Func<T, bool>> predicate) where T : class, new()
     {
         queryState.WhereExpressions.Add(predicate);
@@ -169,13 +303,13 @@ public static class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Sorts the elements of the query in ascending order according to a key.
+    /// Ordena los elementos de la consulta en orden ascendente según una clave.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <typeparam name="TKey">The type of the key returned by the function represented by keySelector</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="keySelector">A function to extract a key from an element</param>
-    /// <returns>The query state with the ordering applied</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="keySelector">Una función para extraer una clave de un elemento</param>
+    /// <returns>El estado de la consulta con el ordenamiento aplicado</returns>
     public static QueryState<T> OrderBy<T, TKey>(this QueryState<T> queryState, Expression<Func<T, TKey>> keySelector) where T : class, new()
     {
         queryState.OrderByField.Add((GetMemberName(keySelector.Body), true));
@@ -183,13 +317,13 @@ public static class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Sorts the elements of the query in descending order according to a key.
+    /// Ordena los elementos de la consulta en orden descendente según una clave.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <typeparam name="TKey">The type of the key returned by the function represented by keySelector</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="keySelector">A function to extract a key from an element</param>
-    /// <returns>The query state with the ordering applied</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="keySelector">Una función para extraer una clave de un elemento</param>
+    /// <returns>El estado de la consulta con el ordenamiento aplicado</returns>
     public static QueryState<T> OrderByDescending<T, TKey>(this QueryState<T> queryState, Expression<Func<T, TKey>> keySelector) where T : class, new()
     {
         queryState.OrderByField.Add((GetMemberName(keySelector.Body), false));
@@ -197,13 +331,13 @@ public static class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Performs a subsequent ordering of the elements in a sequence in descending order.
+    /// Realiza una ordenación posterior de los elementos en una secuencia en orden descendente.
     /// </summary>
-    /// <typeparam name="T">The type of the elements</typeparam>
-    /// <typeparam name="TKey">The type of the key returned by the function represented by keySelector</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="keySelector">A function to extract a key from an element</param>
-    /// <returns>The query state with the subsequent ordering applied</returns>
+    /// <typeparam name="T">El tipo de los elementos</typeparam>
+    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="keySelector">Una función para extraer una clave de un elemento</param>
+    /// <returns>El estado de la consulta con la ordenación posterior aplicada</returns>
     public static QueryState<T> ThenByDescending<T, TKey>(this QueryState<T> queryState, Expression<Func<T, TKey>> keySelector) where T : class, new()
     {
         if (queryState.OrderByField.Count == 0)
@@ -216,12 +350,12 @@ public static class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Bypasses a specified number of elements in the query results and then returns the remaining elements.
+    /// Omite un número especificado de elementos en los resultados de la consulta y luego devuelve los elementos restantes.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="count">The number of elements to skip</param>
-    /// <returns>The query state with the skip applied</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="count">El número de elementos a omitir</param>
+    /// <returns>El estado de la consulta con la omisión aplicada</returns>
     public static QueryState<T> Skip<T>(this QueryState<T> queryState, int count) where T : class, new()
     {
         queryState.SkipField = count;
@@ -229,12 +363,12 @@ public static class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Returns a specified number of contiguous elements from the start of the query results.
+    /// Devuelve un número específico de elementos contiguos desde el inicio de los resultados de la consulta.
     /// </summary>
-    /// <typeparam name="T">The entity type being queried</typeparam>
-    /// <param name="queryState">The query state</param>
-    /// <param name="count">The number of elements to return</param>
-    /// <returns>The query state with the take applied</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="queryState">El estado de la consulta</param>
+    /// <param name="count">El número de elementos a devolver</param>
+    /// <returns>El estado de la consulta con la limitación aplicada</returns>
     public static QueryState<T> Take<T>(this QueryState<T> queryState, int count) where T : class, new()
     {
         queryState.TakeField = count;
@@ -425,7 +559,7 @@ public static class SqlQueryBuilderExtensions
         }
     }
 
-    private static QueryResult BuildQuery<T>(QueryState<T> queryState) where T : class, new()
+    internal static QueryResult BuildQuery<T>(QueryState<T> queryState) where T : class, new()
     {
         QueryResult result = new QueryResult();
         string tableName = GetTableName(queryState);
@@ -541,8 +675,8 @@ public static class SqlQueryBuilderExtensions
                     else if (newExpression.Arguments.Count > 0)
                     {
                         // For other cases, try to extract member access from arguments
-                        var properties = new List<string>();
-                        foreach (var arg in newExpression.Arguments)
+                        List<string> properties = new List<string>();
+                        foreach (Expression arg in newExpression.Arguments)
                         {
                             Expression expr = arg;
 
@@ -605,8 +739,8 @@ public static class SqlQueryBuilderExtensions
                     // Try to evaluate the expression
                     try
                     {
-                        var compiled = Expression.Lambda(body).Compile();
-                        var result2 = compiled.DynamicInvoke();
+                        Delegate compiled = Expression.Lambda(body).Compile();
+                        object result2 = compiled.DynamicInvoke();
                         selectClause = result2?.ToString() ?? "NULL";
                     }
                     catch (Exception ex)
@@ -631,25 +765,29 @@ public static class SqlQueryBuilderExtensions
         }
 
         // Build the final query
-        result.Sql = $"SELECT {selectClause} FROM {tableName}";
+        result.SQL = $"SELECT {selectClause} FROM {tableName}";
 
         if (!string.IsNullOrEmpty(whereClause))
         {
-            result.Sql += whereClause;
+            result.SQL += whereClause;
         }
 
         if (!string.IsNullOrEmpty(orderByClause))
         {
-            result.Sql += $" {orderByClause}";
+            result.SQL += $" {orderByClause}";
         }
 
         // Add pagination if needed
         if (queryState.TakeField.HasValue && queryState.TakeField > 0)
         {
             if (queryState.SkipField > 0)
-                result.Sql += $" OFFSET {queryState.SkipField} ROWS FETCH NEXT {queryState.TakeField} ROWS ONLY";
+            {
+                result.SQL += $" OFFSET {queryState.SkipField} ROWS FETCH NEXT {queryState.TakeField} ROWS ONLY";
+            }
             else
-                result.Sql += $" TOP {queryState.TakeField}";
+            {
+                result.SQL += $" TOP {queryState.TakeField}";
+            }
         }
 
         return result;

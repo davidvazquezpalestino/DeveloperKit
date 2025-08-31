@@ -6,7 +6,7 @@ public partial class SQLServerProvider : ISQLServerProvider
 {
     private readonly SqlConnection Connection;
     private SqlTransaction Transaccion;
-    private readonly SqlOptions Options;
+    private readonly SqlOptions SqlOptions;
 
     /// <summary>Estado actual de la conexión.</summary>
     public ConnectionState ConnectionState => Connection.State;
@@ -23,18 +23,52 @@ public partial class SQLServerProvider : ISQLServerProvider
         Transaccion = Connection.BeginTransaction();
     }
     /// <summary>Confirma la transacción y cierra la conexión.</summary>
+    /// <exception cref="InvalidOperationException">Se lanza cuando no hay una transacción activa.</exception>
     public void CommitTransaction()
     {
-        Transaccion.Commit();
-        Connection.Close();
-        Transaccion = null;
+        if (Transaccion == null)
+        {
+            throw new InvalidOperationException("No hay una transacción activa para confirmar.");
+        }
+
+        try
+        {
+            Transaccion.Commit();
+        }
+        finally
+        {
+            Transaccion.Dispose();
+            Transaccion = null;
+
+            if (Connection.State != ConnectionState.Closed)
+            {
+                Connection.Close();
+            }
+        }
     }
     /// <summary>Revierte la transacción y cierra la conexión.</summary>
+    /// <exception cref="InvalidOperationException">Se lanza cuando no hay una transacción activa.</exception>
     public void RollbackTransaction()
     {
-        Transaccion.Rollback();
-        Transaccion = null;
-        Connection.Close();
+        if (Transaccion == null)
+        {
+            throw new InvalidOperationException("No hay una transacción activa para revertir.");
+        }
+
+        try
+        {
+            Transaccion.Rollback();
+        }
+        finally
+        {
+            Transaccion.Dispose();
+            Transaccion = null;
+
+            if (Connection.State != ConnectionState.Closed)
+            {
+                Connection.Close();
+            }
+        }
     }
 
     /// <summary>Ejecuta una consulta y devuelve el resultado en un <see cref="DataTable"/>.</summary>
@@ -45,7 +79,7 @@ public partial class SQLServerProvider : ISQLServerProvider
             command.CommandType = CommandType.Text;
             command.CommandText = query;
             parametros?.Invoke(command.Parameters);
-            command.CommandTimeout = Options.CommandTimeout;
+            command.CommandTimeout = SqlOptions.CommandTimeout;
 
             if (Connection.State == ConnectionState.Closed)
             {
@@ -68,7 +102,7 @@ public partial class SQLServerProvider : ISQLServerProvider
         {
             command.CommandType = CommandType.StoredProcedure;
             command.CommandText = procedimientoAlmacenado;
-            command.CommandTimeout = Options.CommandTimeout;
+            command.CommandTimeout = SqlOptions.CommandTimeout;
             parametros?.Invoke(command.Parameters);
 
             if (Connection.State == ConnectionState.Closed)
@@ -91,7 +125,7 @@ public partial class SQLServerProvider : ISQLServerProvider
             command.CommandType = CommandType.StoredProcedure;
             command.CommandText = procedimientoAlmacenado;
             parametros?.Invoke(command.Parameters);
-            command.CommandTimeout = Options.CommandTimeout;
+            command.CommandTimeout = SqlOptions.CommandTimeout;
             if (Connection.State == ConnectionState.Closed)
             {
                 Connection.Open();
@@ -121,7 +155,7 @@ public partial class SQLServerProvider : ISQLServerProvider
         DbCommand command = Connection.CreateCommand();
         command.CommandText = query;
         command.CommandType = CommandType.Text;
-        command.CommandTimeout = Options.CommandTimeout;
+        command.CommandTimeout = SqlOptions.CommandTimeout;
         parametros?.Invoke(command.Parameters);
 
         if (Connection.State == ConnectionState.Closed)
@@ -144,7 +178,7 @@ public partial class SQLServerProvider : ISQLServerProvider
             command.CommandType = CommandType.Text;
             command.CommandText = query;
             parametros?.Invoke(command.Parameters);
-            command.CommandTimeout = Options.CommandTimeout;
+            command.CommandTimeout = SqlOptions.CommandTimeout;
             if (Connection.State == ConnectionState.Closed)
             {
                 Connection.Open();
@@ -169,18 +203,26 @@ public partial class SQLServerProvider : ISQLServerProvider
     }
 
     /// <summary>Ejecuta un procedimiento almacenado y mapea el primer registro a la entidad indicada.</summary>
-    public T ExecuteProcedureAsSingle<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null) =>
-        ExecuteProcedureAsList(procedimientoAlmacenado, expression, parametros).FirstOrDefault();
+    public T ExecuteProcedureAsSingle<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)
+    {
+        return ExecuteProcedureAsList(procedimientoAlmacenado, expression, parametros).FirstOrDefault();
+    }
 
-    /// <summary>Ejecuta un procedimiento almacenado y devuelve una lista de entidades.</summary>
+    /// <summary>
+    /// Ejecuta un procedimiento almacenado y devuelve una lista de entidades.
+    /// </summary>
+    /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
+    /// <param name="procedimientoAlmacenado">Nombre del procedimiento almacenado</param>
+    /// <param name="expression">Función para mapear cada registro a una entidad</param>
+    /// <param name="parametros">Parámetros del procedimiento</param>
+    /// <returns>Lista de entidades mapeadas</returns>
     public ICollection<T> ExecuteProcedureAsList<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)
     {
         using (DbCommand command = Connection.CreateCommand())
         {
             command.CommandText = procedimientoAlmacenado;
             command.CommandType = CommandType.StoredProcedure;
-            command.CommandTimeout = Options.CommandTimeout;
-
+            command.CommandTimeout = SqlOptions.CommandTimeout;
             parametros?.Invoke(command.Parameters);
 
             if (Connection.State == ConnectionState.Closed)
@@ -188,16 +230,59 @@ public partial class SQLServerProvider : ISQLServerProvider
                 Connection.Open();
             }
 
-            using (IDataReader reader = command.ExecuteReader())
+            using (IDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection))
             {
-                ICollection<T> collection = new List<T>();
+                ICollection<T> results = new List<T>();
                 while (reader.Read())
                 {
-                    collection.Add(expression(reader));
+                    results.Add(expression(reader));
+                }
+                return results;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado.
+    /// </summary>
+    public T First<T>(string query, Action<IDataParameterCollection> parametros = null) where T : class, new()
+    {
+        using (DbCommand command = Connection.CreateCommand())
+        {
+            command.CommandText = query;
+            command.CommandType = CommandType.Text;
+            command.CommandTimeout = SqlOptions.CommandTimeout;
+            parametros?.Invoke(command.Parameters);
+
+            if (Connection.State == ConnectionState.Closed)
+            {
+                Connection.Open();
+            }
+
+            using (IDataReader reader = command.ExecuteReader(CommandBehavior.SingleRow | CommandBehavior.CloseConnection))
+            {
+                if (!reader.Read())
+                {
+                    throw new InvalidOperationException("La secuencia no contiene elementos");
                 }
 
-                return collection;
+                return reader.GetItem<T>();
             }
+        }
+    }
+
+    /// <summary>
+    /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado o un valor predeterminado si no se encuentra ningún elemento.
+    /// </summary>
+    public T FirstOrDefault<T>(string query, Action<IDataParameterCollection> parametros = null) where T : class, new()
+    {
+        try
+        {
+            return First<T>(query, parametros);
+        }
+        catch (InvalidOperationException) when (typeof(T).IsClass)
+        {
+            return null;
         }
     }
 
@@ -211,142 +296,36 @@ public partial class SQLServerProvider : ISQLServerProvider
             {
                 collection.Add(expression(reader));
             }
-
             return collection;
-        }
-    }
-
-    /// <summary>Inserta una entidad en la tabla especificada.</summary>
-    public void ExecuteInsert<T>(string tableName, T entity) where T : class, new()
-    {
-
-        PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.PropertyType.IsSimpleType())
-            .ToArray();
-
-        if (properties.Length == 0)
-        {
-            throw new ArgumentException("No hay propiedades válidas para insertar.", nameof(T));
-        }
-
-        string columns = string.Join(", ", properties.Select(p => p.Name));
-        string parameters = string.Join(", ", properties.Select(p => $"@{p.Name}"));
-        string command = $"INSERT INTO {tableName} ({columns}) VALUES ({parameters});";
-
-        ExecuteNonQuery(command, param => param.AddSqlParameters(entity));
-    }
-
-    /// <summary>Inserta una colección de entidades en la tabla especificada.</summary>
-    public void ExecuteInsert<T>(string tableName, ICollection<T> collection) where T : class, new()
-    {
-        if (!collection.Any())
-        {
-            throw new ArgumentException("La colección no puede estar vacía.", nameof(collection));
-        }
-
-        PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(p => p.CanRead && p.PropertyType.IsSimpleType())
-            .ToArray();
-
-        if (properties.Length == 0)
-        {
-            throw new ArgumentException("No hay propiedades válidas para insertar.", nameof(T));
-        }
-
-        string columns = string.Join(", ", properties.Select(p => p.Name));
-        string parameters = string.Join(", ", properties.Select(p => $"@{p.Name}"));
-        string command = $"INSERT INTO {tableName} ({columns}) VALUES ({parameters});";
-
-        foreach (T entity in collection)
-        {
-            ExecuteNonQuery(command, param => param.AddSqlParameters(entity));
         }
     }
 
     /// <summary>Ejecuta un comando que no devuelve resultados.</summary>
     public void ExecuteNonQuery(string command, Action<IDataParameterCollection> parametros = null)
     {
-        using (DbCommand sqlCommand = Connection.CreateCommand())
+        bool isConnectionOwner = false;
+        try
         {
-            sqlCommand.CommandTimeout = Options.CommandTimeout;
-            sqlCommand.Transaction = Transaccion;
-            sqlCommand.CommandText = command;
-            parametros?.Invoke(sqlCommand.Parameters);
-
             if (Connection.State == ConnectionState.Closed)
             {
                 Connection.Open();
+                isConnectionOwner = true;
             }
 
-            sqlCommand.ExecuteNonQuery();
+            using (DbCommand sqlCommand = Connection.CreateCommand())
+            {
+                sqlCommand.CommandTimeout = SqlOptions.CommandTimeout;
+                sqlCommand.Transaction = Transaccion;
+                sqlCommand.CommandText = command;
+                sqlCommand.CommandType = CommandType.Text;
+                parametros?.Invoke(sqlCommand.Parameters);
+
+                sqlCommand.ExecuteNonQuery();
+            }
         }
-    }
-
-
-    /// <summary>Copia masivamente datos de un DataTable a la tabla destino.</summary>
-    public void ExecuteBulkInsertToTable(DataTable source, string target)
-    {
-        DropTable(target);
-        CreateTable(source, target);
-        ExecuteBulkInsert(source, target);
-    }
-
-    /// <summary>Copia masivamente datos de un DataTable a la tabla destino.</summary>
-    public void ExecuteBulkInsert(DataTable source, string target)
-    {
-        using (SqlBulkCopy bulkCopy = new SqlBulkCopy(Connection, SqlBulkCopyOptions.Default, Transaccion))
+        finally
         {
-            int defaultBatchSize = source.Rows.Count;
-
-            bulkCopy.DestinationTableName = target;
-            bulkCopy.BatchSize = defaultBatchSize;
-            bulkCopy.NotifyAfter = defaultBatchSize;
-            bulkCopy.BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout;
-
-            if (Options.BulkCopy.BatchSize > 0)
-            {
-                bulkCopy.BatchSize = Options.BulkCopy.BatchSize;
-            }
-
-            if (Options.BulkCopy.NotifyAfter > 0)
-            {
-                bulkCopy.NotifyAfter = Options.BulkCopy.NotifyAfter;
-            }
-
-            foreach (DataColumn column in source.Columns)
-            {
-                bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
-            }
-
-            if (Connection.State == ConnectionState.Closed)
-            {
-                Connection.Open();
-            }
-
-            bulkCopy.WriteToServer(source);
-        }
-    }
-
-    /// <summary>Ejecuta un procedimiento almacenado sin esperar resultados.</summary>
-    public void ExecuteProcedureCommand(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null)
-    {
-        using (DbCommand command = Connection.CreateCommand())
-        {
-            command.Connection = Connection;
-            command.CommandTimeout = Options.CommandTimeout;
-            command.Transaction = Transaccion;
-            command.CommandType = CommandType.StoredProcedure;
-            command.CommandText = procedimientoAlmacenado;
-            parametros?.Invoke(command.Parameters);
-
-            if (Connection.State == ConnectionState.Closed)
-            {
-                Connection.Open();
-            }
-
-            command.ExecuteNonQuery();
-
-            if (Connection.State == ConnectionState.Open && Transaccion == null)
+            if (isConnectionOwner && Connection?.State == ConnectionState.Open)
             {
                 Connection.Close();
             }
@@ -360,7 +339,7 @@ public partial class SQLServerProvider : ISQLServerProvider
         {
             command.CommandText = "SELECT GETDATE()";
             command.CommandType = CommandType.Text;
-            command.CommandTimeout = Options.CommandTimeout;
+            command.CommandTimeout = SqlOptions.CommandTimeout;
 
             if (Connection.State == ConnectionState.Closed)
             {
@@ -386,7 +365,7 @@ public partial class SQLServerProvider : ISQLServerProvider
             command.CommandType = CommandType.Text;
             command.CommandText = query;
             parameter?.Invoke(command.Parameters);
-            command.CommandTimeout = Options.CommandTimeout;
+            command.CommandTimeout = SqlOptions.CommandTimeout;
 
             if (Connection.State == ConnectionState.Closed)
             {
@@ -402,45 +381,62 @@ public partial class SQLServerProvider : ISQLServerProvider
 
             if (result == null || result == DBNull.Value)
             {
-                return default(T);
+                return default;
             }
 
             return (T)Convert.ChangeType(result, typeof(T));
         }
     }
 
-    /// <summary>Inicializa una nueva instancia de <see cref="SQLServerProvider"/> usando el patrón Options.</summary>
+    /// <summary>Inicializa una nueva instancia de <see cref="SQLServerProvider"/> usando el patrón SqlOptions.</summary>
     public SQLServerProvider(IOptions<SqlOptions> options)
     {
-        Options = options.Value ?? throw new ArgumentNullException(nameof(options));
+        SqlOptions = options.Value;
 
-        if (string.IsNullOrWhiteSpace(Options.ConnectionString))
+        if (SqlOptions == null)
+        {
+            throw new ArgumentException("La configuración de SqlOptions no puede ser nula.");
+        }
+
+        if (string.IsNullOrWhiteSpace(SqlOptions.ConnectionString))
         {
             throw new ArgumentException("ConnectionString no puede estar vacío en las opciones.");
         }
 
-        SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(Options.ConnectionString);
+        SqlConnectionStringBuilder builder = new SqlConnectionStringBuilder(SqlOptions.ConnectionString);
 
         // Aplicar configuraciones de pooling
-        if (Options.ConnectionPooling != null)
+        if (SqlOptions.ConnectionPooling != null)
         {
-            builder.Pooling = Options.ConnectionPooling.Pooling;
-            builder.MinPoolSize = Options.ConnectionPooling.MinPoolSize;
-            builder.MaxPoolSize = Options.ConnectionPooling.MaxPoolSize;
+            builder.Pooling = SqlOptions.ConnectionPooling.Pooling;
+            builder.MinPoolSize = SqlOptions.ConnectionPooling.MinPoolSize;
+            builder.MaxPoolSize = SqlOptions.ConnectionPooling.MaxPoolSize;
         }
 
         // Aplicar timeouts
-        builder.ConnectTimeout = Options.ConnectionTimeout;
-        builder.CommandTimeout = Options.CommandTimeout;
-
-        // Aplicar nombre de aplicación si está configurado
-        if (Options.ConfigureApplication != null)
+        if (SqlOptions.ConnectionTimeout > 0)
         {
-            builder.ApplicationName = Options.ConfigureApplication.Invoke();
+            builder.ConnectTimeout = SqlOptions.ConnectionTimeout;
         }
 
-        ConnectionString = Options.ConnectionString;
-        Connection = new SqlConnection(Options.ConnectionString);
+        if (SqlOptions.CommandTimeout > 0)
+        {
+            builder.CommandTimeout = SqlOptions.CommandTimeout;
+        }
+
+        // Aplicar nombre de aplicación si está configurado
+        if (SqlOptions.ConfigureApplication != null)
+        {
+            string appName = SqlOptions.ConfigureApplication.Invoke();
+            if (!string.IsNullOrWhiteSpace(appName))
+            {
+                builder.ApplicationName = appName;
+            }
+        }
+
+        // Usar la cadena de conexión construida
+        ConnectionString = builder.ConnectionString;
+        Connection = new SqlConnection(ConnectionString);
     }
 
     #region Destructores
@@ -456,6 +452,8 @@ public partial class SQLServerProvider : ISQLServerProvider
     {
         if (disposing)
         {
+            // Liberar recursos administrados
+            Transaccion?.Dispose();
             Connection?.Dispose();
         }
     }

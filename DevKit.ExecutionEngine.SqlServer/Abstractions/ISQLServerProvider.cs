@@ -49,6 +49,24 @@ public partial interface ISQLServerProvider
     T ExecuteQueryAsSingle<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null);
 
     /// <summary>
+    /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado.
+    /// </summary>
+    /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
+    /// <param name="query">Consulta SQL a ejecutar</param>
+    /// <param name="parametros">Parámetros de la consulta</param>
+    /// <returns>Primer elemento que cumple con la condición</returns>
+    T First<T>(string query, Action<IDataParameterCollection> parametros = null) where T : class, new();
+
+    /// <summary>
+    /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado o un valor predeterminado si no se encuentra ningún elemento.
+    /// </summary>
+    /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
+    /// <param name="query">Consulta SQL a ejecutar</param>
+    /// <param name="parametros">Parámetros de la consulta</param>
+    /// <returns>Primer elemento que cumple con la condición o valor predeterminado</returns>
+    T FirstOrDefault<T>(string query, Action<IDataParameterCollection> parametros = null) where T : class, new();
+
+    /// <summary>
     /// Ejecuta un procedimiento almacenado y mapea el primer registro a la entidad indicada.
     /// </summary>
     T ExecuteProcedureAsSingle<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null);
@@ -86,19 +104,6 @@ public partial interface ISQLServerProvider
     /// </summary>
     void ExecuteNonQuery(string command, Action<IDataParameterCollection> parametros = null);
 
-    /// <summary>
-    /// Ejecuta un procedimiento almacenado sin esperar resultados.
-    /// </summary>
-    void ExecuteProcedureCommand(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null);
-
-    /// <summary>
-    /// Copia masivamente datos de un DataTable a la tabla destino.
-    /// </summary>
-    void ExecuteBulkInsertToTable(DataTable source, string target);
-    /// <summary>
-    /// Copia masivamente datos de un DataTable a la tabla destino.
-    /// </summary>
-    void ExecuteBulkInsert(DataTable source, string target);
     /// <summary>
     /// Inserta una entidad en la tabla especificada.
     /// </summary>

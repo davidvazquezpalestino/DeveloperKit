@@ -7,22 +7,49 @@ public partial class SQLServerProvider
     public async Task<DataTable> ExecuteQueryAsTableAsync(string query,
         Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
     {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
+        if (string.IsNullOrWhiteSpace(query))
         {
-            using (DbCommand command = connection.CreateCommand())
+            throw new ArgumentException("La consulta no puede estar vacía.", nameof(query));
+        }
+
+        bool isConnectionOwner = false;
+        SqlConnection connection = Connection;
+
+        try
+        {
+            if (connection.State != ConnectionState.Open)
+            {
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+                isConnectionOwner = true;
+            }
+
+            using (SqlCommand command = connection.CreateCommand())
             {
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions?.CommandTimeout ?? 30; // Valor por defecto de 30 segundos
+
+                if (Transaccion != null)
+                {
+                    command.Transaction = Transaccion;
+                }
+
                 parametros?.Invoke(command.Parameters);
 
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                using (IDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false))
+                using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.Default, cancellationToken)
+                           .ConfigureAwait(false))
                 {
                     DataTable table = new DataTable();
                     table.Load(reader);
                     return table;
                 }
+            }
+        }
+        finally
+        {
+            if (isConnectionOwner && connection?.State == ConnectionState.Open)
+            {
+                connection.Close();
             }
         }
     }
@@ -37,7 +64,7 @@ public partial class SQLServerProvider
             {
                 command.CommandText = procedimientoAlmacenado;
                 command.CommandType = CommandType.StoredProcedure;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
                 parametros?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -62,7 +89,7 @@ public partial class SQLServerProvider
             {
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
                 parametros?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -97,7 +124,7 @@ public partial class SQLServerProvider
             {
                 command.CommandText = procedimientoAlmacenado;
                 command.CommandType = CommandType.StoredProcedure;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
                 parametros?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -157,7 +184,7 @@ public partial class SQLServerProvider
             {
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandText = procedimientoAlmacenado;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
@@ -174,9 +201,8 @@ public partial class SQLServerProvider
         return new T();
     }
 
-    /// <summary>Ejecuta una consulta y mapea el primer registro a una entidad de forma asíncrona.</summary>
-    public async Task<T> ExecuteProcedureAsSingleAsync<T>(string procedimientoAlmacenado,
-        Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+    /// <summary>Ejecuta un procedimiento almacenado y mapea el primer registro a la entidad indicada de forma asíncrona.</summary>
+    public async Task<T> ExecuteProcedureAsSingleAsync<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
@@ -184,21 +210,63 @@ public partial class SQLServerProvider
             {
                 command.CommandText = procedimientoAlmacenado;
                 command.CommandType = CommandType.StoredProcedure;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
                 parametros?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                using (IDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow, cancellationToken).ConfigureAwait(false))
+
+                using (DbDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow, cancellationToken).ConfigureAwait(false))
                 {
-                    if (reader.Read())
+                    if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                     {
                         return expression(reader);
                     }
+
+                    return default;
                 }
             }
         }
+    }
 
-        return default;
+    /// <summary>
+    /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado de forma asíncrona.
+    /// </summary>
+    public async Task<T> FirstAsync<T>(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default) where T : class, new()
+    {
+        using (DbConnection connection = new SqlConnection(ConnectionString))
+        {
+            using (DbCommand command = connection.CreateCommand())
+            {
+                command.CommandText = query;
+                command.CommandType = CommandType.Text;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
+                parametros?.Invoke(command.Parameters);
+
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+                using (DbDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow, cancellationToken).ConfigureAwait(false))
+                {
+                    if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+                    {
+                        throw new InvalidOperationException("La secuencia no contiene elementos");
+                    }
+
+                    T item = new T();
+                    PropertyInfo[] properties = typeof(T).GetProperties();
+
+                    for (int i = 0; i < reader.FieldCount; i++)
+                    {
+                        PropertyInfo property = properties.FirstOrDefault(p => string.Equals(p.Name, reader.GetName(i), StringComparison.OrdinalIgnoreCase));
+                        if (property != null && !await reader.IsDBNullAsync(i, cancellationToken).ConfigureAwait(false))
+                        {
+                            property.SetValue(item, Convert.ChangeType(reader[i], property.PropertyType));
+                        }
+                    }
+
+                    return item;
+                }
+            }
+        }
     }
 
     /// <summary>Ejecuta una consulta y devuelve una lista de entidades de forma asíncrona.</summary>
@@ -211,7 +279,7 @@ public partial class SQLServerProvider
             {
                 command.CommandType = CommandType.Text;
                 command.CommandText = query;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
                 parametros?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -242,7 +310,7 @@ public partial class SQLServerProvider
             {
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandText = procedimientoAlmacenado;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
 
                 List<T> items = new List<T>();
 
@@ -269,7 +337,7 @@ public partial class SQLServerProvider
             {
                 command.CommandText = procedimientoAlmacenado;
                 command.CommandType = CommandType.StoredProcedure;
-                command.CommandTimeout = Options.CommandTimeout;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
 
                 parametros?.Invoke(command.Parameters);
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -294,267 +362,31 @@ public partial class SQLServerProvider
         Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
     {
         using (SqlConnection connection = new SqlConnection(ConnectionString))
+        using (SqlCommand command = connection.CreateCommand())
         {
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandType = CommandType.StoredProcedure;
-                command.CommandText = procedimientoAlmacenado;
-                command.Transaction = Transaccion;
-                command.CommandTimeout = Options.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
+            command.CommandType = CommandType.StoredProcedure;
+            command.CommandText = procedimientoAlmacenado;
+            command.Transaction = Transaccion;
+            command.CommandTimeout = SqlOptions.CommandTimeout;
+            parametros?.Invoke(command.Parameters);
 
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-            }
-        }
-    }
-
-    /// <summary>Realiza una copia masiva de un DataTable a la tabla destino de forma asíncrona.</summary>
-    public async Task ExecuteBulkInsertToTableAsync(DataTable source, string target, CancellationToken cancellationToken = default)
-    {
-        using (SqlConnection connection = new SqlConnection(ConnectionString))
-        {
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-            using (SqlTransaction transaction = connection.BeginTransaction())
-            {
-                using (SqlCommand command = connection.CreateCommand())
-                {
-                    command.CommandTimeout = Options.CommandTimeout;
-                    command.Transaction = transaction;
-                    command.CommandText = DropTableScriptSQL(target);
-                    await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-
-                    command.CommandText = CreateTableScriptSQL(source, target);
-                    await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-
-                    using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, transaction))
-                    {
-                        bulkCopy.DestinationTableName = target;
-                        int defaultBatchSize = source.Rows.Count;
-
-                        bulkCopy.BatchSize = defaultBatchSize;
-
-                        if (Options != null)
-                        {
-                            if (Options.BulkCopy.BatchSize > 0)
-                            {
-                                bulkCopy.BatchSize = Options.BulkCopy.BatchSize;
-
-                                bulkCopy.BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout;
-                            }
-                        }
-
-                        foreach (DataColumn column in source.Columns)
-                        {
-                            bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
-                        }
-
-                        await bulkCopy.WriteToServerAsync(source, cancellationToken).ConfigureAwait(false);
-                    }
-
-                    transaction.Commit();
-                }
-            }
+            return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
-    /// <summary>Realiza una copia masiva de un DataTable a la tabla destino de forma asíncrona.</summary>
-    public async Task ExecuteBulkInsertAsync(DataTable source, string target, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado o un valor predeterminado si no se encuentra ningún elemento de forma asíncrona.
+    /// </summary>
+    public async Task<T> FirstOrDefaultAsync<T>(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default) where T : class, new()
     {
-        using (SqlConnection connection = new SqlConnection(ConnectionString))
+        try
         {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, Transaccion))
-            {
-                bulkCopy.DestinationTableName = target;
-                int defaultBatchSize = source.Rows.Count;
-                bulkCopy.BatchSize = defaultBatchSize;
-                if (Options.BulkCopy.BatchSize > 0)
-                {
-                    bulkCopy.BatchSize = Options.BulkCopy.BatchSize;
-                }
-
-                bulkCopy.BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout;
-
-                foreach (DataColumn column in source.Columns)
-                {
-                    bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
-                }
-
-                await bulkCopy.WriteToServerAsync(source, cancellationToken).ConfigureAwait(false);
-            }
+            return await FirstAsync<T>(query, parametros, cancellationToken).ConfigureAwait(false);
         }
-    }
-    /// <summary>Copia masivamente datos con configuración avanzada.</summary>
-    public async Task ExecuteBulkInsertAsync(DataTable source, BulkOperationsConfiguration configuration, CancellationToken cancellationToken = default)
-    {
-        if (source == null)
+        catch (InvalidOperationException) when (typeof(T).IsClass)
         {
-            throw new ArgumentNullException(nameof(source));
-        }
-
-        if (configuration == null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
-        if (string.IsNullOrWhiteSpace(configuration.DestinationTableName))
-        {
-            throw new ArgumentException("DestinationTableName no puede estar vacío.");
-        }
-
-        using (SqlConnection connection = new SqlConnection(ConnectionString))
-        {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.Default, Transaccion))
-            {
-                bulkCopy.DestinationTableName = configuration.DestinationTableName;
-                bulkCopy.BatchSize = configuration.BatchSize;
-                bulkCopy.BulkCopyTimeout = configuration.BulkCopyTimeout;
-                bulkCopy.NotifyAfter = configuration.NotifyAfter;
-
-                // Configurar mapeos de columnas
-                if (configuration.ColumnMappings.Any())
-                {
-                    foreach (ColumnMapping mapping in configuration.ColumnMappings)
-                    {
-                        bulkCopy.ColumnMappings.Add(mapping.SourceColumn, mapping.DestinationColumn);
-                    }
-                }
-                else
-                {
-                    // Mapeo automático por nombre de columna
-                    foreach (DataColumn column in source.Columns)
-                    {
-                        bulkCopy.ColumnMappings.Add(column.ColumnName, column.ColumnName);
-                    }
-                }
-
-
-                await bulkCopy.WriteToServerAsync(source, cancellationToken).ConfigureAwait(false);
-            }
-        }
-    }
-
-    /// <summary>Copia masivamente datos desde un IDataReader con configuración avanzada.</summary>
-    public async Task ExecuteBulkInsertAsync(IDataReader source, BulkOperationsConfiguration configuration, CancellationToken cancellationToken = default)
-    {
-        if (source == null)
-        {
-            throw new ArgumentNullException(nameof(source));
-        }
-
-        if (configuration == null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
-        if (string.IsNullOrWhiteSpace(configuration.DestinationTableName))
-        {
-            throw new ArgumentException("DestinationTableName no puede estar vacío.");
-        }
-
-        if (Connection.State == ConnectionState.Closed)
-        {
-            await Connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        using (SqlBulkCopy bulkCopy = new SqlBulkCopy(Connection, SqlBulkCopyOptions.Default, Transaccion))
-        {
-            bulkCopy.DestinationTableName = configuration.DestinationTableName;
-            bulkCopy.BatchSize = configuration.BatchSize;
-            bulkCopy.BulkCopyTimeout = configuration.BulkCopyTimeout;
-            bulkCopy.NotifyAfter = configuration.NotifyAfter;
-
-            // Configurar mapeos de columnas
-            if (configuration.ColumnMappings.Any())
-            {
-                foreach (ColumnMapping mapping in configuration.ColumnMappings)
-                {
-                    bulkCopy.ColumnMappings.Add(mapping.SourceColumn, mapping.DestinationColumn);
-                }
-            }
-
-            await bulkCopy.WriteToServerAsync(source, cancellationToken).ConfigureAwait(false);
-        }
-    }
-
-    /// <summary>Copia masivamente una colección de entidades con configuración avanzada.</summary>
-    public async Task ExecuteBulkInsertAsync<T>(IEnumerable<T> entities, BulkOperationsConfiguration configuration, CancellationToken cancellationToken = default) where T : class
-    {
-        if (entities == null)
-        {
-            throw new ArgumentNullException(nameof(entities));
-        }
-
-        if (configuration == null)
-        {
-            throw new ArgumentNullException(nameof(configuration));
-        }
-
-        await ExecuteBulkInsertAsync(entities.ToDataTable(), configuration, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>Copia masivamente una colección de entidades con configuración fluida.</summary>
-    public async Task ExecuteBulkInsertAsync<T>(IEnumerable<T> entities, Action<BulkOperationsConfigurationBuilder> configure, CancellationToken cancellationToken = default) where T : class
-    {
-        if (entities == null)
-        {
-            throw new ArgumentNullException(nameof(entities));
-        }
-
-        if (configure == null)
-        {
-            throw new ArgumentNullException(nameof(configure));
-        }
-
-        BulkOperationsConfigurationBuilder builder = new BulkOperationsConfigurationBuilder();
-        configure(builder);
-        BulkOperationsConfiguration configuration = builder.Build();
-
-        await ExecuteBulkInsertAsync(entities, configuration, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>Inserta una colección de entidades en la tabla especificada con configuración de lote.</summary>
-    public async Task ExecuteInsertAsync<T>(string tableName, ICollection<T> entities, int batchSize = 1000, CancellationToken cancellationToken = default) where T : class, new()
-    {
-        if (string.IsNullOrWhiteSpace(tableName))
-        {
-            throw new ArgumentException("Table name cannot be empty", nameof(tableName));
-        }
-
-        if (entities == null)
-        {
-            throw new ArgumentNullException(nameof(entities));
-        }
-
-        List<T> entitiesList = entities.ToList();
-        if (!entitiesList.Any())
-        {
-            return;
-        }
-
-        // Procesar en lotes
-        for (int i = 0; i < entitiesList.Count; i += batchSize)
-        {
-            IEnumerable<T> batch = entitiesList.Skip(i).Take(batchSize);
-            DataTable dataTable = batch.ToDataTable();
-
-            BulkOperationsConfiguration configuration = new BulkOperationsConfiguration
-            {
-                DestinationTableName = tableName,
-                BatchSize = batchSize,
-                BulkCopyTimeout = 300
-            };
-            if (Options.BulkCopy.BulkCopyTimeout > 0)
-            {
-                configuration.BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout;
-            }
-
-            await ExecuteBulkInsertAsync(dataTable, configuration, cancellationToken).ConfigureAwait(false);
+            return null;
         }
     }
 
@@ -566,32 +398,29 @@ public partial class SQLServerProvider
     public async Task<T> ExecuteScalarAsync<T>(string query, Action<IDataParameterCollection> parameter = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
+        using (DbCommand command = connection.CreateCommand())
         {
-            using (DbCommand command = connection.CreateCommand())
+            command.CommandType = CommandType.Text;
+            command.CommandText = query;
+            parameter?.Invoke(command.Parameters);
+            command.CommandTimeout = SqlOptions.CommandTimeout;
+
+            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+            object result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+
+            if (result == null || result == DBNull.Value)
             {
-                command.CommandType = CommandType.Text;
-                command.CommandText = query;
-                parameter?.Invoke(command.Parameters);
-                command.CommandTimeout = Options.CommandTimeout;
-
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                object result = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-
-                if (result == null || result == DBNull.Value)
-                {
-                    return default(T);
-                }
-
-                return (T)Convert.ChangeType(result, typeof(T));
+                return default(T);
             }
+
+            return (T)Convert.ChangeType(result, typeof(T));
         }
     }
 
-
     /// <summary>Ejecuta una consulta que devuelve varios conjuntos de resultados y los devuelve como listas de diccionarios de forma asíncrona.</summary>
     public async Task<IList<IList<Dictionary<string, object>>>> ExecuteMultiResultQueryAsync(string query,
-    Action<IDataParameterCollection> parametros = null, Action<string> logger = null, CancellationToken cancellationToken = default)
+        Action<IDataParameterCollection> parametros = null, Action<string> logger = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -606,11 +435,9 @@ public partial class SQLServerProvider
             {
                 parametros?.Invoke(command.Parameters);
 
-                logger?.Invoke("Opening database connection...");
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                logger?.Invoke("Connection opened successfully.");
+                await connection.OpenAsync(cancellationToken)
+                    .ConfigureAwait(false);
 
-                logger?.Invoke("Executing reader for multi-query...");
                 using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false))
                 {
                     logger?.Invoke("DataReader obtained.");
@@ -648,32 +475,12 @@ public partial class SQLServerProvider
 
 
 
-    /// <summary>Inserta una entidad en la tabla especificada.</summary>
-    public async Task ExecuteInsertAsync<T>(string tableName, T entity, CancellationToken cancellationToken = default)
-    {
-        PropertyInfo[] properties = typeof(T)
-            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(propertyInfo => propertyInfo.CanRead && propertyInfo.PropertyType.IsSimpleType())
-            .ToArray();
-
-        if (properties.Length == 0)
-        {
-            throw new ArgumentException("No hay propiedades válidas para insertar.", nameof(T));
-        }
-
-        string columns = string.Join(", ", properties.Select(p => p.Name));
-        string parameters = string.Join(", ", properties.Select(p => $"@{p.Name}"));
-        string command = $"INSERT INTO {tableName} ({columns}) VALUES ({parameters});";
-
-        await ExecuteNonQueryAsync(command, param => param.AddSqlParameters(entity), cancellationToken).ConfigureAwait(false);
-    }
-
     /// <summary>Ejecuta un comando de forma asíncrona sin devolver resultados.</summary>
     public async Task<int> ExecuteNonQueryAsync(string command, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
     {
         using (SqlCommand sqlCommand = Connection.CreateCommand())
         {
-            sqlCommand.CommandTimeout = Options.CommandTimeout;
+            sqlCommand.CommandTimeout = SqlOptions.CommandTimeout;
             sqlCommand.Transaction = Transaccion;
             sqlCommand.CommandText = command;
             parametros?.Invoke(sqlCommand.Parameters);
