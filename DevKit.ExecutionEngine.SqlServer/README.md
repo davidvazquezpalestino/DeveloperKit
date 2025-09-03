@@ -911,33 +911,33 @@ Este proyecto está bajo licencia MIT. Consulta el archivo LICENSE para más det
 
 ### Consultas y ejecución
 
-- `DataTable GetTableFromQuery(string query, Action<IDataParameterCollection> parametros = null)`  
+- `DataTable GetTableFromQuery(string query, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta una consulta SQL y devuelve un `DataTable` con los resultados.
 
-- `DataTable GetTableFromStoredProcedure(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null)`  
+- `DataTable GetTableFromStoredProcedure(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta un procedimiento almacenado y devuelve un `DataTable`.
 
-- `T GetItemFromQuery<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)`  
+- `T GetItemFromQuery<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta una consulta y transforma la primera fila a un objeto del tipo `T`.
 
-- `T GetItemFromStoredProcedure<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)`  
+- `T GetItemFromStoredProcedure<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)`  
   Igual que el anterior, pero con procedimiento almacenado.
 
-- `ICollection<Dictionary<string, object>> GetDictionaryFromQuery(string query, Action<IDataParameterCollection> parametros = null)`  
+- `ICollection<Dictionary<string, object>> GetDictionaryFromQuery(string query, Action<IDataParameterCollection> dbParameters = null)`  
   Obtiene resultados de consulta como una colección de diccionarios con nombre/valor.
 
-- `ICollection<Dictionary<string, object>> GetDictionaryFromStoredProcedure(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null)`  
+- `ICollection<Dictionary<string, object>> GetDictionaryFromStoredProcedure(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)`  
   Igual que el anterior, pero para procedimientos almacenados.
 
-- `ICollection<T> GetItemsFromStoredProcedure<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)`  
+- `ICollection<T> GetItemsFromStoredProcedure<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)`  
   Obtiene una colección de objetos tipo `T` a partir de un procedimiento almacenado.
 
-- `ICollection<T> GetItemsFromQuery<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)`  
+- `ICollection<T> GetItemsFromQuery<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)`  
   Obtiene una colección de objetos tipo `T` a partir de una consulta SQL.
 
 ### Ejecución de comandos
 
-- `void ExecuteNonQuery(string command, Action<IDataParameterCollection> parametros = null)`  
+- `void ExecuteNonQuery(string command, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta comandos SQL que no retornan datos (INSERT, UPDATE, DELETE, etc.).
 
 - `void ExecuteInsert<T>(string tableName, T entity) where T : class, new()`  
@@ -946,7 +946,7 @@ Este proyecto está bajo licencia MIT. Consulta el archivo LICENSE para más det
 - `void ExecuteInsert<T>(string tableName, ICollection<T> collection) where T : class, new()`  
   Inserta una colección de objetos en la tabla especificada.
 
-- `void ExecuteStoredProcedureCommand(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null)`  
+- `void ExecuteStoredProcedureCommand(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta un procedimiento almacenado que no devuelve resultados.
 
 ### Operaciones Bulk Copy
@@ -975,42 +975,42 @@ La interfaz también define métodos asíncronos para mejorar el rendimiento y e
 
 ### Métodos asíncronos principales
 
-- `Task<T> GetItemFromQueryAsync<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)`  
+- `Task<T> GetItemFromQueryAsync<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta una consulta SQL asíncrona y transforma la primera fila en un objeto `T`.
 
-- `Task<T> GetItemFromStoredProcedureAsync<T>(string procedimientoAlmacenado) where T : new()`  
+- `Task<T> GetItemFromStoredProcedureAsync<T>(string storedProcedure) where T : new()`  
   Ejecuta un procedimiento almacenado de forma asíncrona y devuelve un objeto `T` por defecto.
 
-- `Task<T> GetItemFromStoredProcedureAsync<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)`  
+- `Task<T> GetItemFromStoredProcedureAsync<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta un procedimiento almacenado de forma asíncrona y mapea la primera fila a un objeto `T`.
 
-- `Task<DataTable> GetTableFromQueryAsync(string query, Action<IDataParameterCollection> parametros = null)`  
+- `Task<DataTable> GetTableFromQueryAsync(string query, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta una consulta asíncrona y devuelve un `DataTable` con los resultados.
 
-- `Task<DataTable> GetTableFromStoredProcedureAsync(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null)`  
+- `Task<DataTable> GetTableFromStoredProcedureAsync(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta un procedimiento almacenado de forma asíncrona y devuelve un `DataTable`.
 
-- `Task<ICollection<Dictionary<string, object>>> GetDictionaryFromQueryAsync(string query, Action<IDataParameterCollection> parametros = null)`  
+- `Task<ICollection<Dictionary<string, object>>> GetDictionaryFromQueryAsync(string query, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta una consulta asíncrona y devuelve una colección de diccionarios.
 
-- `Task<ICollection<Dictionary<string, object>>> GetDictionaryFromStoredProcedureAsync(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null)`  
+- `Task<ICollection<Dictionary<string, object>>> GetDictionaryFromStoredProcedureAsync(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)`  
   Igual que el anterior, pero para procedimientos almacenados.
 
-- `Task<ICollection<T>> GetItemsFromQueryAsync<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)`  
+- `Task<ICollection<T>> GetItemsFromQueryAsync<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)`  
   Obtiene una colección de objetos `T` de una consulta asíncrona.
 
 - `Task<ICollection<T>> GetItemsFromStoredProcedureAsync<T>(string storedProcedure) where T : new()`  
   Obtiene una colección de objetos `T` de un procedimiento almacenado asíncrono.
 
-- `Task<ICollection<T>> GetItemsFromStoredProcedureAsync<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)`  
+- `Task<ICollection<T>> GetItemsFromStoredProcedureAsync<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)`  
   Igual que el anterior, pero con mapeo personalizado.
 
 ### Comandos asíncronos
 
-- `Task<int> ExecuteStoredProcedureCommandAsync(string storedProcedure, Action<IDataParameterCollection> parametros = null)`  
+- `Task<int> ExecuteStoredProcedureCommandAsync(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta un procedimiento almacenado asíncrono que devuelve el número de filas afectadas.
 
-- `Task ExecuteNonQueryAsync(string command, Action<IDataParameterCollection> parametros = null)`  
+- `Task ExecuteNonQueryAsync(string command, Action<IDataParameterCollection> dbParameters = null)`  
   Ejecuta un comando SQL que no retorna datos de forma asíncrona.
 
 - `Task ExecuteBulkCopyToTableAsync(DataTable source, string destinationTable)`  

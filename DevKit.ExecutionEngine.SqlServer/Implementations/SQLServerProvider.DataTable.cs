@@ -3,13 +3,13 @@
 public partial class SQLServerProvider
 {
     /// <summary>Ejecuta una consulta y devuelve el resultado en un <see cref="DataTable"/>.</summary>
-    public DataTable ExecuteQueryAsTable(string query, Action<IDataParameterCollection> parametros = null)
+    public DataTable ExecuteQueryAsTable(string query, Action<IDataParameterCollection> dbParameters = null)
     {
         using (DbCommand command = Connection.CreateCommand())
         {
             command.CommandType = CommandType.Text;
             command.CommandText = query;
-            parametros?.Invoke(command.Parameters);
+            dbParameters?.Invoke(command.Parameters);
             command.CommandTimeout = SqlOptions.CommandTimeout;
 
             if (Connection.State == ConnectionState.Closed)
@@ -27,14 +27,14 @@ public partial class SQLServerProvider
     }
 
     /// <summary>Ejecuta un procedimiento almacenado y devuelve el resultado en un <see cref="DataTable"/>.</summary>
-    public DataTable ExecuteProcedureAsTable(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null)
+    public DataTable ExecuteProcedureAsTable(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)
     {
         using (DbCommand command = Connection.CreateCommand())
         {
             command.CommandType = CommandType.StoredProcedure;
-            command.CommandText = procedimientoAlmacenado;
+            command.CommandText = storedProcedure;
             command.CommandTimeout = SqlOptions.CommandTimeout;
-            parametros?.Invoke(command.Parameters);
+            dbParameters?.Invoke(command.Parameters);
 
             if (Connection.State == ConnectionState.Closed)
             {
@@ -50,7 +50,7 @@ public partial class SQLServerProvider
 
     /// <summary>Ejecuta una consulta SQL y devuelve un DataTable de forma asíncrona.</summary>
     public async Task<DataTable> ExecuteQueryAsTableAsync(string query,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+        Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
         {
@@ -79,7 +79,7 @@ public partial class SQLServerProvider
                     command.Transaction = Transaccion;
                 }
 
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.Default, cancellationToken)
                            .ConfigureAwait(false))
@@ -100,17 +100,17 @@ public partial class SQLServerProvider
     }
 
     /// <summary>Ejecuta un procedimiento almacenado y devuelve un DataTable de forma asíncrona.</summary>
-    public async Task<DataTable> ExecuteProcedureAsTableAsync(string procedimientoAlmacenado,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+    public async Task<DataTable> ExecuteProcedureAsTableAsync(string storedProcedure,
+        Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
             using (DbCommand command = connection.CreateCommand())
             {
-                command.CommandText = procedimientoAlmacenado;
+                command.CommandText = storedProcedure;
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 

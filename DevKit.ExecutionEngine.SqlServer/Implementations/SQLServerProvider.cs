@@ -16,27 +16,27 @@ public partial class SQLServerProvider : ISQLServerProvider
     public override string ToString() => Connection.ConnectionString;
 
     /// <summary>Ejecuta una consulta y mapea el primer registro a la entidad indicada.</summary>
-    public T ExecuteQueryAsSingle<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null) =>
-        ExecuteQueryAsList(query, expression, parametros).FirstOrDefault();
+    public T ExecuteQueryAsSingle<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null) =>
+        ExecuteQueryAsList(query, expression, dbParameters).FirstOrDefault();
 
 
     /// <summary>Ejecuta un procedimiento almacenado y mapea el primer registro a la entidad indicada.</summary>
-    public T ExecuteProcedureAsSingle<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)
+    public T ExecuteProcedureAsSingle<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)
     {
-        return ExecuteProcedureAsList(procedimientoAlmacenado, expression, parametros).FirstOrDefault();
+        return ExecuteProcedureAsList(storedProcedure, expression, dbParameters).FirstOrDefault();
     }
 
     /// <summary>
     /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado.
     /// </summary>
-    public T First<T>(string query, Action<IDataParameterCollection> parametros = null) where T : class, new()
+    public T First<T>(string query, Action<IDataParameterCollection> dbParameters = null) where T : class, new()
     {
         using (DbCommand command = Connection.CreateCommand())
         {
             command.CommandText = query;
             command.CommandType = CommandType.Text;
             command.CommandTimeout = SqlOptions.CommandTimeout;
-            parametros?.Invoke(command.Parameters);
+            dbParameters?.Invoke(command.Parameters);
 
             if (Connection.State == ConnectionState.Closed)
             {
@@ -58,11 +58,11 @@ public partial class SQLServerProvider : ISQLServerProvider
     /// <summary>
     /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado o un valor predeterminado si no se encuentra ningún elemento.
     /// </summary>
-    public T FirstOrDefault<T>(string query, Action<IDataParameterCollection> parametros = null) where T : class, new()
+    public T FirstOrDefault<T>(string query, Action<IDataParameterCollection> dbParameters = null) where T : class, new()
     {
         try
         {
-            return First<T>(query, parametros);
+            return First<T>(query, dbParameters);
         }
         catch (InvalidOperationException) when (typeof(T).IsClass)
         {

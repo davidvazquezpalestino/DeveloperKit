@@ -6,18 +6,18 @@ public partial class SQLServerProvider
     /// Ejecuta un procedimiento almacenado y devuelve una lista de entidades.
     /// </summary>
     /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
-    /// <param name="procedimientoAlmacenado">Nombre del procedimiento almacenado</param>
+    /// <param name="storedProcedure">Nombre del procedimiento almacenado</param>
     /// <param name="expression">Función para mapear cada registro a una entidad</param>
     /// <param name="parametros">Parámetros del procedimiento</param>
     /// <returns>Lista de entidades mapeadas</returns>
-    public ICollection<T> ExecuteProcedureAsList<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)
+    public ICollection<T> ExecuteProcedureAsList<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)
     {
         using (DbCommand command = Connection.CreateCommand())
         {
-            command.CommandText = procedimientoAlmacenado;
+            command.CommandText = storedProcedure;
             command.CommandType = CommandType.StoredProcedure;
             command.CommandTimeout = SqlOptions.CommandTimeout;
-            parametros?.Invoke(command.Parameters);
+            dbParameters?.Invoke(command.Parameters);
 
             if (Connection.State == ConnectionState.Closed)
             {
@@ -36,13 +36,13 @@ public partial class SQLServerProvider
         }
     }
     /// <summary>Ejecuta una consulta y devuelve una lista de entidades.</summary>
-    public ICollection<T> ExecuteQueryAsList<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null)
+    public ICollection<T> ExecuteQueryAsList<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)
     {
         DbCommand command = Connection.CreateCommand();
         command.CommandText = query;
         command.CommandType = CommandType.Text;
         command.CommandTimeout = SqlOptions.CommandTimeout;
-        parametros?.Invoke(command.Parameters);
+        dbParameters?.Invoke(command.Parameters);
 
         if (Connection.State == ConnectionState.Closed)
         {
@@ -60,13 +60,13 @@ public partial class SQLServerProvider
 
     }
     /// <summary>Ejecuta una consulta y devuelve los registros como colección de diccionarios.</summary>
-    public ICollection<Dictionary<string, object>> ExecuteQueryAsDictionary(string query, Action<IDataParameterCollection> parametros = null)
+    public ICollection<Dictionary<string, object>> ExecuteQueryAsDictionary(string query, Action<IDataParameterCollection> dbParameters = null)
     {
         using (DbCommand command = Connection.CreateCommand())
         {
             command.CommandType = CommandType.Text;
             command.CommandText = query;
-            parametros?.Invoke(command.Parameters);
+            dbParameters?.Invoke(command.Parameters);
             command.CommandTimeout = SqlOptions.CommandTimeout;
             if (Connection.State == ConnectionState.Closed)
             {
@@ -91,13 +91,13 @@ public partial class SQLServerProvider
         }
     }
     /// <summary>Ejecuta un procedimiento almacenado y devuelve los registros como colección de diccionarios.</summary>
-    public ICollection<Dictionary<string, object>> ExecuteProcedureAsDictionary(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null)
+    public ICollection<Dictionary<string, object>> ExecuteProcedureAsDictionary(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)
     {
         using (DbCommand command = Connection.CreateCommand())
         {
             command.CommandType = CommandType.StoredProcedure;
-            command.CommandText = procedimientoAlmacenado;
-            parametros?.Invoke(command.Parameters);
+            command.CommandText = storedProcedure;
+            dbParameters?.Invoke(command.Parameters);
             command.CommandTimeout = SqlOptions.CommandTimeout;
             if (Connection.State == ConnectionState.Closed)
             {
@@ -125,7 +125,7 @@ public partial class SQLServerProvider
 
     /// <summary>Ejecuta una consulta y devuelve una lista de entidades de forma asíncrona.</summary>
     public async Task<ICollection<T>> ExecuteQueryAsListAsync<T>(string query, Func<IDataReader, T> expression,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+        Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
@@ -134,7 +134,7 @@ public partial class SQLServerProvider
                 command.CommandType = CommandType.Text;
                 command.CommandText = query;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
@@ -154,7 +154,7 @@ public partial class SQLServerProvider
     }
 
     /// <summary>Ejecuta una consulta y devuelve una lista de entidades de forma asíncrona.</summary>
-    public async Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string procedimientoAlmacenado, CancellationToken cancellationToken = default) where T : new()
+    public async Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string storedProcedure, CancellationToken cancellationToken = default) where T : new()
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
@@ -163,7 +163,7 @@ public partial class SQLServerProvider
             using (DbCommand command = connection.CreateCommand())
             {
                 command.CommandType = CommandType.StoredProcedure;
-                command.CommandText = procedimientoAlmacenado;
+                command.CommandText = storedProcedure;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
 
                 List<T> items = new();
@@ -182,18 +182,18 @@ public partial class SQLServerProvider
     }
 
     /// <inheritdoc />>
-    public async Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string procedimientoAlmacenado,
-        Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+    public async Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string storedProcedure,
+        Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
             using (DbCommand command = connection.CreateCommand())
             {
-                command.CommandText = procedimientoAlmacenado;
+                command.CommandText = storedProcedure;
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
 
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
                 using (IDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
@@ -212,7 +212,7 @@ public partial class SQLServerProvider
     }
     /// <summary>Ejecuta una consulta y devuelve una colección de diccionarios de forma asíncrona.</summary>
     public async Task<ICollection<Dictionary<string, object>>> ExecuteQueryAsDictionaryAsync(string query,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+        Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
@@ -221,7 +221,7 @@ public partial class SQLServerProvider
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
@@ -248,16 +248,16 @@ public partial class SQLServerProvider
 
     /// <summary>Ejecuta un procedimiento almacenado y devuelve una colección de diccionarios de forma asíncrona.</summary>
     public async Task<ICollection<Dictionary<string, object>>> ExecuteProcedureAsDictionaryAsync(
-        string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+        string storedProcedure, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
             using (DbCommand command = connection.CreateCommand())
             {
-                command.CommandText = procedimientoAlmacenado;
+                command.CommandText = storedProcedure;
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
                 List<Dictionary<string, object>> result = new();

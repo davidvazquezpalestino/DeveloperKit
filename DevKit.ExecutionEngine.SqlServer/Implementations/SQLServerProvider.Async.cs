@@ -6,7 +6,7 @@ public partial class SQLServerProvider
 
     /// <summary>Ejecuta una consulta y mapea el primer registro a una entidad de forma asíncrona.</summary>
     public async Task<T> ExecuteQueryAsSingleAsync<T>(string query, Func<IDataReader, T> expression,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+        Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
@@ -14,7 +14,7 @@ public partial class SQLServerProvider
             {
                 command.Connection = connection;
                 command.CommandText = query;
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
@@ -32,14 +32,14 @@ public partial class SQLServerProvider
     }
 
     /// <summary>Ejecuta una consulta y mapea el primer registro a una entidad de forma asíncrona.</summary>
-    public async Task<T> ExecuteProcedureAsSingleAsync<T>(string procedimientoAlmacenado, CancellationToken cancellationToken = default) where T : new()
+    public async Task<T> ExecuteProcedureAsSingleAsync<T>(string storedProcedure, CancellationToken cancellationToken = default) where T : new()
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
             using (DbCommand command = connection.CreateCommand())
             {
                 command.CommandType = CommandType.StoredProcedure;
-                command.CommandText = procedimientoAlmacenado;
+                command.CommandText = storedProcedure;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -58,16 +58,16 @@ public partial class SQLServerProvider
     }
 
     /// <summary>Ejecuta un procedimiento almacenado y mapea el primer registro a la entidad indicada de forma asíncrona.</summary>
-    public async Task<T> ExecuteProcedureAsSingleAsync<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+    public async Task<T> ExecuteProcedureAsSingleAsync<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
             using (DbCommand command = connection.CreateCommand())
             {
-                command.CommandText = procedimientoAlmacenado;
+                command.CommandText = storedProcedure;
                 command.CommandType = CommandType.StoredProcedure;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
@@ -87,7 +87,7 @@ public partial class SQLServerProvider
     /// <summary>
     /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado de forma asíncrona.
     /// </summary>
-    public async Task<T> FirstAsync<T>(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default) where T : class, new()
+    public async Task<T> FirstAsync<T>(string query, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default) where T : class, new()
     {
         using (DbConnection connection = new SqlConnection(ConnectionString))
         {
@@ -96,7 +96,7 @@ public partial class SQLServerProvider
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
                 command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
@@ -128,17 +128,17 @@ public partial class SQLServerProvider
 
 
     /// <summary>Ejecuta un procedimiento almacenado que no devuelve resultados, de forma asíncrona.</summary>
-    public async Task<int> ExecuteProcedureCommandAsync(string procedimientoAlmacenado,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+    public async Task<int> ExecuteProcedureCommandAsync(string storedProcedure,
+        Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (SqlConnection connection = new(ConnectionString))
         using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandType = CommandType.StoredProcedure;
-            command.CommandText = procedimientoAlmacenado;
+            command.CommandText = storedProcedure;
             command.Transaction = Transaccion;
             command.CommandTimeout = SqlOptions.CommandTimeout;
-            parametros?.Invoke(command.Parameters);
+            dbParameters?.Invoke(command.Parameters);
 
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
@@ -148,11 +148,11 @@ public partial class SQLServerProvider
     /// <summary>
     /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado o un valor predeterminado si no se encuentra ningún elemento de forma asíncrona.
     /// </summary>
-    public async Task<T> FirstOrDefaultAsync<T>(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default) where T : class, new()
+    public async Task<T> FirstOrDefaultAsync<T>(string query, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default) where T : class, new()
     {
         try
         {
-            return await FirstAsync<T>(query, parametros, cancellationToken).ConfigureAwait(false);
+            return await FirstAsync<T>(query, dbParameters, cancellationToken).ConfigureAwait(false);
         }
         catch (InvalidOperationException) when (typeof(T).IsClass)
         {
@@ -192,14 +192,14 @@ public partial class SQLServerProvider
 
 
     /// <summary>Ejecuta un comando de forma asíncrona sin devolver resultados.</summary>
-    public async Task<int> ExecuteNonQueryAsync(string command, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
+    public async Task<int> ExecuteNonQueryAsync(string command, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
         using (SqlCommand sqlCommand = Connection.CreateCommand())
         {
             sqlCommand.CommandTimeout = SqlOptions.CommandTimeout;
             sqlCommand.Transaction = Transaccion;
             sqlCommand.CommandText = command;
-            parametros?.Invoke(sqlCommand.Parameters);
+            dbParameters?.Invoke(sqlCommand.Parameters);
 
             if (Connection.State == ConnectionState.Closed)
             {

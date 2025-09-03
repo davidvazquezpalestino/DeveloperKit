@@ -9,20 +9,20 @@ public partial interface ISQLServerProvider
     DataTable ExecuteQueryAsTable(string query, Action<IDataParameterCollection> parameter = null);
 
     /// <summary>Ejecuta un procedimiento almacenado y devuelve los resultados en un DataTable.</summary>
-    /// <param name="procedimientoAlmacenado">Nombre del procedimiento almacenado a ejecutar.</param>
+    /// <param name="storedProcedure">Nombre del procedimiento almacenado a ejecutar.</param>
     /// <param name="parameter">Acción para configurar los parámetros del procedimiento.</param>
     /// <returns>DataTable con los resultados del procedimiento.</returns>
-    DataTable ExecuteProcedureAsTable(string procedimientoAlmacenado, Action<IDataParameterCollection> parameter = null);
+    DataTable ExecuteProcedureAsTable(string storedProcedure, Action<IDataParameterCollection> parameter = null);
 
 
     /// <summary>
     /// Ejecuta una consulta de forma asíncrona y devuelve un DataTable.
     /// </summary>
-    Task<DataTable> ExecuteQueryAsTableAsync(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default);
+    Task<DataTable> ExecuteQueryAsTableAsync(string query, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Ejecuta un procedimiento almacenado de forma asíncrona y devuelve un DataTable.
     /// </summary>
-    Task<DataTable> ExecuteProcedureAsTableAsync(string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default);
+    Task<DataTable> ExecuteProcedureAsTableAsync(string storedProcedure, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);
 
 }

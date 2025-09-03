@@ -20,7 +20,7 @@ public partial interface ISQLServerProvider
     /// <summary>
     /// Ejecuta una consulta y mapea el primer registro a la entidad indicada.
     /// </summary>
-    T ExecuteQueryAsSingle<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null);
+    T ExecuteQueryAsSingle<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null);
 
     /// <summary>
     /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado.
@@ -29,7 +29,7 @@ public partial interface ISQLServerProvider
     /// <param name="query">Consulta SQL a ejecutar</param>
     /// <param name="parametros">Parámetros de la consulta</param>
     /// <returns>Primer elemento que cumple con la condición</returns>
-    T First<T>(string query, Action<IDataParameterCollection> parametros = null) where T : class, new();
+    T First<T>(string query, Action<IDataParameterCollection> dbParameters = null) where T : class, new();
 
     /// <summary>
     /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado o un valor predeterminado si no se encuentra ningún elemento.
@@ -38,12 +38,12 @@ public partial interface ISQLServerProvider
     /// <param name="query">Consulta SQL a ejecutar</param>
     /// <param name="parametros">Parámetros de la consulta</param>
     /// <returns>Primer elemento que cumple con la condición o valor predeterminado</returns>
-    T FirstOrDefault<T>(string query, Action<IDataParameterCollection> parametros = null) where T : class, new();
+    T FirstOrDefault<T>(string query, Action<IDataParameterCollection> dbParameters = null) where T : class, new();
 
     /// <summary>
     /// Ejecuta un procedimiento almacenado y mapea el primer registro a la entidad indicada.
     /// </summary>
-    T ExecuteProcedureAsSingle<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null);
+    T ExecuteProcedureAsSingle<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null);
 
     /// <summary>
     /// Ejecuta una consulta SQL y devuelve un valor escalar.

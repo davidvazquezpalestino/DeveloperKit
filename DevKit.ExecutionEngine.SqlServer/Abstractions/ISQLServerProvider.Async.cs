@@ -9,7 +9,7 @@ public partial interface ISQLServerProvider
     /// <summary>
     /// Ejecuta una consulta de forma asíncrona y retorna la entidad resultante.
     /// </summary>
-    Task<T> ExecuteQueryAsSingleAsync<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default);
+    Task<T> ExecuteQueryAsSingleAsync<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado de forma asíncrona.
@@ -19,7 +19,7 @@ public partial interface ISQLServerProvider
     /// <param name="parametros">Parámetros de la consulta</param>
     /// <param name="cancellationToken">Token de cancelación</param>
     /// <returns>Primer elemento que cumple con la condición</returns>
-    Task<T> FirstAsync<T>(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default) where T : class, new();
+    Task<T> FirstAsync<T>(string query, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default) where T : class, new();
 
     /// <summary>
     /// Ejecuta una consulta y devuelve el primer elemento del tipo especificado o un valor predeterminado si no se encuentra ningún elemento de forma asíncrona.
@@ -29,29 +29,29 @@ public partial interface ISQLServerProvider
     /// <param name="parametros">Parámetros de la consulta</param>
     /// <param name="cancellationToken">Token de cancelación</param>
     /// <returns>Primer elemento que cumple con la condición o valor predeterminado</returns>
-    Task<T> FirstOrDefaultAsync<T>(string query, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default) where T : class, new();
+    Task<T> FirstOrDefaultAsync<T>(string query, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default) where T : class, new();
 
     /// <summary>
     /// Ejecuta un procedimiento almacenado de forma asíncrona y retorna la entidad mapeada.
     /// </summary>
-    Task<T> ExecuteProcedureAsSingleAsync<T>(string procedimientoAlmacenado, CancellationToken cancellationToken = default) where T : new();
+    Task<T> ExecuteProcedureAsSingleAsync<T>(string storedProcedure, CancellationToken cancellationToken = default) where T : new();
 
     /// <summary>
     /// Ejecuta un procedimiento almacenado de forma asíncrona y mapea el resultado con la expresión indicada.
     /// </summary>
-    Task<T> ExecuteProcedureAsSingleAsync<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default);
+    Task<T> ExecuteProcedureAsSingleAsync<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);
 
 
 
     /// <summary>
     /// Ejecuta un procedimiento almacenado de forma asíncrona sin esperar resultados.
     /// </summary>
-    Task<int> ExecuteProcedureCommandAsync(string storedProcedure, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default);
+    Task<int> ExecuteProcedureCommandAsync(string storedProcedure, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Ejecuta un comando de forma asíncrona sin devolver resultados.
     /// </summary>
-    Task<int> ExecuteNonQueryAsync(string command, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default);
+    Task<int> ExecuteNonQueryAsync(string command, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);
 
 
     /// <summary>

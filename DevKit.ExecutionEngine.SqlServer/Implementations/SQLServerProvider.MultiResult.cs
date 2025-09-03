@@ -5,7 +5,7 @@ public partial class SQLServerProvider
     /// <inheritdoc />
     public async Task<DataSet> ExecuteQueryMultiResultAsync(
         string query,
-        Action<IDataParameterCollection> parametros = null,
+        Action<IDataParameterCollection> dbParameters = null,
         Action<string> logger = null,
         CancellationToken cancellationToken = default)
     {
@@ -21,7 +21,7 @@ public partial class SQLServerProvider
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
 
-                parametros?.Invoke(command.Parameters);
+                dbParameters?.Invoke(command.Parameters);
 
                 await connection.OpenAsync(cancellationToken);
 
