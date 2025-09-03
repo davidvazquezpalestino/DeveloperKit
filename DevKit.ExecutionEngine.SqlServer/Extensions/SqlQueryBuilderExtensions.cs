@@ -60,7 +60,7 @@ public static partial class SqlQueryBuilderExtensions
         }
 
         // Create a new state to maintain immutability
-        QueryState<T> newState = new QueryState<T>(queryState.DbProvider, queryState.Schema, queryState.TableName)
+        QueryState<T> newState = new(queryState.DbProvider, queryState.Schema, queryState.TableName)
         {
             TakeField = queryState.TakeField,
             SkipField = queryState.SkipField
@@ -561,7 +561,7 @@ public static partial class SqlQueryBuilderExtensions
 
     internal static QueryResult BuildQuery<T>(QueryState<T> queryState) where T : class, new()
     {
-        QueryResult result = new QueryResult();
+        QueryResult result = new();
         string tableName = GetTableName(queryState);
         string whereClause = "";
         string orderByClause = "";
@@ -570,9 +570,9 @@ public static partial class SqlQueryBuilderExtensions
         // Build WHERE clause
         if (queryState.WhereExpressions.Count > 0)
         {
-            List<string> whereConditions = new List<string>();
+            List<string> whereConditions = new();
             // Crear el visitador con el diccionario de parámetros compartido
-            WhereExpressionVisitor visitor = new WhereExpressionVisitor(result.Parameters, ref paramIndex);
+            WhereExpressionVisitor visitor = new(result.Parameters, ref paramIndex);
 
             foreach (Expression<Func<T, bool>> expr in queryState.WhereExpressions)
             {
@@ -675,7 +675,7 @@ public static partial class SqlQueryBuilderExtensions
                     else if (newExpression.Arguments.Count > 0)
                     {
                         // For other cases, try to extract member access from arguments
-                        List<string> properties = new List<string>();
+                        List<string> properties = new();
                         foreach (Expression arg in newExpression.Arguments)
                         {
                             Expression expr = arg;

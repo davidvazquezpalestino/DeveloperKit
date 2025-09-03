@@ -3,150 +3,6 @@ namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 /// <summary>Métodos asíncronos de <see cref="SQLServerProvider"/>.</summary>
 public partial class SQLServerProvider
 {
-    /// <summary>Ejecuta una consulta SQL y devuelve un DataTable de forma asíncrona.</summary>
-    public async Task<DataTable> ExecuteQueryAsTableAsync(string query,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            throw new ArgumentException("La consulta no puede estar vacía.", nameof(query));
-        }
-
-        bool isConnectionOwner = false;
-        SqlConnection connection = Connection;
-
-        try
-        {
-            if (connection.State != ConnectionState.Open)
-            {
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                isConnectionOwner = true;
-            }
-
-            using (SqlCommand command = connection.CreateCommand())
-            {
-                command.CommandText = query;
-                command.CommandType = CommandType.Text;
-                command.CommandTimeout = SqlOptions?.CommandTimeout ?? 30; // Valor por defecto de 30 segundos
-
-                if (Transaccion != null)
-                {
-                    command.Transaction = Transaccion;
-                }
-
-                parametros?.Invoke(command.Parameters);
-
-                using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.Default, cancellationToken)
-                           .ConfigureAwait(false))
-                {
-                    DataTable table = new DataTable();
-                    table.Load(reader);
-                    return table;
-                }
-            }
-        }
-        finally
-        {
-            if (isConnectionOwner && connection?.State == ConnectionState.Open)
-            {
-                connection.Close();
-            }
-        }
-    }
-
-    /// <summary>Ejecuta un procedimiento almacenado y devuelve un DataTable de forma asíncrona.</summary>
-    public async Task<DataTable> ExecuteProcedureAsTableAsync(string procedimientoAlmacenado,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
-    {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
-        {
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandText = procedimientoAlmacenado;
-                command.CommandType = CommandType.StoredProcedure;
-                command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
-
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                using (DbDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    DataTable tabla = new DataTable();
-                    tabla.Load(reader);
-                    return tabla;
-                }
-            }
-        }
-    }
-
-    /// <summary>Ejecuta una consulta y devuelve una colección de diccionarios de forma asíncrona.</summary>
-    public async Task<ICollection<Dictionary<string, object>>> ExecuteQueryAsDictionaryAsync(string query,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
-    {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
-        {
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandText = query;
-                command.CommandType = CommandType.Text;
-                command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
-
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                using (DbDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false))
-                {
-                    List<Dictionary<string, object>> result = new List<Dictionary<string, object>>();
-                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        Dictionary<string, object> row = new Dictionary<string, object>();
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            row.Add(reader.GetName(i), reader.GetValue(i));
-                        }
-
-                        result.Add(row);
-                    }
-
-                    return result;
-                }
-            }
-        }
-    }
-
-    /// <summary>Ejecuta un procedimiento almacenado y devuelve una colección de diccionarios de forma asíncrona.</summary>
-    public async Task<ICollection<Dictionary<string, object>>> ExecuteProcedureAsDictionaryAsync(
-        string procedimientoAlmacenado, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
-    {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
-        {
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandText = procedimientoAlmacenado;
-                command.CommandType = CommandType.StoredProcedure;
-                command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
-
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-                List<Dictionary<string, object>> result = new List<Dictionary<string, object>>();
-                using (DbDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false))
-                {
-                    while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                    {
-                        Dictionary<string, object> row = new Dictionary<string, object>();
-                        for (int i = 0; i < reader.FieldCount; i++)
-                        {
-                            row.Add(reader.GetName(i), reader.GetValue(i));
-                        }
-
-                        result.Add(row);
-                    }
-
-                    return result;
-                }
-            }
-        }
-    }
 
     /// <summary>Ejecuta una consulta y mapea el primer registro a una entidad de forma asíncrona.</summary>
     public async Task<T> ExecuteQueryAsSingleAsync<T>(string query, Func<IDataReader, T> expression,
@@ -251,7 +107,7 @@ public partial class SQLServerProvider
                         throw new InvalidOperationException("La secuencia no contiene elementos");
                     }
 
-                    T item = new T();
+                    T item = new();
                     PropertyInfo[] properties = typeof(T).GetProperties();
 
                     for (int i = 0; i < reader.FieldCount; i++)
@@ -269,99 +125,13 @@ public partial class SQLServerProvider
         }
     }
 
-    /// <summary>Ejecuta una consulta y devuelve una lista de entidades de forma asíncrona.</summary>
-    public async Task<ICollection<T>> ExecuteQueryAsListAsync<T>(string query, Func<IDataReader, T> expression,
-        Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
-    {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
-        {
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandType = CommandType.Text;
-                command.CommandText = query;
-                command.CommandTimeout = SqlOptions.CommandTimeout;
-                parametros?.Invoke(command.Parameters);
 
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                using (IDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    List<T> result = new List<T>();
-
-                    while (reader.Read())
-                    {
-                        result.Add(expression(reader));
-                    }
-
-                    return result;
-                }
-            }
-        }
-    }
-
-    /// <summary>Ejecuta una consulta y devuelve una lista de entidades de forma asíncrona.</summary>
-    public async Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string procedimientoAlmacenado, CancellationToken cancellationToken = default) where T : new()
-    {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
-        {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandType = CommandType.StoredProcedure;
-                command.CommandText = procedimientoAlmacenado;
-                command.CommandTimeout = SqlOptions.CommandTimeout;
-
-                List<T> items = new List<T>();
-
-                using (IDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    while (reader.Read())
-                    {
-                        items.Add(reader.GetItem<T>());
-                    }
-                }
-
-                return items;
-            }
-        }
-    }
-
-    /// <summary>Ejecuta una consulta y devuelve una lista de entidades de forma asíncrona.</summary>
-    public async Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string procedimientoAlmacenado,
-        Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
-    {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
-        {
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandText = procedimientoAlmacenado;
-                command.CommandType = CommandType.StoredProcedure;
-                command.CommandTimeout = SqlOptions.CommandTimeout;
-
-                parametros?.Invoke(command.Parameters);
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                using (IDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    List<T> list = new List<T>();
-                    while (reader.Read())
-                    {
-                        T item = expression(reader);
-                        list.Add(item);
-                    }
-
-                    return list;
-                }
-            }
-        }
-    }
 
     /// <summary>Ejecuta un procedimiento almacenado que no devuelve resultados, de forma asíncrona.</summary>
     public async Task<int> ExecuteProcedureCommandAsync(string procedimientoAlmacenado,
         Action<IDataParameterCollection> parametros = null, CancellationToken cancellationToken = default)
     {
-        using (SqlConnection connection = new SqlConnection(ConnectionString))
+        using (SqlConnection connection = new(ConnectionString))
         using (SqlCommand command = connection.CreateCommand())
         {
             command.CommandType = CommandType.StoredProcedure;
@@ -418,60 +188,6 @@ public partial class SQLServerProvider
         }
     }
 
-    /// <summary>Ejecuta una consulta que devuelve varios conjuntos de resultados y los devuelve como listas de diccionarios de forma asíncrona.</summary>
-    public async Task<IList<IList<Dictionary<string, object>>>> ExecuteMultiResultQueryAsync(string query,
-        Action<IDataParameterCollection> parametros = null, Action<string> logger = null, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(query))
-        {
-            throw new ArgumentException("La consulta no puede estar vacía.", nameof(query));
-        }
-
-        IList<IList<Dictionary<string, object>>> results = new List<IList<Dictionary<string, object>>>();
-
-        using (SqlConnection connection = new SqlConnection(ConnectionString))
-        {
-            using (SqlCommand command = new SqlCommand(query, connection))
-            {
-                parametros?.Invoke(command.Parameters);
-
-                await connection.OpenAsync(cancellationToken)
-                    .ConfigureAwait(false);
-
-                using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess | CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false))
-                {
-                    logger?.Invoke("DataReader obtained.");
-
-                    int resultIndex = 0;
-                    do
-                    {
-                        logger?.Invoke($"Processing ResultSet #{resultIndex}...");
-                        List<Dictionary<string, object>> resultSet = new List<Dictionary<string, object>>();
-
-                        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
-                        {
-                            Dictionary<string, object> record = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                            for (int i = 0; i < reader.FieldCount; i++)
-                            {
-                                string columnName = reader.GetName(i);
-                                object value = reader.IsDBNull(i) ? null : reader.GetValue(i);
-                                record[columnName] = value;
-                            }
-
-                            resultSet.Add(record);
-                        }
-
-                        logger?.Invoke($"ResultSet #{resultIndex} contains {resultSet.Count} rows.");
-                        results.Add(resultSet);
-                        resultIndex++;
-                    } while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
-
-                    logger?.Invoke("All ResultSets processed successfully.");
-                    return results;
-                }
-            }
-        }
-    }
 
 
 

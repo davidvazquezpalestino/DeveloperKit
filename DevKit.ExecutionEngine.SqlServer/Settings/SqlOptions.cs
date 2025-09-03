@@ -65,7 +65,7 @@ public class SqlOptions
         if (SqlAuth.IsConfigured())
         {
             // Construcción básica; se agregan opciones comunes si están configuradas
-            List<string> parts = new List<string>
+            List<string> parts = new()
             {
                 $"Server={SqlAuth.Server}",
                 $"Database={SqlAuth.Database}",
@@ -131,7 +131,7 @@ public class BulkCopyOptions
     /// <summary>
     /// Tamaño del lote para operaciones bulk. Por defecto: 1000.
     /// </summary>
-    public int BatchSize { get; set; } = 1000;
+    public int BatchSize { get; set; }
 
     /// <summary>
     /// Tiempo de espera para operaciones bulk en segundos. Por defecto: 300 (5 minutos).

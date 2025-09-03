@@ -5,7 +5,7 @@ public partial interface ISQLServerProvider
     /// <summary>
     /// Elimina la tabla temporal indicada.
     /// </summary>
-    void DropTable(string tableName);
+    void DropTableIfExists(string tableName);
 
     /// <summary>
     /// Crea una tabla temporal a partir de un DataTable.

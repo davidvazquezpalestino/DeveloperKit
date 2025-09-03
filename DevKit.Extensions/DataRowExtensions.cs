@@ -1,107 +1,103 @@
 namespace DevKit.Extensions;
 
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Linq;
+using System.Reflection;
+
 /// <summary>Proporciona métodos de extensión para DataRow que facilitan el acceso seguro a los datos.</summary>
 public static class DataRowExtensions
 {
-    private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> PropertyCache =
-        new();
-
-    /// <summary>Obtiene el valor tipado de la columna. Si es DBNull retorna default(T) (null para tipos referencia y tipos valor anulables).</summary>
-    /// <exception cref="InvalidCastException">Se lanza cuando hay un error al convertir el valor de la columna al tipo especificado.</exception>
-    /// <exception cref="ArgumentException">Se lanza cuando el nombre de la columna no existe en el DataRow.</exception>
-    public static T GetValue<T>(this DataRow row, string columnName)
-    {
-        try
-        {
-            object value = row[columnName];
-            return value == DBNull.Value ? default : (T)value;
-        }
-        catch (Exception ex) when (ex is InvalidCastException || ex is FormatException)
-        {
-            object columnValue = row[columnName];
-            string valueType = columnValue.GetType().Name;
-            string valueString = columnValue.ToString() ?? "null";
-
-            throw new InvalidCastException(
-                $"Error al convertir el valor de la columna '{columnName}' al tipo {typeof(T).Name}. " +
-                $"Tipo del valor: {valueType}, Valor: {valueString}", ex);
-        }
-    }
+    private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> PropertyCache = new();
 
     /// <summary>
-    /// Intenta obtener el valor tipado de la columna de forma segura, sin lanzar excepciones.
+    /// Obtiene el valor tipado de la columna. Si es DBNull retorna default(T).
     /// </summary>
     /// <typeparam name="T">Tipo de dato esperado</typeparam>
-    /// <param name="row">Fila de datos</param>
+    /// <param name="row">DataRow de origen</param>
     /// <param name="columnName">Nombre de la columna</param>
-    /// <param name="defaultValue">Valor predeterminado a devolver en caso de error (opcional)</param>
-    /// <returns>
-    /// El valor convertido al tipo especificado si la columna existe y la conversión es exitosa;
-    /// de lo contrario, el valor predeterminado del tipo o el valor especificado en defaultValue.
-    /// </returns>
-    public static T TryGetValue<T>(this DataRow row, string columnName, T defaultValue = default)
+    /// <param name="defaultValue">Valor por defecto opcional en caso de DBNull</param>
+    /// <returns>Valor convertido al tipo especificado</returns>
+    /// <exception cref="ArgumentNullException">Cuando el DataRow es nulo</exception>
+    /// <exception cref="ArgumentException">Cuando el nombre de la columna no existe</exception>
+    /// <exception cref="InvalidCastException">Cuando la conversión de tipo falla</exception>
+    public static T GetValue<T>(this DataRow row, string columnName, T defaultValue = default)
     {
+        if (row == null)
+        {
+            throw new ArgumentNullException(nameof(row));
+        }
+
+        if (string.IsNullOrWhiteSpace(columnName))
+        {
+            throw new ArgumentException("El nombre de la columna no puede estar vacío", nameof(columnName));
+        }
+
+        if (!row.Table.Columns.Contains(columnName))
+        {
+            throw new ArgumentException($"La columna '{columnName}' no existe en la tabla", nameof(columnName));
+        }
+
         try
         {
-            // Verificar si la columna existe
-            if (!row.Table.Columns.Contains(columnName))
-            {
-                return defaultValue;
-            }
-
-            // Obtener el valor
             object value = row[columnName];
 
-            // Manejar valores nulos
             if (value == DBNull.Value)
             {
                 return defaultValue;
             }
 
-            // Manejar conversión especial para tipos anulables
-            Type targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
-
-            // Si es un enum
-            if (targetType.IsEnum)
+            // Si el tipo ya es el correcto, retornar directamente
+            if (value is T typedValue)
             {
-                try
-                {
-                    if (value is string strValue)
-                    {
-                        return (T)Enum.Parse(targetType, strValue, true);
-                    }
-                    return (T)value;
-                }
-                catch { return defaultValue; }
+                return typedValue;
             }
 
-            // Conversión estándar para tipos primitivos
-            try
-            {
-                return (T)Convert.ChangeType(value, targetType);
-            }
-            catch
-            {
-                return defaultValue;
-            }
+            // Conversión especial para tipos comunes
+            return ConvertValue<T>(value);
         }
-        catch
+        catch (Exception ex) when (ex is InvalidCastException or FormatException)
         {
-            return defaultValue;
+            object columnValue = row[columnName];
+            throw CreateConversionException<T>(columnName, columnValue, ex);
         }
     }
 
     /// <summary>
-    /// Mapea los datos del DataRow a un objeto del tipo especificado.
+    /// Obtiene el valor de la columna de forma segura, sin lanzar excepciones
     /// </summary>
-    /// <typeparam name="T">Tipo de objeto a mapear</typeparam>
-    /// <param name="row">Fila de datos</param>
-    /// <returns>Instancia del tipo T con los datos del DataRow</returns>
-    /// <remarks>
-    /// Este método utiliza caché de propiedades para mejorar el rendimiento en llamadas repetidas.
-    /// Soporta mapeo de columnas con nombres que difieren en mayúsculas/minúsculas.
-    /// Maneja conversiones de tipos y valores nulos de forma segura.
-    /// </remarks>
+    public static bool TryGetValue<T>(this DataRow row, string columnName, out T result, T defaultValue = default)
+    {
+        result = defaultValue;
+
+        try
+        {
+            if (row == null || !row.Table.Columns.Contains(columnName))
+            {
+                return false;
+            }
+
+            object value = row[columnName];
+            if (value == DBNull.Value)
+            {
+                return false;
+            }
+
+            result = ConvertValue<T>(value);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Mapea los datos del DataRow a un objeto del tipo especificado
+    /// </summary>
     public static T GetItem<T>(this DataRow row) where T : new()
     {
         if (row == null)
@@ -112,42 +108,163 @@ public static class DataRowExtensions
         T item = new T();
         Type type = typeof(T);
 
-        // Obtener o crear la caché de propiedades para el tipo T
-        if (!PropertyCache.TryGetValue(type, out Dictionary<string, PropertyInfo> properties))
+        Dictionary<string, PropertyInfo> properties = GetCachedProperties(type);
+
+        foreach (DataColumn column in row.Table.Columns)
         {
-            properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                           .Where(propertyInfo => propertyInfo.CanWrite)
-                           .ToDictionary(propertyInfo => propertyInfo.Name, propertyInfo => propertyInfo, StringComparer.OrdinalIgnoreCase);
+            string columnName = column.ColumnName;
+            object value = row[columnName];
 
-            PropertyCache[type] = properties;
-        }
-
-        // Mapear columnas a propiedades
-        foreach (DataColumn col in row.Table.Columns)
-        {
-            string columnName = col.ColumnName;
-
-            // Buscar propiedad que coincida con el nombre de la columna (case-insensitive)
-            if (properties.TryGetValue(columnName, out PropertyInfo prop) &&
-                row[columnName] != DBNull.Value)
+            if (value == DBNull.Value)
             {
-                try
-                {
-                    object value = row[columnName];
-
-                    // Manejar conversión de tipos
-                    Type propType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                    object safeValue = Convert.ChangeType(value, propType);
-                    prop.SetValue(item, safeValue);
-                }
-                catch (Exception ex) when (ex is InvalidCastException or FormatException)
-                {
-                    // Registrar el error y continuar con la siguiente propiedad
-                    System.Diagnostics.Debug.WriteLine($"Error al mapear la columna '{columnName}': {ex.Message}");
-                }
+                continue;
             }
+
+            // Intentar mapear a propiedad
+            if (properties.TryGetValue(columnName, out PropertyInfo property))
+            {
+                SetPropertyValue(item, property, value);
+            }
+
         }
 
         return item;
+    }
+
+
+    /// <summary>
+    /// Mapea una DataTable a una lista de objetos
+    /// </summary>
+    public static List<T> GetItems<T>(this DataTable table) where T : new()
+    {
+        if (table == null)
+        {
+            throw new ArgumentNullException(nameof(table));
+        }
+
+        return table.AsEnumerable().GetItems<T>();
+    }
+
+    /// <summary>
+    /// Mapea una colección de DataRows a una lista de objetos
+    /// </summary>
+    public static List<T> GetItems<T>(this IEnumerable<DataRow> rows) where T : new()
+    {
+        if (rows == null)
+        {
+            throw new ArgumentNullException(nameof(rows));
+        }
+
+        return rows.Select(row => row.GetItem<T>()).ToList();
+    }
+
+    private static Dictionary<string, PropertyInfo> GetCachedProperties(Type type)
+    {
+        return PropertyCache.GetOrAdd(type, t =>
+            t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+             .Where(propertyInfo => propertyInfo.CanWrite && propertyInfo.GetSetMethod(false) != null)
+             .ToDictionary(propertyInfo => propertyInfo.Name, p => p, StringComparer.OrdinalIgnoreCase));
+    }
+
+
+    private static void SetPropertyValue<T>(T item, PropertyInfo property, object value)
+    {
+        try
+        {
+            object convertedValue = ConvertToType(value, property.PropertyType);
+            property.SetValue(item, convertedValue);
+        }
+        catch (Exception ex)
+        {
+            HandleMappingError(property.Name, value, ex);
+        }
+    }
+
+    private static object ConvertToType(object value, Type targetType)
+    {
+        if (value == null || value == DBNull.Value)
+        {
+            return GetDefaultValue(targetType);
+        }
+
+        Type sourceType = value.GetType();
+
+        // Si los tipos son compatibles, retornar directamente
+        if (targetType.IsAssignableFrom(sourceType))
+        {
+            return value;
+        }
+
+        // Manejar tipos nullable
+        Type underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+        // Usar TypeConverter para conversiones más flexibles
+        TypeConverter converter = TypeDescriptor.GetConverter(underlyingType);
+        if (converter.CanConvertFrom(sourceType))
+        {
+            return converter.ConvertFrom(value);
+        }
+
+        // Conversión estándar
+        return Convert.ChangeType(value, underlyingType);
+    }
+
+    private static T ConvertValue<T>(object value)
+    {
+        if (value is T typedValue)
+        {
+            return typedValue;
+        }
+
+        Type targetType = typeof(T);
+        Type underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+
+        // Conversiones especiales para tipos comunes
+        if (underlyingType == typeof(Guid) && value is string stringGuid)
+        {
+            return (T)(object)Guid.Parse(stringGuid);
+        }
+
+        if (underlyingType == typeof(DateTimeOffset) && value is DateTime dateTime)
+        {
+            return (T)(object)new DateTimeOffset(dateTime);
+        }
+
+        if (underlyingType.IsEnum && value is string stringEnum)
+        {
+            return (T)Enum.Parse(underlyingType, stringEnum, true);
+        }
+
+        // Usar TypeConverter
+        TypeConverter converter = TypeDescriptor.GetConverter(underlyingType);
+        if (converter.CanConvertFrom(value.GetType()))
+        {
+            return (T)converter.ConvertFrom(value);
+        }
+
+        return (T)Convert.ChangeType(value, underlyingType);
+    }
+
+    private static object GetDefaultValue(Type type)
+    {
+        return type.IsValueType && Nullable.GetUnderlyingType(type) == null
+            ? Activator.CreateInstance(type)
+            : null;
+    }
+
+    private static InvalidCastException CreateConversionException<T>(string columnName, object value, Exception innerException)
+    {
+        string valueType = value?.GetType().Name ?? "null";
+        string valueString = value?.ToString() ?? "null";
+
+        return new InvalidCastException(
+            $"Error al convertir el valor de la columna '{columnName}' al tipo {typeof(T).Name}. " +
+            $"Tipo del valor: {valueType}, Valor: {valueString}. " +
+            $"Asegúrese de que los tipos son compatibles.", innerException);
+    }
+
+    private static void HandleMappingError(string memberName, object value, Exception ex)
+    {
+        System.Diagnostics.Debug.WriteLine($"Error al mapear el valor '{value}' al miembro '{memberName}': {ex.Message}");
     }
 }

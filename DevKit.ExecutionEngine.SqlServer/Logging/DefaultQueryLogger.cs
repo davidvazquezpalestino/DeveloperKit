@@ -20,7 +20,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Logging
                 return;
             }
 
-            StringBuilder logMessage = new StringBuilder();
+            StringBuilder logMessage = new();
 
             if (!string.IsNullOrEmpty(message))
             {

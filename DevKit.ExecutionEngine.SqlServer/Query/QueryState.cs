@@ -77,8 +77,8 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
     private QueryResult BuildQueryInternal()
     {
         // Construir la consulta SQL manualmente
-        StringBuilder sqlBuilder = new System.Text.StringBuilder();
-        Dictionary<string, object> parameters = new Dictionary<string, object>();
+        StringBuilder sqlBuilder = new();
+        Dictionary<string, object> parameters = new();
         int paramIndex = 0;
 
         // SELECT
@@ -199,7 +199,7 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
     /// <returns>El estado de la consulta con el esquema establecido</returns>
     public QueryState<T> WithSchema(string schema)
     {
-        QueryState<T> queryState = new QueryState<T>(DbProvider, schema, TableName)
+        QueryState<T> queryState = new(DbProvider, schema, TableName)
         {
             TakeField = TakeField,
             SkipField = SkipField,
@@ -219,7 +219,7 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
     /// <returns>The query state with the table name set</returns>
     public QueryState<T> WithTableName(string tableName)
     {
-        QueryState<T> queryState = new QueryState<T>(DbProvider, Schema, tableName)
+        QueryState<T> queryState = new(DbProvider, Schema, tableName)
         {
             TakeField = TakeField,
             SkipField = SkipField,

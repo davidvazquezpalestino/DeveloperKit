@@ -16,32 +16,6 @@ public partial interface ISQLServerProvider
     /// </summary>
     public string ConnectionString { get; }
 
-    /// <summary>
-    /// Inicia una transacción.
-    /// </summary>
-    void BeginTransaction();
-
-    /// <summary>
-    /// Confirma la transacción en curso.
-    /// </summary>
-    void CommitTransaction();
-
-    /// <summary>
-    /// Revierte la transacción en curso.
-    /// </summary>
-    void RollbackTransaction();
-
-    /// <summary>Ejecuta una consulta SQL y devuelve los resultados en un DataTable.</summary>
-    /// <param name="query">Consulta SQL a ejecutar.</param>
-    /// <param name="parameter">Acción para configurar los parámetros de la consulta.</param>
-    /// <returns>DataTable con los resultados de la consulta.</returns>
-    DataTable ExecuteQueryAsTable(string query, Action<IDataParameterCollection> parameter = null);
-
-    /// <summary>Ejecuta un procedimiento almacenado y devuelve los resultados en un DataTable.</summary>
-    /// <param name="procedimientoAlmacenado">Nombre del procedimiento almacenado a ejecutar.</param>
-    /// <param name="parameter">Acción para configurar los parámetros del procedimiento.</param>
-    /// <returns>DataTable con los resultados del procedimiento.</returns>
-    DataTable ExecuteProcedureAsTable(string procedimientoAlmacenado, Action<IDataParameterCollection> parameter = null);
 
     /// <summary>
     /// Ejecuta una consulta y mapea el primer registro a la entidad indicada.
@@ -70,48 +44,6 @@ public partial interface ISQLServerProvider
     /// Ejecuta un procedimiento almacenado y mapea el primer registro a la entidad indicada.
     /// </summary>
     T ExecuteProcedureAsSingle<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parametros = null);
-
-    /// <summary>Ejecuta una consulta SQL y devuelve los resultados como una colección de diccionarios.</summary>
-    /// <param name="query">Consulta SQL a ejecutar.</param>
-    /// <param name="parameter">Acción para configurar los parámetros de la consulta.</param>
-    /// <returns>Colección de diccionarios donde cada diccionario representa una fila.</returns>
-    ICollection<Dictionary<string, object>> ExecuteQueryAsDictionary(string query, Action<IDataParameterCollection> parameter = null);
-
-    /// <summary>Ejecuta un procedimiento almacenado y devuelve los resultados como una colección de diccionarios.</summary>
-    /// <param name="procedimientoAlmacenado">Nombre del procedimiento almacenado.</param>
-    /// <param name="parameter">Acción para configurar los parámetros del procedimiento.</param>
-    /// <returns>Colección de diccionarios donde cada diccionario representa una fila.</returns>
-    ICollection<Dictionary<string, object>> ExecuteProcedureAsDictionary(string procedimientoAlmacenado, Action<IDataParameterCollection> parameter = null);
-
-    /// <summary>Ejecuta un procedimiento almacenado y devuelve los resultados como una colección de objetos.</summary>
-    /// <typeparam name="T">Tipo de los objetos en la colección de retorno.</typeparam>
-    /// <param name="procedimientoAlmacenado">Nombre del procedimiento almacenado.</param>
-    /// <param name="expression">Función para mapear cada fila a un objeto.</param>
-    /// <param name="parameter">Acción para configurar los parámetros del procedimiento.</param>
-    /// <returns>Colección de objetos mapeados.</returns>
-    ICollection<T> ExecuteProcedureAsList<T>(string procedimientoAlmacenado, Func<IDataReader, T> expression, Action<IDataParameterCollection> parameter = null);
-
-    /// <summary>Ejecuta una consulta SQL y devuelve los resultados como una colección de objetos.</summary>
-    /// <typeparam name="T">Tipo de los objetos en la colección de retorno.</typeparam>
-    /// <param name="query">Consulta SQL a ejecutar.</param>
-    /// <param name="expression">Función para mapear cada fila a un objeto.</param>
-    /// <param name="parameter">Acción para configurar los parámetros de la consulta.</param>
-    /// <returns>Colección de objetos mapeados.</returns>
-    ICollection<T> ExecuteQueryAsList<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> parameter = null);
-
-    /// <summary>
-    /// Ejecuta un comando que no devuelve resultados.
-    /// </summary>
-    void ExecuteNonQuery(string command, Action<IDataParameterCollection> parametros = null);
-
-    /// <summary>
-    /// Inserta una entidad en la tabla especificada.
-    /// </summary>
-    void ExecuteInsert<T>(string tableName, T entity) where T : class, new();
-    /// <summary>
-    /// Inserta una colección de entidades en la tabla especificada.
-    /// </summary>
-    void ExecuteInsert<T>(string tableName, ICollection<T> collection) where T : class, new();
 
     /// <summary>
     /// Ejecuta una consulta SQL y devuelve un valor escalar.

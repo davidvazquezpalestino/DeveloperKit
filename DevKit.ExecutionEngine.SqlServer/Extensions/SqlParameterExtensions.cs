@@ -18,7 +18,7 @@ public static class SqlParameterExtensions
             object parameterValue = value ?? DBNull.Value;
             log?.Invoke($"Valor del parámetro {parameterName}: {parameterValue} (Tipo: {value?.GetType().Name ?? "null"})");
 
-            SqlParameter parameter = new SqlParameter
+            SqlParameter parameter = new()
             {
                 ParameterName = parameterName,
                 Value = parameterValue
