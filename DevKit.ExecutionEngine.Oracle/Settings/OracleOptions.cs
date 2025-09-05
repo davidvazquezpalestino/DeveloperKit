@@ -23,6 +23,9 @@ public class OracleOptions
 
     /// <summary>Permite establecer el nombre de la aplicación en la conexión.</summary>
     public Func<string> ConfigureApplication { get; set; }
+
+    /// <summary>Tiempo de espera para operaciones de copia masiva en segundos. Por defecto: 300.</summary>
+    public int BulkCopyTimeout { get; set; } = 300;
 }
 
 /// <summary>Configuración para el Pooling de conexiones Oracle.</summary>

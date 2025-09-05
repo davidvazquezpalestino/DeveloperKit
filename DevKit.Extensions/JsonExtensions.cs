@@ -103,14 +103,46 @@ public static class JsonExtensions
         }
         if (node is JsonValue jsonValue)
         {
-            if (jsonValue.TryGetValue(out long longValue)) return longValue;
-            if (jsonValue.TryGetValue(out decimal decimalValue)) return decimalValue;
-            if (jsonValue.TryGetValue(out double doubleValue)) return doubleValue;
-            if (jsonValue.TryGetValue(out bool boolValue)) return boolValue;
-            if (jsonValue.TryGetValue(out DateTimeOffset dtoValue)) return dtoValue;
-            if (jsonValue.TryGetValue(out DateTime dtValue)) return dtValue;
-            if (jsonValue.TryGetValue(out string stringValue)) return stringValue;
-            if (jsonValue.TryGetValue(out object value)) return value;
+            if (jsonValue.TryGetValue(out long longValue))
+            {
+                return longValue;
+            }
+
+            if (jsonValue.TryGetValue(out decimal decimalValue))
+            {
+                return decimalValue;
+            }
+
+            if (jsonValue.TryGetValue(out double doubleValue))
+            {
+                return doubleValue;
+            }
+
+            if (jsonValue.TryGetValue(out bool boolValue))
+            {
+                return boolValue;
+            }
+
+            if (jsonValue.TryGetValue(out DateTimeOffset dtoValue))
+            {
+                return dtoValue;
+            }
+
+            if (jsonValue.TryGetValue(out DateTime dtValue))
+            {
+                return dtValue;
+            }
+
+            if (jsonValue.TryGetValue(out string stringValue))
+            {
+                return stringValue;
+            }
+
+            if (jsonValue.TryGetValue(out object value))
+            {
+                return value;
+            }
+
             return null;
         }
         // Para objetos o arreglos, devolver la representación JSON cruda

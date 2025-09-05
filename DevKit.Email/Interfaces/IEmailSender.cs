@@ -7,12 +7,14 @@ public interface IEmailSender
     
     /// <summary>Envía un mensaje de correo electrónico de forma asíncrona usando la configuración inyectada.</summary>
     /// <param name="message">El mensaje de correo electrónico a enviar.</param>
-    Task SendEmailAsync(EmailMessage message);
+    /// <param name="cancellationToken">Token de cancelación.</param>
+    Task SendEmailAsync(EmailMessage message, CancellationToken cancellationToken = default);
 
     /// <summary>Envía un mensaje de correo electrónico de forma asíncrona con configuración personalizada.</summary>
     /// <param name="message">El mensaje de correo electrónico a enviar.</param>
     /// <param name="settings">Configuración personalizada del servidor SMTP.</param>
-    Task SendEmailAsync(EmailMessage message, MailKitSetting settings);
+    /// <param name="cancellationToken">Token de cancelación.</param>
+    Task SendEmailAsync(EmailMessage message, MailKitSetting settings, CancellationToken cancellationToken = default);
 
     #endregion
 

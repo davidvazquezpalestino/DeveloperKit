@@ -21,7 +21,7 @@
 		<Description>DotNet.DependencyInjection es una biblioteca que proporciona extensiones para la inyección de dependencias en .NET. Utiliza reflexión para registrar servicios automáticamente, simplificando la configuración de la inyección de dependencias. Compatible con múltiples versiones de .NET (4.8, 8.0 y 9.0) y utiliza Microsoft.Extensions.DependencyInjection.Abstractions para la implementación de DI.</Description>
 		<PackageTags>dependency-injection reflection di aspnetcore registration</PackageTags>
 		<PackageId>DependencyInjection.ReflectionExtensions</PackageId>
-		<PackageOutputPath>C:\Github\Packages\DotNet.Injection.Extensions</PackageOutputPath>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)..\..\packages\$(AssemblyName)</PackageOutputPath>
 		<PackageIcon>102042_tools_icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -29,6 +29,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.8" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
 	</ItemGroup>
 

@@ -1,5 +1,7 @@
 global using DevKit.ExecutionEngine.SQLServer.Abstractions;
 global using DevKit.ExecutionEngine.SQLServer.Extensions;
+global using DevKit.ExecutionEngine.SQLServer.Logging;
+global using DevKit.ExecutionEngine.SQLServer.Query;
 global using DevKit.ExecutionEngine.SQLServer.Settings;
 global using DevKit.Extensions;
 global using DevKit.Extensions.DataTableExtension;
@@ -7,9 +9,14 @@ global using Microsoft.Data.SqlClient;
 global using Microsoft.Extensions.Options;
 global using System;
 global using System.Collections.Generic;
+global using System.ComponentModel.DataAnnotations.Schema;
 global using System.Data;
 global using System.Data.Common;
+global using System.Diagnostics;
 global using System.Linq;
+global using System.Linq.Expressions;
 global using System.Reflection;
+global using System.Text;
+global using System.Threading;
 global using System.Threading.Tasks;
 

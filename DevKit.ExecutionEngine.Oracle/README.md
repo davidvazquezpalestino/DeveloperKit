@@ -9,9 +9,11 @@ Biblioteca que proporciona una implementación robusta para la conexión y opera
 - Ejecución de consultas y procedimientos almacenados
 - Soporte para parámetros
 - Manejo de errores robusto
-- Soporte para operaciones asíncronas
+- Soporte completo para operaciones asíncronas con CancellationToken
+- Configuración avanzada de timeouts y bulk operations
 - Manejo de conexiones temporales
 - Integración con inyección de dependencias
+- Optimizaciones de rendimiento con ConfigureAwait(false)
 
 ## Instalación
 
@@ -33,11 +35,21 @@ dotnet add package DeveloperKit.CoreOracleDatabase
 ### Configuración Inicial
 
 ```csharp
-// Configurar la conexión
+// Configuración básica
 services.AddScoped<IOracleRepository, OracleRepository>(provider =>
 {
     var connectionString = Configuration.GetConnectionString("OracleConnection");
     return new OracleRepository(connectionString);
+});
+
+// Configuración avanzada con opciones personalizadas
+services.Configure<OracleOptions>(options =>
+{
+    options.CommandTimeout = 60; // Timeout en segundos para comandos
+    options.BulkCopyTimeout = 300; // Timeout para operaciones bulk
+    options.ConnectionPooling = true;
+    options.MaxPoolSize = 100;
+    options.MinPoolSize = 5;
 });
 ```
 
@@ -52,19 +64,19 @@ public MyService(IOracleRepository oracleRepository)
     _oracleRepository = oracleRepository;
 }
 
-// Ejecutar consulta
-public async Task<DataTable> GetCustomers()
+// Ejecutar consulta con soporte de cancelación
+public async Task<DataTable> GetCustomers(CancellationToken cancellationToken = default)
 {
     var query = "SELECT * FROM CUSTOMERS WHERE ACTIVE = :active";
     
     return await _oracleRepository.ExecuteQueryAsTableAsync(query, parameters =>
     {
         parameters.Add("active", OracleDbType.Int32, 1, ParameterDirection.Input);
-    });
+    }, cancellationToken);
 }
 
-// Ejecutar procedimiento almacenado
-public async Task ExecuteStoredProcedure()
+// Ejecutar procedimiento almacenado con soporte de cancelación
+public async Task ExecuteStoredProcedure(CancellationToken cancellationToken = default)
 {
     var spName = "PKG_CUSTOMERS.GET_CUSTOMER";
     
@@ -72,7 +84,7 @@ public async Task ExecuteStoredProcedure()
     {
         parameters.Add("p_customer_id", OracleDbType.Int32, 123, ParameterDirection.Input);
         parameters.Add("p_result", OracleDbType.Int32, ParameterDirection.Output);
-    });
+    }, cancellationToken);
 }
 ```
 

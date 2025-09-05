@@ -16,8 +16,7 @@
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-		<PackageOutputPath>C:\Github\Packages\CoreControlesUsuario</PackageOutputPath>
-		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+		<PackageOutputPath>$(MSBuildThisFileDirectory)..\..\packages\$(AssemblyName)</PackageOutputPath>
 		<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
 		<PackageIcon>102042_tools_icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>

@@ -48,16 +48,36 @@ public partial class Autocomplete<T>
     /// </summary>
     [Parameter] public bool ResetValueOnEmptyText { get; set; } = true;
 
-    // Two-way binding
+    private T ValueField;
+    private bool ValueFromExternalSourceField;
+    private bool IsSettingValueInternallyField;
+
     /// <summary>
     /// Valor seleccionado en el componente.
     /// </summary>
-    [Parameter] public T Value { get; set; }
+    [Parameter]
+    public T Value
+    {
+        get => ValueField;
+        set
+        {
+            if (!EqualityComparer<T>.Default.Equals(ValueField, value))
+            {
+                ValueField = value;
+                ValueFromExternalSourceField = true;
+            }
+        }
+    }
 
     /// <summary>
     /// Evento que se dispara cuando el valor cambia.
     /// </summary>
     [Parameter] public EventCallback<T> ValueChanged { get; set; }
+
+    /// <summary>
+    /// Comparador personalizado para determinar igualdad de objetos.
+    /// </summary>
+    [Parameter] public IEqualityComparer<T> Comparer { get; set; } = EqualityComparer<T>.Default;
 
     // Callback adicional
     /// <summary>
@@ -71,59 +91,150 @@ public partial class Autocomplete<T>
     [Parameter(CaptureUnmatchedValues = true)]
     public Dictionary<string, object> InputAttributes { get; set; } = new Dictionary<string, object>();
 
-    private string SearchText { get; set; } = string.Empty;
-    private IEnumerable<T> Items { get; set; } = [];
-    private bool IsDropdownVisible { get; set; }
-    private int SelectedIndex { get; set; } = -1;
+    private string SearchTextField = string.Empty;
+    private List<T> ItemsField = new();
+    private bool IsDropdownVisibleField;
+    private int SelectedIndexField = -1;
+    private System.Timers.Timer DebounceTimerField;
+    private CancellationTokenSource CancellationTokenSourceField;
+    private bool DisposedField;
 
-    private System.Timers.Timer DebounceTimer;
-    private CancellationTokenSource CancellationTokenSource;
-    private bool Disposed;
+    private string SearchText
+    {
+        get => SearchTextField;
+        set
+        {
+            if (SearchTextField != value)
+            {
+                SearchTextField = value;
+                SelectedIndexField = -1;
+            }
+        }
+    }
+
+    private IReadOnlyList<T> Items => ItemsField;
+
+    private bool IsDropdownVisible
+    {
+        get => IsDropdownVisibleField;
+        set
+        {
+            if (IsDropdownVisibleField != value)
+            {
+                IsDropdownVisibleField = value;
+                if (!IsDropdownVisibleField)
+                    SelectedIndexField = -1;
+            }
+        }
+    }
 
     /// <summary>
-    /// Inicializa el componente configurando el temporizador para el debounce.
-    /// Este método se llama una vez cuando el componente es inicializado.
-    /// Configura un temporizador que se utiliza para retrasar la búsqueda mientras el usuario escribe,
-    /// mejorando el rendimiento al evitar múltiples búsquedas innecesarias.
+    /// Inicializa el componente y configura el temporizador para el debounce de búsqueda.
+    /// Este método se ejecuta una vez durante la inicialización del componente.
     /// </summary>
+    /// <remarks>
+    /// Configura un temporizador que se activa después del intervalo de debounce especificado
+    /// para evitar realizar búsquedas con cada pulsación de tecla, mejorando el rendimiento.
+    /// </remarks>
     protected override void OnInitialized()
     {
-        DebounceTimer = new System.Timers.Timer(DebounceInterval)
+        DebounceTimerField = new System.Timers.Timer(DebounceInterval)
         {
             AutoReset = false
         };
-        DebounceTimer.Elapsed += DebounceElapsed;
+        DebounceTimerField.Elapsed += DebounceElapsed;
+    }
+
+    /// <summary>
+    /// Maneja la actualización de parámetros del componente, sincronizando el valor externo
+    /// con el estado interno del autocomplete.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Este método se ejecuta cuando los parámetros del componente cambian, detectando
+    /// específicamente cuando el valor (Value) ha sido establecido desde una fuente externa
+    /// (como una base de datos) y actualizando el texto de búsqueda en consecuencia.
+    /// </para>
+    /// <para>
+    /// Utiliza flags de control (ValueFromExternalSourceField, IsSettingValueInternallyField)
+    /// para determinar el origen de los cambios y evitar bucles de actualización.
+    /// </para>
+    /// </remarks>
+    protected override async Task OnParametersSetAsync()
+    {
+        if (ValueFromExternalSourceField && !IsSettingValueInternallyField)
+        {
+            ValueFromExternalSourceField = false;
+            SearchTextField = Value != null ? DisplayItem(Value) : string.Empty;
+            await UpdateItemsFromValue();
+        }
+    }
+
+    private async Task UpdateItemsFromValue()
+    {
+        if (Value == null)
+        {
+            ItemsField.Clear();
+            IsDropdownVisible = false;
+            return;
+        }
+
+        if (SearchHandler != null)
+        {
+            try
+            {
+                IEnumerable<T> results = await SearchHandler(DisplayItem(Value), CancellationToken.None);
+                ItemsField = results?.ToList() ?? new List<T>();
+
+                // Ensure the current value is in the list
+                if (Value != null && !ItemsField.Any(item => Comparer.Equals(item, Value)))
+                {
+                    ItemsField.Add(Value);
+                }
+            }
+            catch
+            {
+                ItemsField = new List<T> { Value };
+            }
+        }
+        else
+        {
+            ItemsField = new List<T> { Value };
+        }
     }
 
     private async Task HandleInput(ChangeEventArgs e)
     {
         SearchText = e.Value?.ToString() ?? string.Empty;
-        SelectedIndex = -1;
+        SelectedIndexField = -1;
 
         if (string.IsNullOrEmpty(SearchText) && ResetValueOnEmptyText)
         {
             await UpdateValueAsync(default);
-            Items = [];
+            ItemsField.Clear();
             IsDropdownVisible = false;
         }
         else
         {
             // Reinicia el debounce
-            DebounceTimer.Stop();
-            DebounceTimer.Start();
+            DebounceTimerField.Stop();
+            DebounceTimerField.Start();
         }
     }
 
     private async void DebounceElapsed(object sender, System.Timers.ElapsedEventArgs e)
     {
-        if (Disposed) return;
+        if (DisposedField)
+        {
+            return;
+        }
 
-        CancellationTokenSource?.Cancel();
-        CancellationTokenSource = new CancellationTokenSource();
+        CancellationTokenSourceField?.Cancel();
+        CancellationTokenSourceField = new CancellationTokenSource();
 
         await InvokeAsync(async () =>
         {
-            await PerformSearch(CancellationTokenSource.Token);
+            await PerformSearch(CancellationTokenSourceField.Token);
         });
     }
 
@@ -134,7 +245,7 @@ public partial class Autocomplete<T>
             try
             {
                 IEnumerable<T> results = await SearchHandler(SearchText, token);
-                Items = results ?? [];
+                ItemsField = results?.ToList() ?? new List<T>();
             }
             catch (OperationCanceledException)
             {
@@ -143,76 +254,114 @@ public partial class Autocomplete<T>
         }
         else
         {
-            Items = [];
+            ItemsField.Clear();
         }
 
-        SelectedIndex = -1;
-        IsDropdownVisible = Items.Any();
+        SelectedIndexField = -1;
+        IsDropdownVisibleField = ItemsField.Any();
         StateHasChanged();
     }
 
     private void HandleKeyDown(KeyboardEventArgs e)
     {
-        if (!IsDropdownVisible || !Items.Any()) return;
+        if (!IsDropdownVisible || !Items.Any())
+        {
+            return;
+        }
 
         if (e.Key == "ArrowDown")
-            SelectedIndex = (SelectedIndex + 1) % Items.Count();
+        {
+            SelectedIndexField = (SelectedIndexField + 1) % ItemsField.Count;
+        }
         else if (e.Key == "ArrowUp")
-            SelectedIndex = (SelectedIndex - 1 + Items.Count()) % Items.Count();
-        else if (e.Key == "Enter" && SelectedIndex >= 0)
-            _ = SelectOption(Items.ElementAt(SelectedIndex));
+        {
+            SelectedIndexField = (SelectedIndexField - 1 + ItemsField.Count) % ItemsField.Count;
+        }
+        else if (e.Key == "Enter" && SelectedIndexField >= 0)
+        {
+            _ = SelectOption(ItemsField[SelectedIndexField]);
+        }
     }
 
     private void ShowSuggestions()
     {
         if (SearchText.Length >= MinCharacters && Items.Any())
+        {
             IsDropdownVisible = true;
+        }
     }
 
     private async Task HideSuggestionsWithDelay()
     {
         await Task.Delay(200);
-        if (!Disposed)
+        if (!DisposedField)
+        {
             IsDropdownVisible = false;
+        }
     }
 
     private async Task SelectOption(T option)
     {
         SearchText = DisplayItem(option);
-        Items = [];
+        ItemsField.Clear();
         IsDropdownVisible = false;
-        SelectedIndex = -1;
+        SelectedIndexField = -1;
 
         await UpdateValueAsync(option);
 
         if (OnSelected.HasDelegate)
+        {
             await OnSelected.InvokeAsync(option);
+        }
     }
 
     private async Task ClearSearch()
     {
         SearchText = string.Empty;
-        Items = [];
+        ItemsField.Clear();
         IsDropdownVisible = false;
-        SelectedIndex = -1;
+        SelectedIndexField = -1;
 
         if (ResetValueOnEmptyText)
+        {
             await UpdateValueAsync(default);
+        }
     }
 
     private async Task UpdateValueAsync(T val)
     {
-        Value = val;
-        await ValueChanged.InvokeAsync(val);
+        if (Comparer.Equals(ValueField, val)) return;
+
+        IsSettingValueInternallyField = true;
+        try
+        {
+            ValueField = val;
+            SearchTextField = val != null ? DisplayItem(val) : string.Empty;
+            await ValueChanged.InvokeAsync(val);
+
+            if (OnSelected.HasDelegate)
+            {
+                await OnSelected.InvokeAsync(val);
+            }
+        }
+        finally
+        {
+            IsSettingValueInternallyField = false;
+        }
     }
+
     /// <summary>
     /// Libera los recursos administrados utilizados por la instancia.
     /// </summary>
     public void Dispose()
     {
-        Disposed = true;
-        DebounceTimer?.Stop();
-        DebounceTimer?.Dispose();
-        CancellationTokenSource?.Cancel();
+        if (!DisposedField)
+        {
+            DisposedField = true;
+            DebounceTimerField?.Stop();
+            DebounceTimerField?.Dispose();
+            CancellationTokenSourceField?.Cancel();
+            CancellationTokenSourceField?.Dispose();
+        }
     }
 }

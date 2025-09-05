@@ -19,7 +19,7 @@ public class BulkOperationsConfiguration
     public int NotifyAfter { get; set; }
 
     ///<summary> Mapeos de columnas personalizados. </summary>
-    public List<ColumnMapping> ColumnMappings { get; set; } = new List<ColumnMapping>();
+    public List<ColumnMapping> ColumnMappings { get; set; } = new();
 
     ///<summary> Callback para notificaciones de progreso. </summary>
 
@@ -50,7 +50,7 @@ public class ColumnMapping
 ///<summary> Builder para configurar operaciones bulk de manera fluida. </summary>
 public class BulkOperationsConfigurationBuilder
 {
-    private readonly BulkOperationsConfiguration Configuration = new BulkOperationsConfiguration();
+    private readonly BulkOperationsConfiguration Configuration = new();
 
     /// <summary> Establece la tabla destino. </summary>
     public BulkOperationsConfigurationBuilder ToTable(string tableName)

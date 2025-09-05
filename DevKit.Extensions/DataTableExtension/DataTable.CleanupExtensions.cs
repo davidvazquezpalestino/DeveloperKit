@@ -5,7 +5,11 @@ public static partial class DataTableExtensions
     /// <summary>Reemplaza todos los valores DBNull en el DataTable por el valor predeterminado especificado.</summary>
     public static void ReplaceNulls(this DataTable table, object defaultValue)
     {
-        if (table == null) return;
+        if (table == null)
+        {
+            return;
+        }
+
         foreach (DataRow row in table.Rows)
         {
             foreach (DataColumn column in table.Columns)
@@ -21,7 +25,11 @@ public static partial class DataTableExtensions
     /// <summary>Elimina todas las filas que contengan valores nulos o DBNull en cualquier columna.</summary>
     public static DataTable RemoveRowsWithNulls(this DataTable table)
     {
-        if (table == null) return new DataTable();
+        if (table == null)
+        {
+            return new DataTable();
+        }
+
         List<DataRow> rowsToRemove = new List<DataRow>();
 
         foreach (DataRow row in table.Rows)

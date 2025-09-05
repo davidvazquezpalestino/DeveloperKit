@@ -2,13 +2,14 @@
 
 //cargar DI
 
-using DevKit.ExecutionEngine.MySQL;
 using DevKit.ExecutionEngine.MySQL.Abstractions;
+using DevKit.ExecutionEngine.MySQL.Implementations;
 using DevKit.ExecutionEngine.MySQL.Settings;
 using DevKit.ExecutionEngine.PostgreSQL;
 using DevKit.ExecutionEngine.PostgreSQL.Abstractions;
 using DevKit.ExecutionEngine.PostgreSQL.Settings;
 using DevKit.ExecutionEngine.SQLServer.Abstractions;
+using DevKit.ExecutionEngine.SQLServer.Extensions;
 using DevKit.ExecutionEngine.SQLServer.Implementations;
 using DevKit.ExecutionEngine.SQLServer.Settings;
 using Microsoft.Extensions.Options;
@@ -17,7 +18,7 @@ using System.Data;
 IHost host = CreateHostBuilder().Build();
 
 
-ISQLServerDatabaseProvider infomexDataBase = host.Services.GetRequiredKeyedService<ISQLServerDatabaseProvider>("Infomex");
+ISQLServerProvider infomexDataBase = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
 
 DateTime currentDateTime = await infomexDataBase.GetCurrentDateTimeAsync();
 Console.WriteLine(currentDateTime);
@@ -27,7 +28,24 @@ Console.WriteLine("Consultando SQL Sever");
 DataTable table = await infomexDataBase.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
 table.TableName = "Asentamientos";
 
-IMySQLDatabaseProvider mySqlDatabase = host.Services.GetRequiredService<IMySQLDatabaseProvider>();
+
+List<Asentamientos> asentamientosList = await infomexDataBase
+    .From<Asentamientos>()
+    .WithSchema("Comprobante")
+    .WithTableName("VW_Asentamientos")
+    .Where(u => u.Estado == "VERACRUZ" && u.Asentamiento.StartsWith("A") && u.Asentamiento.EndsWith("A"))
+    .OrderBy(u => u.Asentamiento)
+    .ToListAsync();
+
+
+List<Asentamientos> asentamientosList2 = await infomexDataBase
+    .From<Asentamientos>()
+    .WithSchema("Comprobante")
+    .WithTableName("VW_Asentamientos")
+    .ToListAsync();
+
+
+IMySqlProvider mySqlDatabase = host.Services.GetRequiredService<IMySqlProvider>();
 await mySqlDatabase.ExecuteBulkInsertToTableAsync(table, table.TableName);
 
 Console.WriteLine("consultando MySQL");
@@ -36,7 +54,7 @@ mySqlDatabase.ExecuteBulkInsertToTable(table, table.TableName);
 DataTable asTable = mySqlDatabase.ExecuteQueryAsTable("SELECT * FROM Sepomex.Asentamientos");
 asTable.TableName = "AsentamientosV2";
 
-IPostgreSqlDatabaseProvider postgreDatabase = host.Services.GetRequiredService<IPostgreSqlDatabaseProvider>();
+IPostgreSqlProvider postgreDatabase = host.Services.GetRequiredService<IPostgreSqlProvider>();
 
 await postgreDatabase.ExecuteBulkInsertToTableAsync(table, table.TableName);
 
@@ -58,7 +76,7 @@ static IHostBuilder CreateHostBuilder()
         {
             services.Configure<RepositoryOptions>(builder.Configuration.GetSection(RepositoryOptions.SectionKey));
 
-            services.AddKeyedScoped<ISQLServerDatabaseProvider>("Infomex", (provider, _) =>
+            services.AddKeyedScoped<ISQLServerProvider>("Infomex", (provider, _) =>
             {
                 RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
 
@@ -67,10 +85,10 @@ static IHostBuilder CreateHostBuilder()
                     ConnectionString = repositoryOptions.ConnectionStringInfomex
                 };
 
-                return new SQLServerDatabaseProvider(Options.Create(options));
+                return new SQLServerProvider(Options.Create(options));
             });
 
-            services.AddScoped<ISQLServerDatabaseProvider>(provider =>
+            services.AddScoped<ISQLServerProvider>(provider =>
             {
                 RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
 
@@ -79,10 +97,10 @@ static IHostBuilder CreateHostBuilder()
                     ConnectionString = repositoryOptions.ConnectionStringInfomex
                 };
 
-                return new SQLServerDatabaseProvider(Options.Create(options));
+                return new SQLServerProvider(Options.Create(options));
             });
 
-            services.AddScoped<IMySQLDatabaseProvider>(provider =>
+            services.AddScoped<IMySqlProvider>(provider =>
             {
                 RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
                 MySqlOptions options = new MySqlOptions
@@ -93,17 +111,17 @@ static IHostBuilder CreateHostBuilder()
                         AllowLoadLocalInfile = true
                     }
                 };
-                return new MySqlDatabaseProvider(Options.Create(options));
+                return new MySqlProvider(Options.Create(options));
             });
 
-            services.AddScoped<IPostgreSqlDatabaseProvider>(provider =>
+            services.AddScoped<IPostgreSqlProvider>(provider =>
             {
                 RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
                 PostgreOptions options = new PostgreOptions
                 {
                     ConnectionString = repositoryOptions.PosgreSql
                 };
-                return new PostgreSqlDatabaseProvider(Options.Create(options));
+                return new PostgreSqlProvider(Options.Create(options));
             });
 
         });
@@ -118,4 +136,20 @@ namespace ConsoleNet8
         public string MySql { get; set; }
         public string PosgreSql { get; set; }
     }
+}
+
+public class Asentamientos
+{
+    public int ColoniaID { get; set; }
+    public string CodigoPostal { get; set; }
+    public string NumeroAsentamiento { get; set; }
+    public string Asentamiento { get; set; }
+    public string NumeroMunicipio { get; set; }
+    public string Municipio { get; set; }
+    public string NumeroLocalidad { get; set; }
+    public string Localidad { get; set; }
+    public string NumeroEstado { get; set; }
+    public string Estado { get; set; }
+    public string NumeroPais { get; set; }
+    public string Pais { get; set; }
 }

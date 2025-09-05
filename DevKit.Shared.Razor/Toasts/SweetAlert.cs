@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace DevKit.Shared.Razor.Toasts
 {
     /// <summary>
@@ -16,8 +18,12 @@ namespace DevKit.Shared.Razor.Toasts
             await EnsureInitializedAsync();
             await jsRuntime.InvokeVoidAsync(
                 $"{SweetAlert2}.fire",
-                message,
-                icon.ToString().ToLower());
+                new
+                {
+                    title = "Soluciones Tecnológicas para su negocio",
+                    text = message,
+                    icon = icon != SweetAlertIcon.None ? icon.ToString().ToLower() : null
+                });
         }
 
         /// <summary>
@@ -25,12 +31,12 @@ namespace DevKit.Shared.Razor.Toasts
         /// </summary>
         public async Task<bool> ShowConfirmAsync(
             string message,
-            string confirmButtonText = "Aceptar",
-            string cancelButtonText = "Cancelar",
+            string confirmButtonText = "Sí, continuar",
+            string cancelButtonText = "No, cancelar",
             SweetAlertIcon icon = SweetAlertIcon.Question)
         {
             await EnsureInitializedAsync();
-            object result = await jsRuntime.InvokeAsync<object>(
+            var result = await jsRuntime.InvokeAsync<JsonElement>(
                 $"{SweetAlert2}.fire",
                 new
                 {
@@ -44,8 +50,9 @@ namespace DevKit.Shared.Razor.Toasts
                     cancelButtonColor = "#d33"
                 });
 
-            // SweetAlert2 devuelve un objeto con la propiedad 'isConfirmed' cuando se usa con confirm
-            return result?.GetType().GetProperty("isConfirmed")?.GetValue(result) as bool? ?? false;
+            // Check the result using JsonElement
+            return result.TryGetProperty("isConfirmed", out var isConfirmed) &&
+                   isConfirmed.GetBoolean();
         }
 
         /// <summary>
@@ -64,7 +71,7 @@ namespace DevKit.Shared.Razor.Toasts
                     timer = duration,
                     title = "Soluciones Tecnológicas para su negocio",
                     text = message,
-                    icon = icon.ToString().ToLower()
+                    icon = icon != SweetAlertIcon.None ? icon.ToString().ToLower() : null
                 });
         }
 
@@ -74,9 +81,20 @@ namespace DevKit.Shared.Razor.Toasts
         public async Task ShowSuccessAsync(string message, bool asToast = false)
         {
             if (asToast)
+            {
                 await ShowToastAsync(message);
+            }
             else
-                await ShowAlertAsync(message, SweetAlertIcon.Success);
+            {
+                await jsRuntime.InvokeVoidAsync(
+                    $"{SweetAlert2}.fire",
+                    new
+                    {
+                        title = "Soluciones Tecnológicas para su negocio",
+                        text = message,
+                        icon = nameof(SweetAlertIcon.Success).ToLower()
+                    });
+            }
         }
 
         /// <summary>
@@ -85,9 +103,20 @@ namespace DevKit.Shared.Razor.Toasts
         public async Task ShowErrorAsync(string message, bool asToast = false)
         {
             if (asToast)
+            {
                 await ShowToastAsync(message, SweetAlertIcon.Error);
+            }
             else
-                await ShowAlertAsync(message, SweetAlertIcon.Error);
+            {
+                await jsRuntime.InvokeVoidAsync(
+                    $"{SweetAlert2}.fire",
+                    new
+                    {
+                        title = "Soluciones Tecnológicas para su negocio",
+                        text = message,
+                        icon = nameof(SweetAlertIcon.Error).ToLower()
+                    });
+            }
         }
 
         /// <summary>
@@ -96,9 +125,20 @@ namespace DevKit.Shared.Razor.Toasts
         public async Task ShowWarningAsync(string message, bool asToast = true)
         {
             if (asToast)
+            {
                 await ShowToastAsync(message, SweetAlertIcon.Warning);
+            }
             else
-                await ShowAlertAsync(message, SweetAlertIcon.Warning);
+            {
+                await jsRuntime.InvokeVoidAsync(
+                    $"{SweetAlert2}.fire",
+                    new
+                    {
+                        title = "Soluciones Tecnológicas para su negocio",
+                        text = message,
+                        icon = nameof(SweetAlertIcon.Warning).ToLower()
+                    });
+            }
         }
 
         /// <summary>
@@ -107,9 +147,20 @@ namespace DevKit.Shared.Razor.Toasts
         public async Task ShowInfoAsync(string message, bool asToast = true)
         {
             if (asToast)
+            {
                 await ShowToastAsync(message, SweetAlertIcon.Info);
+            }
             else
-                await ShowAlertAsync(message, SweetAlertIcon.Info);
+            {
+                await jsRuntime.InvokeVoidAsync(
+                    $"{SweetAlert2}.fire",
+                    new
+                    {
+                        title = "Soluciones Tecnológicas para su negocio",
+                        text = message,
+                        icon = nameof(SweetAlertIcon.Info).ToLower()
+                    });
+            }
         }
 
         private async ValueTask EnsureInitializedAsync()
