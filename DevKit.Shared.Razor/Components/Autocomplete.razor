@@ -34,11 +34,11 @@
     {
         <ul class="dropdown-menu show position-absolute"
             style="min-width: 100%; width: auto; white-space: nowrap;">
-            @for (int index = 0; index < Items.Count(); index++)
+            @for (int index = 0; index < Items.Count; index++)
             {
-                T option = Items.ElementAt(index);
+                var option = Items[index];
                 <li>
-                    <button class="dropdown-item @(index == SelectedIndex ? "active" : "")"
+                    <button class="dropdown-item @(index == SelectedIndexField ? "active" : "")"
                             @onclick="() => SelectOption(option)">
                         @DisplayItem(option)
                     </button>

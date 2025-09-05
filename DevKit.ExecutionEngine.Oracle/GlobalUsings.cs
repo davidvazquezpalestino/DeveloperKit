@@ -1,5 +1,4 @@
 global using DevKit.ExecutionEngine.Oracle.Abstractions;
-global using DevKit.ExecutionEngine.Oracle.QueryBuilder;
 global using DevKit.ExecutionEngine.Oracle.Settings;
 global using DevKit.Extensions;
 global using Microsoft.Extensions.Options;
@@ -8,4 +7,3 @@ global using System;
 global using System.Data;
 global using System.Data.Common;
 global using System.Reflection;
-global using System.Text;
