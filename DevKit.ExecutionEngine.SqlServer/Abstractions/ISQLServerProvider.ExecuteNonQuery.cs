@@ -5,7 +5,7 @@ public partial interface ISQLServerProvider
     /// <summary>
     /// Ejecuta un comando que no devuelve resultados.
     /// </summary>
-    void ExecuteNonQuery(string command, Action<IDataParameterCollection> dbParameters = null);
+    void ExecuteCommand(string command, Action<IDataParameterCollection> dbParameters = null);
 
     /// <summary>
     /// Ejecuta un procedimiento almacenado sin esperar resultados.

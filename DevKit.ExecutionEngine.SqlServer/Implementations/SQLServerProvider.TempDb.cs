@@ -4,13 +4,13 @@ namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 public partial class SQLServerProvider
 {
     /// <summary>Elimina una tabla de la base de datos si existe.</summary>
-    public void DropTableIfExists(string tableName) => ExecuteNonQuery(DropTableScriptSQL(tableName));
+    public void DropTableIfExists(string tableName) => ExecuteCommand(DropTableScriptSQL(tableName));
 
     /// <summary>Crea una nueva tabla en la base de datos basada en la estructura de un DataTable.</summary>
     /// <param name="source">DataTable que contiene la estructura de la tabla a crear.</param>
     /// <param name="target">Nombre de la tabla de destino.</param>
     public void CreateTable(DataTable source, string target) =>
-        ExecuteNonQuery(CreateTableScriptSQL(source, target));
+        ExecuteCommand(CreateTableScriptSQL(source, target));
 
     /// <summary>Genera el script SQL para eliminar una tabla si existe.</summary>
     internal static string DropTableScriptSQL(string table)
@@ -40,11 +40,12 @@ public partial class SQLServerProvider
             [typeof(float)] = _ => "FLOAT",
             [typeof(byte[])] = _ => "VARBINARY(MAX)",
             [typeof(long)] = _ => "BIGINT",
-            [typeof(short)] = _ => "INT",
+            [typeof(short)] = _ => "SMALLINT",
             [typeof(int)] = _ => "INT",
             [typeof(DateTime)] = _ => "DATETIME",
             [typeof(bool)] = _ => "BIT",
-            [typeof(Guid)] = _ => "UNIQUEIDENTIFIER"
+            [typeof(Guid)] = _ => "UNIQUEIDENTIFIER",
+            [typeof(byte)] = _ => "TINYINT"
         };
 
         if (typeMapping.TryGetValue(column.DataType, out Func<int, string> mapper))
