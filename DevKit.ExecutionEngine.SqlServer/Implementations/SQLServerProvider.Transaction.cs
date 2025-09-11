@@ -13,7 +13,9 @@ public partial class SQLServerProvider
     public void CommitTransaction()
     {
         if (Transaccion == null)
+        {
             throw new InvalidOperationException("No hay una transacción activa para confirmar.");
+        }
 
         using (Transaccion)
         {
@@ -23,14 +25,18 @@ public partial class SQLServerProvider
         Transaccion = null;
 
         if (Connection.State != ConnectionState.Closed)
+        {
             Connection.Close();
+        }
     }
     /// <summary>Revierte la transacción y cierra la conexión.</summary>
     /// <exception cref="InvalidOperationException">Se lanza cuando no hay una transacción activa.</exception>
     public void RollbackTransaction()
     {
         if (Transaccion == null)
+        {
             throw new InvalidOperationException("No hay una transacción activa para revertir.");
+        }
 
         try
         {
@@ -40,7 +46,10 @@ public partial class SQLServerProvider
         {
             Transaccion?.Dispose();
             Transaccion = null;
-            if (Connection.State != ConnectionState.Closed) Connection.Close();
+            if (Connection.State == ConnectionState.Open)
+            {
+                Connection.Close();
+            }
         }
     }
 }

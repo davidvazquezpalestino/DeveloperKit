@@ -49,7 +49,9 @@ public partial class SQLServerProvider
         };
 
         if (typeMapping.TryGetValue(column.DataType, out Func<int, string> mapper))
+        {
             return mapper(column.MaxLength);
+        }
 
         throw new Exception($"Tipo de dato no considerado: {column.ColumnName} {column.DataType.FullName}");
     }

@@ -123,7 +123,9 @@ public partial class Autocomplete<T>
             {
                 IsDropdownVisibleField = value;
                 if (!IsDropdownVisibleField)
+                {
                     SelectedIndexField = -1;
+                }
             }
         }
     }
@@ -330,7 +332,10 @@ public partial class Autocomplete<T>
 
     private async Task UpdateValueAsync(T val)
     {
-        if (Comparer.Equals(ValueField, val)) return;
+        if (Comparer.Equals(ValueField, val))
+        {
+            return;
+        }
 
         IsSettingValueInternallyField = true;
         try

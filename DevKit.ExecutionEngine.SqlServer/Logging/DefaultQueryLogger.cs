@@ -37,7 +37,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Logging
 
                 foreach (KeyValuePair<string, object> param in parameters)
                 {
-                    logMessage.AppendLine($"  {param.Key} = {param.Value} (Type: {param.Value?.GetType().Name ?? "null"})");
+                    logMessage.AppendLine($"{param.Key} = {param.Value}");
                 }
             }
 

@@ -14,7 +14,6 @@ public partial interface ISQLServerProvider
     /// <returns>DataTable con los resultados del procedimiento.</returns>
     DataTable ExecuteProcedureAsTable(string storedProcedure, Action<IDataParameterCollection> parameter = null);
 
-
     /// <summary>
     /// Ejecuta una consulta de forma asíncrona y devuelve un DataTable.
     /// </summary>

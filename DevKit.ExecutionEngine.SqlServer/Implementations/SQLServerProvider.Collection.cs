@@ -8,7 +8,7 @@ public partial class SQLServerProvider
     /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
     /// <param name="storedProcedure">Nombre del procedimiento almacenado</param>
     /// <param name="expression">Función para mapear cada registro a una entidad</param>
-    /// <param name="parametros">Parámetros del procedimiento</param>
+    /// <param name="dbParameters">Parámetros del procedimiento</param>
     /// <returns>Lista de entidades mapeadas</returns>
     public ICollection<T> ExecuteProcedureAsList<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)
     {

@@ -16,7 +16,6 @@ public partial interface ISQLServerProvider
     /// </summary>
     public string ConnectionString { get; }
 
-
     /// <summary>
     /// Ejecuta una consulta y mapea el primer registro a la entidad indicada.
     /// </summary>
@@ -27,7 +26,7 @@ public partial interface ISQLServerProvider
     /// </summary>
     /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
     /// <param name="query">Consulta SQL a ejecutar</param>
-    /// <param name="parametros">Parámetros de la consulta</param>
+    /// <param name="dbParameters">Parámetros de la consulta</param>
     /// <returns>Primer elemento que cumple con la condición</returns>
     T First<T>(string query, Action<IDataParameterCollection> dbParameters = null) where T : class, new();
 
@@ -36,7 +35,7 @@ public partial interface ISQLServerProvider
     /// </summary>
     /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
     /// <param name="query">Consulta SQL a ejecutar</param>
-    /// <param name="parametros">Parámetros de la consulta</param>
+    /// <param name="dbParameters">Parámetros de la consulta</param>
     /// <returns>Primer elemento que cumple con la condición o valor predeterminado</returns>
     T FirstOrDefault<T>(string query, Action<IDataParameterCollection> dbParameters = null) where T : class, new();
 

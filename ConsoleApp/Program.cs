@@ -30,18 +30,26 @@ table.TableName = "Asentamientos";
 
 
 List<Asentamientos> asentamientosList = await infomexDataBase
-    .From<Asentamientos>()
-    .WithSchema("Comprobante")
-    .WithTableName("VW_Asentamientos")
-    .Where(u => u.Estado == "VERACRUZ" && u.Asentamiento.StartsWith("A") && u.Asentamiento.EndsWith("A"))
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+    .Where(u => u.Estado == "VERACRUZ" && u.Asentamiento.StartsWith("MAGU")  )
     .OrderBy(u => u.Asentamiento)
-    .ToListAsync();
+    .Select(u => new Asentamientos
+    {
+        ColoniaID = u.ColoniaID,
+        CodigoPostal = u.CodigoPostal,
+        NumeroAsentamiento = u.NumeroAsentamiento,
+        Asentamiento = u.Asentamiento,
+        NumeroMunicipio = u.NumeroMunicipio,
+        Municipio = u.Municipio,
+        NumeroLocalidad = u.NumeroLocalidad,
+        Localidad = u.Localidad,
+        NumeroEstado = u.NumeroEstado,
+        Estado = u.Estado
+    }).ToListAsync();
 
 
 List<Asentamientos> asentamientosList2 = await infomexDataBase
-    .From<Asentamientos>()
-    .WithSchema("Comprobante")
-    .WithTableName("VW_Asentamientos")
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
     .ToListAsync();
 
 

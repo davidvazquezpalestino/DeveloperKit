@@ -12,8 +12,6 @@ public partial interface ISQLServerProvider
     /// <param name="target">The target table name.</param>
     void ExecuteBulkInsert(DataTable source, string target);
 
-
-
     /// <summary>
     /// Realiza una copia masiva de un DataTable a la tabla destino de forma asíncrona.
     /// </summary>

@@ -28,8 +28,8 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
     /// </summary>
     internal string TableName { get; }
 
-    internal List<Expression<Func<T, bool>>> WhereExpressions { get; } = new();
-    internal List<(string column, bool isAscending)> OrderByField { get; } = new();
+    internal List<Expression<Func<T, bool>>> Where { get; } = new();
+    internal List<(string column, bool isAscending)> OrderBy { get; } = new();
     internal int? TakeField { get; set; }
     internal int? SkipField { get; set; }
     internal bool DistinctField { get; set; }
@@ -37,7 +37,7 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
 
     internal Expression<Func<T, object>> SelectExpression { get; set; }
 
-    internal QueryState(ISQLServerProvider dbProvider, string schema = null, string tableName = null)
+    internal QueryState(ISQLServerProvider dbProvider, string schema , string tableName )
     {
         DbProvider = dbProvider ?? throw new ArgumentNullException(nameof(dbProvider));
         Schema = schema;
@@ -102,11 +102,11 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
         sqlBuilder.Append($"[{TableName}]");
 
         // WHERE
-        if (WhereExpressions.Count > 0)
+        if (Where.Count > 0)
         {
             sqlBuilder.Append(" WHERE ");
             bool first = true;
-            foreach (Expression<Func<T, bool>> whereExpr in WhereExpressions)
+            foreach (Expression<Func<T, bool>> whereExpr in Where)
             {
                 if (!first)
                 {
@@ -126,11 +126,11 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
         }
 
         // ORDER BY
-        if (OrderByField.Count > 0)
+        if (OrderBy.Count > 0)
         {
             sqlBuilder.Append(" ORDER BY ");
             bool first = true;
-            foreach ((string column, bool isAscending) in OrderByField)
+            foreach ((string column, bool isAscending) in OrderBy)
             {
                 if (!first)
                 {
@@ -190,45 +190,5 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
         Parameters = queryInfo.Parameters ?? new Dictionary<string, object>();
 
         return result.ToList();
-    }
-
-    /// <summary>
-    /// Establece el esquema para la consulta.
-    /// </summary>
-    /// <param name="schema">Nombre del esquema a utilizar</param>
-    /// <returns>El estado de la consulta con el esquema establecido</returns>
-    public QueryState<T> WithSchema(string schema)
-    {
-        QueryState<T> queryState = new(DbProvider, schema, TableName)
-        {
-            TakeField = TakeField,
-            SkipField = SkipField,
-            SelectExpression = SelectExpression
-        };
-
-        queryState.WhereExpressions.AddRange(WhereExpressions);
-        queryState.OrderByField.AddRange(OrderByField);
-
-        return queryState;
-    }
-
-    /// <summary>
-    /// Sets the table name for the query.
-    /// </summary>
-    /// <param name="tableName">The table name to use</param>
-    /// <returns>The query state with the table name set</returns>
-    public QueryState<T> WithTableName(string tableName)
-    {
-        QueryState<T> queryState = new(DbProvider, Schema, tableName)
-        {
-            TakeField = TakeField,
-            SkipField = SkipField,
-            SelectExpression = SelectExpression
-        };
-
-        queryState.WhereExpressions.AddRange(WhereExpressions);
-        queryState.OrderByField.AddRange(OrderByField);
-
-        return queryState;
     }
 }

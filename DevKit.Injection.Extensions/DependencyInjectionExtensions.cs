@@ -11,7 +11,7 @@ public static class DependencyInjectionExtensions
     public static IServiceCollection AddFromAssembly(this IServiceCollection services,
         Assembly assembly,
         Func<Type, bool>? filter = null,
-        Action<string>? logger = null,
+        Action<string>? LogTo = null,
         bool onlyClass = false,
         ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
@@ -67,19 +67,19 @@ public static class DependencyInjectionExtensions
             if (onlyClass)
             {
                 services.TryAdd(new ServiceDescriptor(type, type, lifetime));
-                logger?.Invoke($"Registrado => {type.Name}");
+                LogTo?.Invoke($"Registrado => {type.Name}");
             }
             else
             {
                 foreach (Type service in interfaces)
                 {
                     services.TryAdd(new ServiceDescriptor(service, type, lifetime));
-                    logger?.Invoke($"Registrado => {type.Name}:{service.Name}");
+                    LogTo?.Invoke($"Registrado => {type.Name}:{service.Name}");
                 }
             }
         }
 
-        logger?.Invoke(types.Count == 0
+        LogTo?.Invoke(types.Count == 0
             ? $"No se encontraron tipos en el ensamblado {assemblyName} que coincidan con los criterios."
             : $"Se encontraron {types.Count} tipos en el ensamblado {assemblyName}.");
 
@@ -91,10 +91,10 @@ public static class DependencyInjectionExtensions
     /// </summary>
     public static IServiceCollection AddServicesWithAttributes(this IServiceCollection services,
         Assembly assembly,
-        Action<string>? logger = null)
+        Action<string>? LogTo = null)
     {
         ServiceRegistrar registrar = new ServiceRegistrar(services);
-        registrar.RegisterFromAttributes(assembly, logger);
+        registrar.RegisterFromAttributes(assembly, LogTo);
         return services;
     }
 
@@ -104,10 +104,10 @@ public static class DependencyInjectionExtensions
     public static IServiceCollection AddImplementationsOf<TInterface>(this IServiceCollection services,
         Assembly assembly,
         ServiceLifetime lifetime = ServiceLifetime.Scoped,
-        Action<string>? logger = null)
+        Action<string>? LogTo = null)
     {
         ServiceRegistrar registrar = new ServiceRegistrar(services);
-        registrar.RegisterImplementationsOf<TInterface>(assembly, lifetime, logger);
+        registrar.RegisterImplementationsOf<TInterface>(assembly, lifetime, LogTo);
         return services;
     }
 
@@ -125,12 +125,12 @@ public static class DependencyInjectionExtensions
     public static IServiceCollection AddFromAssemblies(this IServiceCollection services,
         IEnumerable<Assembly> assemblies,
         Func<Type, bool>? filter = null,
-        Action<string>? logger = null,
+        Action<string>? LogTo = null,
         ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
         foreach (Assembly assembly in assemblies)
         {
-            services.AddFromAssembly(assembly, filter, logger, false, lifetime);
+            services.AddFromAssembly(assembly, filter, LogTo, false, lifetime);
         }
         return services;
     }
@@ -139,9 +139,9 @@ public static class DependencyInjectionExtensions
     /// Registra servicios del ensamblado actual automáticamente.
     /// </summary>
     public static IServiceCollection AddCurrentAssembly(this IServiceCollection services,
-        Action<string>? logger = null)
+        Action<string>? LogTo = null)
     {
         Assembly callingAssembly = Assembly.GetCallingAssembly();
-        return services.AddFromAssembly(callingAssembly, logger: logger);
+        return services.AddFromAssembly(callingAssembly, LogTo: LogTo);
     }
 }

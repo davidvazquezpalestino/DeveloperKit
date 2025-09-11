@@ -257,6 +257,79 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions
             return list.ToArray();
         }
 
+        /// <summary>
+        /// Ejecuta una consulta proyectada de forma asíncrona y devuelve los resultados como una lista.
+        /// </summary>
+        /// <typeparam name="T">El tipo de entidad fuente</typeparam>
+        /// <typeparam name="TResult">El tipo del resultado proyectado</typeparam>
+        /// <param name="queryState">El estado de la consulta proyectada</param>
+        /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
+        /// <returns>Una tarea que representa la operación asíncrona, conteniendo la lista de resultados proyectados</returns>
+        public static async Task<List<TResult>> ToListAsync<T, TResult>(this ProjectedQueryState<T, TResult> queryState, CancellationToken cancellationToken = default) where T : class, new()
+        {
+            QueryResult queryResult = BuildQuery(queryState);
+
+            // Registrar la consulta que se va a ejecutar
+            QueryLogger.LogQuery(
+                queryResult.SQL,
+                queryResult.Parameters,
+                IQueryLogger.LogLevel.Debug,
+                $"Iniciando consulta asíncrona proyectada ToList para {typeof(T).Name} -> {typeof(TResult).Name}");
+
+            try
+            {
+                // For anonymous types or complex projections, we need to use dynamic mapping
+                if (typeof(TResult).IsAnonymousType() || typeof(TResult) != typeof(T))
+                {
+                    // Use dynamic reader that can handle projections
+                    ICollection<TResult> result = await queryState.DbProvider.ExecuteQueryAsListAsync(
+                        queryResult.SQL,
+                        reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
+                        collection => collection.AddSqlParameters(queryResult.Parameters),
+                        cancellationToken);
+
+                    List<TResult> resultList = result.ToList();
+
+                    // Registrar el resultado
+                    QueryLogger.LogQuery(queryResult.SQL, queryResult.Parameters, IQueryLogger.LogLevel.Debug,
+                        $"Consulta asíncrona proyectada ToList completada. Se encontraron {resultList.Count} registros proyectados");
+
+                    return resultList;
+                }
+                else
+                {
+                    // For same-type projections, use the standard mapping
+                    ICollection<TResult> result = await queryState.DbProvider.ExecuteQueryAsListAsync(
+                        queryResult.SQL,
+                        reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
+                        collection => collection.AddSqlParameters(queryResult.Parameters),
+                        cancellationToken);
+
+                    List<TResult> resultList = result.ToList();
+
+                    // Registrar el resultado
+                    QueryLogger.LogQuery(
+                        queryResult.SQL,
+                        queryResult.Parameters,
+                        IQueryLogger.LogLevel.Debug,
+                        $"Consulta asíncrona proyectada ToList completada. Se encontraron {resultList.Count} registros");
+
+                    return resultList;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Registrar el error
+                QueryLogger.LogQuery(
+                    queryResult?.SQL ?? string.Empty,
+                    queryResult?.Parameters,
+                    IQueryLogger.LogLevel.Error,
+                    $"Error en consulta asíncrona proyectada ToList para {typeof(T).Name} -> {typeof(TResult).Name}: {ex.Message}");
+
+                throw; // Relanzar la excepción para que el llamador la maneje
+            }
+        }
+
         #endregion
     }
 }
