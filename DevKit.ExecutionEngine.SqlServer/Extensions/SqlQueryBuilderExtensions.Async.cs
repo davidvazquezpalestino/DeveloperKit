@@ -5,8 +5,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions
     /// </summary>
     public static partial class SqlQueryBuilderExtensions
     {
-        #region Métodos de ejecución asíncrona
-
+       
         /// <summary>
         /// Ejecuta la consulta de forma asíncrona y devuelve los resultados como una lista.
         /// </summary>
@@ -330,6 +329,5 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions
             }
         }
 
-        #endregion
     }
 }

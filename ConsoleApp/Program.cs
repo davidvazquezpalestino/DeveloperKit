@@ -18,59 +18,45 @@ using System.Data;
 IHost host = CreateHostBuilder().Build();
 
 
-ISQLServerProvider infomexDataBase = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
+ISQLServerProvider infomex = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
 
-DateTime currentDateTime = await infomexDataBase.GetCurrentDateTimeAsync();
+DateTime currentDateTime = await infomex.GetCurrentDateTimeAsync();
 Console.WriteLine(currentDateTime);
 
 Console.WriteLine("Consultando SQL Sever");
 
-DataTable table = await infomexDataBase.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
+DataTable table = await infomex.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
 table.TableName = "Asentamientos";
 
 
-List<Asentamientos> asentamientosList = await infomexDataBase
+List<Asentamientos> asentamientosList = await infomex
     .From<Asentamientos>("Comprobante", "VW_Asentamientos")
     .Where(u => u.Estado == "VERACRUZ" && u.Asentamiento.StartsWith("MAGU")  )
     .OrderBy(u => u.Asentamiento)
-    .Select(u => new Asentamientos
-    {
-        ColoniaID = u.ColoniaID,
-        CodigoPostal = u.CodigoPostal,
-        NumeroAsentamiento = u.NumeroAsentamiento,
-        Asentamiento = u.Asentamiento,
-        NumeroMunicipio = u.NumeroMunicipio,
-        Municipio = u.Municipio,
-        NumeroLocalidad = u.NumeroLocalidad,
-        Localidad = u.Localidad,
-        NumeroEstado = u.NumeroEstado,
-        Estado = u.Estado
-    }).ToListAsync();
+    .ToListAsync();
 
 
-List<Asentamientos> asentamientosList2 = await infomexDataBase
+List<Asentamientos> asentamientosList2 = await infomex
     .From<Asentamientos>("Comprobante", "VW_Asentamientos")
     .ToListAsync();
 
 
-IMySqlProvider mySqlDatabase = host.Services.GetRequiredService<IMySqlProvider>();
-await mySqlDatabase.ExecuteBulkInsertToTableAsync(table, table.TableName);
 
-Console.WriteLine("consultando MySQL");
-mySqlDatabase.ExecuteBulkInsertToTable(table, table.TableName);
+var results = infomex
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+    .Where(u => u.Estado == "VERACRUZ")
+    .Count();
 
-DataTable asTable = mySqlDatabase.ExecuteQueryAsTable("SELECT * FROM Sepomex.Asentamientos");
-asTable.TableName = "AsentamientosV2";
+var results2 = infomex
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+    .Where(u => u.Estado == "VERACRUZ")
+    .OrderBy(u => u.Asentamiento)
+    .Select(u => new { u.ColoniaID, u.Asentamiento })
+    .ToList(); // Método síncrono
 
-IPostgreSqlProvider postgreDatabase = host.Services.GetRequiredService<IPostgreSqlProvider>();
 
-await postgreDatabase.ExecuteBulkInsertToTableAsync(table, table.TableName);
 
-table.TableName = "AsentamientosV3";
-postgreDatabase.ExecuteBulkInsertToTable(table, table.TableName);
 
-DataTable tablaPostgres = await postgreDatabase.ExecuteQueryAsTableAsync("SELECT * FROM public.\"AsentamientosV3\";");
-Console.WriteLine("Consultando PostgreSQL");
 
 Console.WriteLine("Fin");
 
