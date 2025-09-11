@@ -355,4 +355,30 @@ public static partial class SqlQueryBuilderExtensions
         return query;
     }
 
+    /// <summary>
+    /// Omite un número especificado de elementos en los resultados de la consulta y luego devuelve los elementos restantes.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="query">El estado de la consulta</param>
+    /// <param name="count">El número de elementos a omitir</param>
+    /// <returns>El estado de la consulta con la omisión aplicada</returns>
+    public static QueryState<T> Skip<T>(this QueryState<T> query, int count) where T : class, new()
+    {
+        query.SkipField = count;
+        return query;
+    }
+
+    /// <summary>
+    /// Devuelve un número específico de elementos contiguos desde el inicio de los resultados de la consulta.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
+    /// <param name="query">El estado de la consulta</param>
+    /// <param name="count">El número de elementos a devolver</param>
+    /// <returns>El estado de la consulta con la limitación aplicada</returns>
+    public static QueryState<T> Take<T>(this QueryState<T> query, int count) where T : class, new()
+    {
+        query.TakeField = count;
+        return query;
+    }
+
 }

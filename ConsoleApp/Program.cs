@@ -1,4 +1,4 @@
-//IOracleRepository apex = new OracleRepository("Server=172.19.221.90;Database=MX_ATM_SPI;User Id=SpiConnectSQL;Password=59iC0@n3C75Ql1;encrypt=false;");
+ï»¿//IOracleRepository apex = new OracleRepository("Server=172.19.221.90;Database=MX_ATM_SPI;User Id=SpiConnectSQL;Password=59iC0@n3C75Ql1;encrypt=false;");
 
 //cargar DI
 
@@ -14,6 +14,7 @@ using DevKit.ExecutionEngine.SQLServer.Implementations;
 using DevKit.ExecutionEngine.SQLServer.Settings;
 using Microsoft.Extensions.Options;
 using System.Data;
+
 
 IHost host = CreateHostBuilder().Build();
 
@@ -31,7 +32,7 @@ table.TableName = "Asentamientos";
 
 List<Asentamientos> asentamientosList = await infomex
     .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-    .Where(u => u.Estado == "VERACRUZ" && u.Asentamiento.StartsWith("MAGU")  )
+    .Where(u => u.Estado == "VERACRUZ" && u.Asentamiento.StartsWith("MAGU"))
     .OrderBy(u => u.Asentamiento)
     .ToListAsync();
 
@@ -42,17 +43,31 @@ List<Asentamientos> asentamientosList2 = await infomex
 
 
 
-var results = infomex
+var registros = infomex
     .From<Asentamientos>("Comprobante", "VW_Asentamientos")
     .Where(u => u.Estado == "VERACRUZ")
     .Count();
 
-var results2 = infomex
-    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-    .Where(u => u.Estado == "VERACRUZ")
-    .OrderBy(u => u.Asentamiento)
-    .Select(u => new { u.ColoniaID, u.Asentamiento })
-    .ToList(); // Método síncrono
+
+int pageSize = 5;
+int totalPages = (int)Math.Ceiling((double)registros / pageSize);
+
+List<object> queryState = new List<object>();
+for (int pageNumber = 0; pageNumber < totalPages; pageNumber++)
+{
+    var select = infomex
+        .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+        .Where(u => u.Estado == "VERACRUZ")
+        .OrderBy(u => u.Asentamiento)
+        .Skip(pageNumber * pageSize)
+        .Take(pageSize)
+        .Select(u => new { u.ColoniaID, u.Asentamiento })
+        .ToList();
+
+    Console.WriteLine($"PÃ¡gina {pageNumber}");
+    queryState.Add(select);
+}
+
 
 
 

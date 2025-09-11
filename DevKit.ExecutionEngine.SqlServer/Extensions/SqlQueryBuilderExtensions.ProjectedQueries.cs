@@ -16,6 +16,13 @@ public static partial class SqlQueryBuilderExtensions
     {
         QueryResult queryResult = BuildQuery(queryState);
 
+        // Registrar la consulta que se va a ejecutar
+        QueryLogger.LogQuery(
+            queryResult.SQL,
+            queryResult.Parameters,
+            IQueryLogger.LogLevel.Debug,
+            $"Ejecutando consulta proyectada ToList para {typeof(T).Name} -> {typeof(TResult).Name}");
+
         // For anonymous types or complex projections, we need to use dynamic mapping
         if (typeof(TResult).IsAnonymousType() || typeof(TResult) != typeof(T))
         {
@@ -23,7 +30,17 @@ public static partial class SqlQueryBuilderExtensions
             ICollection<TResult> result = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
                 reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
                 collection => collection.AddSqlParameters(queryResult.Parameters));
-            return result.ToList();
+            
+            List<TResult> resultList = result.ToList();
+
+            // Registrar el resultado
+            QueryLogger.LogQuery(
+                queryResult.SQL,
+                queryResult.Parameters,
+                IQueryLogger.LogLevel.Debug,
+                $"Consulta proyectada ToList completada. Se encontraron {resultList.Count} registros proyectados");
+
+            return resultList;
         }
         else
         {
@@ -31,7 +48,17 @@ public static partial class SqlQueryBuilderExtensions
             ICollection<TResult> result = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
                 reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
                 collection => collection.AddSqlParameters(queryResult.Parameters));
-            return result.ToList();
+            
+            List<TResult> resultList = result.ToList();
+
+            // Registrar el resultado
+            QueryLogger.LogQuery(
+                queryResult.SQL,
+                queryResult.Parameters,
+                IQueryLogger.LogLevel.Debug,
+                $"Consulta proyectada ToList completada. Se encontraron {resultList.Count} registros");
+
+            return resultList;
         }
     }
 

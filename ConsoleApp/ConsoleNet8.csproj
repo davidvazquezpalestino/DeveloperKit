@@ -7,7 +7,7 @@
     <LangVersion>latest</LangVersion>
     <Title>ConsoleNet8 - Aplicación de Consola con Integración de Servicios</Title>
     <Authors>David Vázquez Palestino</Authors>
-    <Company>David Vázquez Palestino</Company>
+    <Company>Infosoft</Company>
     <Product>ConsoleNet8</Product>
     <Description>ConsoleNet8 es una aplicación de consola que demuestra el uso de múltiples bibliotecas y servicios en .NET. Proporciona funcionalidades para la manipulación de Excel, envío de correos electrónicos, gestión de bases de datos (SQL Server y Oracle), autenticación JWT y exportación de datos. Utiliza Microsoft.Extensions.Hosting para la configuración y gestión de servicios, y ExcelDataReader para la lectura de archivos Excel. Compatible con .NET 8.0 y diseñada para mostrar las capacidades de integración entre diferentes servicios y tecnologías.</Description>
     <Copyright>Copyright © David Vázquez Palestino</Copyright>

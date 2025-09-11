@@ -49,14 +49,15 @@ public partial class SQLServerProvider
             Connection.Open();
         }
 
-        IDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection);
-
-        ICollection<T> collection = new List<T>();
-        while (reader.Read())
+        using (IDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection))
         {
-            collection.Add(expression(reader));
+            ICollection<T> collection = new List<T>();
+            while (reader.Read())
+            {
+                collection.Add(expression(reader));
+            }
+            return collection;
         }
-        return collection;
 
     }
     /// <summary>Ejecuta una consulta y devuelve los registros como colección de diccionarios.</summary>
