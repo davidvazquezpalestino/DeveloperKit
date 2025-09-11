@@ -27,10 +27,28 @@ public static partial class SqlQueryBuilderExtensions
     public static List<T> ToList<T>(this QueryState<T> query) where T : class, new()
     {
         QueryResult queryResult = BuildQuery(query);
+
+        // Registrar la consulta que se va a ejecutar
+        QueryLogger.LogQuery(
+            queryResult.SQL,
+            queryResult.Parameters,
+            IQueryLogger.LogLevel.Debug,
+            $"Ejecutando consulta ToList para {typeof(T).Name}");
+
         ICollection<T> result = query.DbProvider.ExecuteQueryAsList(queryResult.SQL,
             reader => reader.GetItem<T>(),
             collection => collection.AddSqlParameters(queryResult.Parameters));
-        return result.ToList();
+
+        List<T> resultList = result.ToList();
+
+        // Registrar el resultado
+        QueryLogger.LogQuery(
+            queryResult.SQL,
+            queryResult.Parameters,
+            IQueryLogger.LogLevel.Debug,
+            $"Consulta ToList completada. Se encontraron {resultList.Count} registros de {typeof(T).Name}");
+
+        return resultList;
     }
 
     /// <summary>
@@ -114,11 +132,27 @@ public static partial class SqlQueryBuilderExtensions
         query.TakeField = 1;
         QueryResult queryResult = BuildQuery(query);
 
+        // Registrar la consulta que se va a ejecutar
+        QueryLogger.LogQuery(
+            queryResult.SQL,
+            queryResult.Parameters,
+            IQueryLogger.LogLevel.Debug,
+            $"Ejecutando consulta First para {typeof(T).Name}");
+
         ICollection<T> results = query.DbProvider.ExecuteQueryAsList(queryResult.SQL,
             reader => reader.GetItem<T>(),
             collection => collection.AddSqlParameters(queryResult.Parameters));
 
-        return results.First();
+        T result = results.First();
+
+        // Registrar el resultado
+        QueryLogger.LogQuery(
+            queryResult.SQL,
+            queryResult.Parameters,
+            IQueryLogger.LogLevel.Debug,
+            $"Consulta First completada. Se encontró 1 registro de {typeof(T).Name}");
+
+        return result;
     }
 
     /// <summary>
@@ -157,8 +191,24 @@ public static partial class SqlQueryBuilderExtensions
             QueryResult queryResult = BuildQuery(query);
             string countQuery = $"SELECT COUNT(*) FROM ({queryResult.SQL}) AS CountQuery";
 
-            return query.DbProvider.ExecuteScalar<int>(countQuery,
+            // Registrar la consulta que se va a ejecutar
+            QueryLogger.LogQuery(
+                countQuery,
+                queryResult.Parameters,
+                IQueryLogger.LogLevel.Debug,
+                $"Ejecutando consulta Count para {typeof(T).Name}");
+
+            int result = query.DbProvider.ExecuteScalar<int>(countQuery,
                 collection => collection.AddSqlParameters(queryResult.Parameters));
+
+            // Registrar el resultado
+            QueryLogger.LogQuery(
+                countQuery,
+                queryResult.Parameters,
+                IQueryLogger.LogLevel.Debug,
+                $"Consulta Count completada. Resultado: {result} registros de {typeof(T).Name}");
+
+            return result;
         }
         finally
         {
@@ -197,8 +247,24 @@ public static partial class SqlQueryBuilderExtensions
             QueryResult queryResult = BuildQuery(query);
             string existsQuery = $"SELECT CASE WHEN EXISTS ({queryResult.SQL}) THEN 1 ELSE 0 END";
 
-            return query.DbProvider.ExecuteScalar<int>(existsQuery,
+            // Registrar la consulta que se va a ejecutar
+            QueryLogger.LogQuery(
+                existsQuery,
+                queryResult.Parameters,
+                IQueryLogger.LogLevel.Debug,
+                $"Ejecutando consulta Any para {typeof(T).Name}");
+
+            bool result = query.DbProvider.ExecuteScalar<int>(existsQuery,
                 collection => collection.AddSqlParameters(queryResult.Parameters)) == 1;
+
+            // Registrar el resultado
+            QueryLogger.LogQuery(
+                existsQuery,
+                queryResult.Parameters,
+                IQueryLogger.LogLevel.Debug,
+                $"Consulta Any completada. Resultado: {(result ? "Existen registros" : "No existen registros")} de {typeof(T).Name}");
+
+            return result;
         }
         finally
         {
