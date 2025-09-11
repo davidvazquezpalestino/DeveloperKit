@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
 /// <summary>
@@ -7,12 +5,6 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 /// </summary>
 public static partial class SqlQueryBuilderExtensions
 {
-    private static string GetSchema<T>(QueryState<T> query) where T : class, new()
-    {
-        // Use explicitly provided schema, then check TableAttribute, then default to "dbo"
-        return query.Schema ?? typeof(T).GetCustomAttribute<TableAttribute>()?.Schema ?? "dbo";
-    }
-
     private static string GetTableName<T>(QueryState<T> query) where T : class, new()
     {
         // Use explicitly provided table name, then check TableAttribute, then use type name
@@ -217,17 +209,14 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Maps a data reader to a projected type using the select expression
     /// </summary>
-    private static TResult MapToProjectedType<TResult>(IDataReader reader, Expression selectExpression)
+    private static TResult MapToProjectedType<TResult>(IDataReader reader, Expression expression)
     {
-        // This is a simplified implementation - in a real scenario, you'd need more sophisticated mapping
-        // For now, we'll use reflection to create the result type
-
         if (typeof(TResult).IsAnonymousType())
         {
             // Handle anonymous types by creating them dynamically
-            var constructor = typeof(TResult).GetConstructors().First();
-            var parameters = constructor.GetParameters();
-            var values = new object[parameters.Length];
+            ConstructorInfo constructor = typeof(TResult).GetConstructors().First();
+            ParameterInfo[] parameters = constructor.GetParameters();
+            object[] values = new object[parameters.Length];
 
             for (int i = 0; i < parameters.Length && i < reader.FieldCount; i++)
             {
@@ -236,49 +225,46 @@ public static partial class SqlQueryBuilderExtensions
 
             return (TResult)constructor.Invoke(values);
         }
-        else
+
+        TResult item = (TResult)Activator.CreateInstance(typeof(TResult));
+        Type type = typeof(TResult);
+
+        Dictionary<string, PropertyInfo> properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanWrite)
+            .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
+
+        for (int i = 0; i < reader.FieldCount; i++)
         {
-            // Handle regular types using Activator.CreateInstance since TResult may not have new() constraint
-            TResult item = (TResult)Activator.CreateInstance(typeof(TResult));
-            Type type = typeof(TResult);
+            string columnName = reader.GetName(i);
 
-            var properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                .Where(p => p.CanWrite)
-                .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase);
-
-            for (int i = 0; i < reader.FieldCount; i++)
+            if (properties.TryGetValue(columnName, out PropertyInfo prop) && !reader.IsDBNull(i))
             {
-                string columnName = reader.GetName(i);
-
-                if (properties.TryGetValue(columnName, out PropertyInfo prop) && !reader.IsDBNull(i))
+                try
                 {
-                    try
+                    object value = reader.GetValue(i);
+                    if (value != DBNull.Value)
                     {
-                        object value = reader.GetValue(i);
-                        if (value != DBNull.Value)
+                        // Handle type conversion
+                        Type targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+                        if (prop.PropertyType.IsInstanceOfType(value))
                         {
-                            // Handle type conversion
-                            Type targetType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
-                            if (prop.PropertyType.IsInstanceOfType(value))
-                            {
-                                prop.SetValue(item, value);
-                            }
-                            else
-                            {
-                                object convertedValue = Convert.ChangeType(value, targetType);
-                                prop.SetValue(item, convertedValue);
-                            }
+                            prop.SetValue(item, value);
+                        }
+                        else
+                        {
+                            object convertedValue = Convert.ChangeType(value, targetType);
+                            prop.SetValue(item, convertedValue);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error setting property {prop.Name}: {ex.Message}");
-                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error setting property {prop.Name}: {ex.Message}");
                 }
             }
-
-            return item;
         }
+
+        return item;
     }
 
     /// <summary>
