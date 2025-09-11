@@ -4,11 +4,11 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 public static class SqlParameterExtensions
 {
     /// <summary>Crea un nuevo parámetro SQL con las características especificadas.</summary>
-    public static SqlParameter CreateSqlParameter(string parameterName, object value, SqlDbType? sqlDbType = null, int? size = null, byte? precision = null, byte? scale = null, ParameterDirection? direction = null, Action<string> log = null)
+    public static SqlParameter CreateSqlParameter(string parameterName, object value, SqlDbType? sqlDbType = null, int? size = null, byte? precision = null, byte? scale = null, ParameterDirection? direction = null, Action<string> LogTo = null)
     {
         try
         {
-            log?.Invoke($"Creando parámetro SQL: {parameterName}");
+            LogTo?.Invoke($"Creando parámetro SQL: {parameterName}");
 
             if (string.IsNullOrWhiteSpace(parameterName))
             {
@@ -16,7 +16,7 @@ public static class SqlParameterExtensions
             }
 
             object parameterValue = value ?? DBNull.Value;
-            log?.Invoke($"Valor del parámetro {parameterName}: {parameterValue} (Tipo: {value?.GetType().Name ?? "null"})");
+            LogTo?.Invoke($"Valor del parámetro {parameterName}: {parameterValue} (Tipo: {value?.GetType().Name ?? "null"})");
 
             SqlParameter parameter = new()
             {
@@ -27,74 +27,74 @@ public static class SqlParameterExtensions
             if (sqlDbType.HasValue)
             {
                 parameter.SqlDbType = sqlDbType.Value;
-                log?.Invoke($"Tipo de dato SQL para {parameterName}: {sqlDbType.Value}");
+                LogTo?.Invoke($"Tipo de dato SQL para {parameterName}: {sqlDbType.Value}");
             }
 
             if (size.HasValue)
             {
                 parameter.Size = size.Value;
-                log?.Invoke($"Tamaño para {parameterName}: {size.Value}");
+                LogTo?.Invoke($"Tamaño para {parameterName}: {size.Value}");
             }
 
             if (precision.HasValue)
             {
                 parameter.Precision = precision.Value;
-                log?.Invoke($"Precisión para {parameterName}: {precision.Value}");
+                LogTo?.Invoke($"Precisión para {parameterName}: {precision.Value}");
             }
 
             if (scale.HasValue)
             {
                 parameter.Scale = scale.Value;
-                log?.Invoke($"Escala para {parameterName}: {scale.Value}");
+                LogTo?.Invoke($"Escala para {parameterName}: {scale.Value}");
             }
 
             if (direction.HasValue)
             {
                 parameter.Direction = direction.Value;
-                log?.Invoke($"Dirección para {parameterName}: {direction.Value}");
+                LogTo?.Invoke($"Dirección para {parameterName}: {direction.Value}");
             }
 
-            log?.Invoke($"Parámetro {parameterName} creado exitosamente");
+            LogTo?.Invoke($"Parámetro {parameterName} creado exitosamente");
             return parameter;
         }
         catch (Exception ex)
         {
-            log?.Invoke($"ERROR al crear el parámetro {parameterName}: {ex.Message}");
+            LogTo?.Invoke($"ERROR al crear el parámetro {parameterName}: {ex.Message}");
             throw; // Relanzar la excepción para manejo posterior
         }
     }
     /// <summary>Agrega un parámetro SQL a la colección especificada.</summary>
     public static IDataParameterCollection AddSqlParameter(this IDataParameterCollection parameterCollection, string parameterName, object value,
         SqlDbType? sqlDbType = null, int? size = null, byte? precision = null, byte? scale = null,
-        ParameterDirection? direction = null, Action<string> log = null)
+        ParameterDirection? direction = null, Action<string> LogTo = null)
     {
         try
         {
-            log?.Invoke($"Agregando parámetro a la colección: {parameterName}");
+            LogTo?.Invoke($"Agregando parámetro a la colección: {parameterName}");
 
             if (parameterCollection == null)
             {
                 throw new ArgumentNullException(nameof(parameterCollection));
             }
 
-            SqlParameter parameter = CreateSqlParameter(parameterName, value, sqlDbType, size, precision, scale, direction, log);
+            SqlParameter parameter = CreateSqlParameter(parameterName, value, sqlDbType, size, precision, scale, direction, LogTo);
             parameterCollection.Add(parameter);
 
-            log?.Invoke($"Parámetro {parameterName} agregado exitosamente a la colección");
+            LogTo?.Invoke($"Parámetro {parameterName} agregado exitosamente a la colección");
             return parameterCollection;
         }
         catch (Exception ex)
         {
-            log?.Invoke($"ERROR al agregar el parámetro {parameterName} a la colección: {ex.Message}");
+            LogTo?.Invoke($"ERROR al agregar el parámetro {parameterName} a la colección: {ex.Message}");
             throw;
         }
     }
     /// <summary>Convierte las propiedades de un objeto en una colección de parámetros SQL.</summary>
-    public static IDataParameterCollection AddSqlParameters<T>(this IDataParameterCollection parameterCollection, T item, Action<string> log = null)
+    public static IDataParameterCollection AddSqlParameters<T>(this IDataParameterCollection parameterCollection, T item, Action<string> LogTo = null)
     {
         try
         {
-            log?.Invoke("Iniciando conversión de objeto a parámetros SQL");
+            LogTo?.Invoke("Iniciando conversión de objeto a parámetros SQL");
 
             if (parameterCollection == null)
             {
@@ -107,50 +107,50 @@ public static class SqlParameterExtensions
             }
 
             PropertyInfo[] properties = item.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            log?.Invoke($"Procesando {properties.Length} propiedades del objeto");
+            LogTo?.Invoke($"Procesando {properties.Length} propiedades del objeto");
 
             foreach (PropertyInfo property in properties)
             {
                 try
                 {
                     string propertyName = property.Name;
-                    log?.Invoke($"Procesando propiedad: {propertyName}");
+                    LogTo?.Invoke($"Procesando propiedad: {propertyName}");
 
                     object value = property.GetValue(item);
                     SqlDbType dbType = GetSqlDbType(property.PropertyType);
                     string paramName = NormalizeSqlParamName(propertyName);
 
-                    log?.Invoke($"Tipo SQL inferido para {propertyName}: {dbType}");
+                    LogTo?.Invoke($"Tipo SQL inferido para {propertyName}: {dbType}");
 
-                    parameterCollection.AddSqlParameter(paramName, value ?? DBNull.Value, dbType, log: log);
+                    parameterCollection.AddSqlParameter(paramName, value ?? DBNull.Value, dbType, LogTo: LogTo);
                 }
                 catch (Exception ex)
                 {
                     string errorMsg = $"Error al procesar la propiedad '{property.Name}': {ex.Message}";
-                    log?.Invoke($"ERROR: {errorMsg}");
-                    if (log == null) // Solo lanzar Console si no hay logger configurado
+                    LogTo?.Invoke($"ERROR: {errorMsg}");
+                    if (LogTo == null) // Solo lanzar Console si no hay LogToger configurado
                     {
                         Console.WriteLine(errorMsg);
                     }
                 }
             }
 
-            log?.Invoke("Conversión de objeto a parámetros SQL completada exitosamente");
+            LogTo?.Invoke("Conversión de objeto a parámetros SQL completada exitosamente");
             return parameterCollection;
         }
         catch (Exception ex)
         {
-            log?.Invoke($"ERROR en AsSqlParameters: {ex.Message}");
+            LogTo?.Invoke($"ERROR en AsSqlParameters: {ex.Message}");
             throw;
         }
     }
     /// <summary>Convierte un diccionario en una colección de parámetros SQL.</summary>
     public static IDataParameterCollection AddSqlParameters(this IDataParameterCollection parameterCollection,
-        Dictionary<string, object> parameters, Action<string> log = null)
+        Dictionary<string, object> parameters, Action<string> LogTo = null)
     {
         try
         {
-            log?.Invoke("Iniciando conversión de diccionario a parámetros SQL");
+            LogTo?.Invoke("Iniciando conversión de diccionario a parámetros SQL");
 
             if (parameterCollection == null)
             {
@@ -163,39 +163,39 @@ public static class SqlParameterExtensions
             }
 
             List<KeyValuePair<string, object>> validParameters = parameters.Where(pair => string.IsNullOrWhiteSpace(pair.Key) == false).ToList();
-            log?.Invoke($"Procesando {validParameters.Count} parámetros del diccionario");
+            LogTo?.Invoke($"Procesando {validParameters.Count} parámetros del diccionario");
 
             foreach (KeyValuePair<string, object> kvp in validParameters)
             {
                 try
                 {
-                    log?.Invoke($"Procesando parámetro: {kvp.Key}");
+                    LogTo?.Invoke($"Procesando parámetro: {kvp.Key}");
 
                     Type type = kvp.Value?.GetType() ?? typeof(string);
                     SqlDbType dbType = GetSqlDbType(type);
                     string paramName = NormalizeSqlParamName(kvp.Key);
 
-                    log?.Invoke($"Tipo SQL inferido para {kvp.Key}: {dbType}");
+                    LogTo?.Invoke($"Tipo SQL inferido para {kvp.Key}: {dbType}");
 
-                    parameterCollection.AddSqlParameter(paramName, kvp.Value ?? DBNull.Value, dbType, log: log);
+                    parameterCollection.AddSqlParameter(paramName, kvp.Value ?? DBNull.Value, dbType, LogTo: LogTo);
                 }
                 catch (Exception ex)
                 {
                     string errorMsg = $"Error al procesar el parámetro '{kvp.Key}': {ex.Message}";
-                    log?.Invoke($"ERROR: {errorMsg}");
-                    if (log == null) // Solo lanzar Console si no hay logger configurado
+                    LogTo?.Invoke($"ERROR: {errorMsg}");
+                    if (LogTo == null) // Solo lanzar Console si no hay LogToger configurado
                     {
                         Console.Error.WriteLine(errorMsg);
                     }
                 }
             }
 
-            log?.Invoke("Conversión de diccionario a parámetros SQL completada exitosamente");
+            LogTo?.Invoke("Conversión de diccionario a parámetros SQL completada exitosamente");
             return parameterCollection;
         }
         catch (Exception ex)
         {
-            log?.Invoke($"ERROR en AsSqlParamsFromDictionary: {ex.Message}");
+            LogTo?.Invoke($"ERROR en AsSqlParamsFromDictionary: {ex.Message}");
             throw;
         }
     }
