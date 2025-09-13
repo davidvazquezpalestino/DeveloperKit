@@ -104,9 +104,10 @@ public partial class Autocomplete<T>
         get => SearchTextField;
         set
         {
-            if (SearchTextField != value)
+            string sanitizedValue = value ?? string.Empty;
+            if (SearchTextField != sanitizedValue)
             {
-                SearchTextField = value;
+                SearchTextField = sanitizedValue;
                 SelectedIndexField = -1;
             }
         }
@@ -287,9 +288,12 @@ public partial class Autocomplete<T>
 
     private void ShowSuggestions()
     {
-        if (SearchText.Length >= MinCharacters && Items.Any())
+        if (string.IsNullOrWhiteSpace(SearchText) == false)
         {
-            IsDropdownVisible = true;
+            if (SearchText.Length >= MinCharacters && Items.Any())
+            {
+                IsDropdownVisible = true;
+            }
         }
     }
 
@@ -369,4 +373,6 @@ public partial class Autocomplete<T>
             CancellationTokenSourceField?.Dispose();
         }
     }
+
+    public void HolaMundo() => Console.WriteLine("Hola Mundo");
 }
