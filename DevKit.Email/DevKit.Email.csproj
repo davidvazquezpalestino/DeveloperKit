@@ -12,9 +12,9 @@
 		<Description>CoreMailKit es una biblioteca completa para el manejo de correos electrónicos en aplicaciones .NET. Proporciona funcionalidades avanzadas para la creación, envío y recepción de emails, incluyendo soporte para adjuntos, HTML, múltiples destinatarios, configuración SMTP personalizada y manejo de errores. Compatible con múltiples versiones de .NET (4.8, 8.0 y 9.0) y utiliza MailKit para la implementación eficiente de protocolos de correo electrónico.</Description>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
 
-		<AssemblyVersion>2025.08.19</AssemblyVersion>
-		<Version>2025.08.19</Version>
-		<FileVersion>2025.08.19</FileVersion>
+		<AssemblyVersion>2025.10.10</AssemblyVersion>
+		<Version>2025.10.10</Version>
+		<FileVersion>2025.10.10</FileVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -43,10 +43,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MailKit" Version="4.7.1.1" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.1" />
+		<PackageReference Include="MailKit" Version="4.14.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
 	</ItemGroup>
 
 	<ItemGroup>

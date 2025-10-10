@@ -32,7 +32,7 @@ table.TableName = "Asentamientos";
 
 List<Asentamientos> asentamientosList = await infomex
     .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-    .Where(u => u.Estado == "VERACRUZ" && u.Asentamiento.StartsWith("MAGU"))
+    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
     .OrderBy(u => u.Asentamiento)
     .ToListAsync();
 

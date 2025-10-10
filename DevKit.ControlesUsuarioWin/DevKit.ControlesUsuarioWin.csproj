@@ -10,13 +10,13 @@
 		<Copyright>Copyright  David Vázquez Palestino</Copyright>
 		<Company>David Vázquez Palestino</Company>
 		<PackageId>CoreControlesUsuario</PackageId>
-		<Version>2025.08.19</Version>
-		<FileVersion>2025.08.19</FileVersion>
-		<AssemblyVersion>2025.08.19</AssemblyVersion>
+		<Version>2025.10.10</Version>
+		<FileVersion>2025.10.10</FileVersion>
+		<AssemblyVersion>2025.10.10</AssemblyVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-		<PackageOutputPath>$(MSBuildThisFileDirectory)..\..\packages\$(AssemblyName)</PackageOutputPath>
+		<PackageOutputPath>C:\Github\Packages\DevKit.ControlesUsuarioWin</PackageOutputPath>
 		<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
 		<PackageIcon>102042_tools_icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -81,8 +81,8 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="DevExpress.Win.Design" Version="24.2.7" />
-		<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.8" />
-		<PackageReference Include="System.Text.Json" Version="9.0.8" />
+		<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.9" />
+		<PackageReference Include="System.Text.Json" Version="9.0.9" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Update="Properties\Resources.resx">
