@@ -8,6 +8,6 @@ public partial interface ISQLServerProvider
     public Task<DataSet> ExecuteQueryMultiResultAsync(
         string query,
         Action<IDataParameterCollection> dbParameters = null,
-        Action<string> LogTo = null,
+        Action<string> logTo = null,
         CancellationToken cancellationToken = default);
 }

@@ -3,11 +3,9 @@ namespace DevKit.JWT.Services;
 /// <summary>
 /// Implementación del servicio de gestión de refresh tokens.
 /// </summary>
-public class RefreshTokenService(IOptions<JwtOptions> options, ILogger<RefreshTokenService> logger)
-    : IRefreshTokenService
+public class RefreshTokenService(IOptions<JwtOptions> options) : IRefreshTokenService
 {
     private readonly JwtOptions Options = options?.Value;
-    private readonly ILogger<RefreshTokenService> Logger = logger;
     private readonly ConcurrentDictionary<string, RefreshToken> TokenStore = new();
 
     /// <summary>
@@ -31,8 +29,6 @@ public class RefreshTokenService(IOptions<JwtOptions> options, ILogger<RefreshTo
 
         TokenStore.TryAdd(refreshToken.Token, refreshToken);
 
-        Logger.LogInformation("Refresh token generado para usuario {UserId} desde IP {IpAddress}", userId, ipAddress);
-
         return Task.FromResult(refreshToken);
     }
 
@@ -48,13 +44,11 @@ public class RefreshTokenService(IOptions<JwtOptions> options, ILogger<RefreshTo
 
         if (!TokenStore.TryGetValue(token, out RefreshToken refreshToken))
         {
-            Logger.LogWarning("Intento de validación con token inexistente: {Token}", token[..8] + "...");
             return Task.FromResult<RefreshToken>(null);
         }
 
         if (!refreshToken.IsActive)
         {
-            Logger.LogWarning("Intento de validación con token inactivo para usuario {UserId}", refreshToken.UserId);
             return Task.FromResult<RefreshToken>(null);
         }
 
@@ -81,9 +75,6 @@ public class RefreshTokenService(IOptions<JwtOptions> options, ILogger<RefreshTo
         refreshToken.RevokedByIp = ipAddress;
         refreshToken.RevocationReason = reason ?? "Manual revocation";
 
-        Logger.LogInformation("Refresh token revocado para usuario {UserId} desde IP {IpAddress}. Razón: {Reason}",
-            refreshToken.UserId, ipAddress, reason);
-
         return Task.FromResult(true);
     }
 
@@ -109,9 +100,6 @@ public class RefreshTokenService(IOptions<JwtOptions> options, ILogger<RefreshTo
             revokedCount++;
         }
 
-        Logger.LogInformation("Revocados {Count} refresh tokens para usuario {UserId} desde IP {IpAddress}",
-            revokedCount, userId, ipAddress);
-
         return Task.FromResult(revokedCount);
     }
 
@@ -135,9 +123,6 @@ public class RefreshTokenService(IOptions<JwtOptions> options, ILogger<RefreshTo
         oldToken.RevocationReason = "Token rotation";
         oldToken.ReplacedByToken = newToken.Token;
 
-        Logger.LogInformation("Refresh token rotado para usuario {UserId} desde IP {IpAddress}",
-            oldToken.UserId, ipAddress);
-
         return newToken;
     }
 
@@ -159,7 +144,6 @@ public class RefreshTokenService(IOptions<JwtOptions> options, ILogger<RefreshTo
             }
         }
 
-        Logger.LogInformation("Limpiados {Count} refresh tokens expirados", removedCount);
         return Task.FromResult(removedCount);
     }
 

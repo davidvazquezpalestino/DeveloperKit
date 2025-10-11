@@ -6,7 +6,7 @@ public partial class SQLServerProvider
     public async Task<DataSet> ExecuteQueryMultiResultAsync(
         string query,
         Action<IDataParameterCollection> dbParameters = null,
-        Action<string> LogTo = null,
+        Action<string> logTo = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -41,7 +41,7 @@ public partial class SQLServerProvider
 
                     } while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
 
-                    LogTo?.Invoke($"Query executed with {resultSetCount} result sets.");
+                    logTo?.Invoke($"Query executed with {resultSetCount} result sets.");
                     return dataSet;
                 }
             }

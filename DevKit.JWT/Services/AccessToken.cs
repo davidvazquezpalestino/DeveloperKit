@@ -3,7 +3,7 @@ namespace DevKit.JWT.Services;
 /// <summary>
 /// Servicio para la generación y gestión completa de tokens JWT.
 /// </summary>
-public class AccessToken(IOptions<JwtOptions> options, IRefreshTokenService refreshTokenService, Action<string>? LogTo = null) : IAccessToken
+public class AccessToken(IOptions<JwtOptions> options, IRefreshTokenService refreshTokenService, Action<string> logTo = null) : IAccessToken
 {
     private readonly JwtOptions Options = options.Value;
 
@@ -40,7 +40,7 @@ public class AccessToken(IOptions<JwtOptions> options, IRefreshTokenService refr
 
         DateTime expiresAt = DateTime.UtcNow.AddMinutes(Options.ExpireInMinutes);
 
-        LogTo?.Invoke($"Par de tokens generado para usuario {userId} desde IP {ipAddress}");
+        logTo?.Invoke($"Par de tokens generado para usuario {userId} desde IP {ipAddress}");
 
         return new TokenResponse
         {
@@ -65,7 +65,7 @@ public class AccessToken(IOptions<JwtOptions> options, IRefreshTokenService refr
         RefreshToken storedToken = await refreshTokenService.ValidateRefreshTokenAsync(refreshToken, cancellationToken).ConfigureAwait(false);
         if (storedToken == null)
         {
-            LogTo?.Invoke($"Intento de renovación con refresh token inválido desde IP {ipAddress}");
+            logTo?.Invoke($"Intento de renovación con refresh token inválido desde IP {ipAddress}");
             throw new SecurityTokenValidationException("Refresh token inválido o expirado");
         }
 
@@ -88,7 +88,7 @@ public class AccessToken(IOptions<JwtOptions> options, IRefreshTokenService refr
 
         DateTime expiresAt = DateTime.UtcNow.AddMinutes(Options.ExpireInMinutes);
 
-        LogTo?.Invoke($"Token renovado para usuario {storedToken.UserId} desde IP {ipAddress}");
+        logTo?.Invoke($"Token renovado para usuario {storedToken.UserId} desde IP {ipAddress}");
 
         return new TokenResponse
         {
@@ -122,12 +122,12 @@ public class AccessToken(IOptions<JwtOptions> options, IRefreshTokenService refr
                 return new ClaimsPrincipal(result.ClaimsIdentity);
             }
 
-            LogTo?.Invoke($"Token JWT inválido: {result.Exception?.Message}");
+            logTo?.Invoke($"Token JWT inválido: {result.Exception?.Message}");
             return null;
         }
         catch (Exception ex)
         {
-            LogTo?.Invoke($"Error validando token JWT: {ex.Message}");
+            logTo?.Invoke($"Error validando token JWT: {ex.Message}");
             return null;
         }
     }
@@ -141,7 +141,7 @@ public class AccessToken(IOptions<JwtOptions> options, IRefreshTokenService refr
 
         if (result)
         {
-            LogTo?.Invoke($"Refresh token revocado manualmente desde IP {ipAddress}");
+            logTo?.Invoke($"Refresh token revocado manualmente desde IP {ipAddress}");
         }
 
         return result;
@@ -154,7 +154,7 @@ public class AccessToken(IOptions<JwtOptions> options, IRefreshTokenService refr
     {
         int count = await refreshTokenService.RevokeAllUserRefreshTokensAsync(userId, ipAddress, "Bulk user revocation", cancellationToken).ConfigureAwait(false);
 
-        LogTo?.Invoke("Revocados {count} tokens para usuario {userId} desde IP {ipAddress}");
+        logTo?.Invoke("Revocados {count} tokens para usuario {userId} desde IP {ipAddress}");
 
         return count;
     }
