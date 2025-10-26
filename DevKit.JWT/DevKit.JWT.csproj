@@ -6,9 +6,9 @@
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<Company>David Vázquez Palestino</Company>
 		<Product>AccessToken</Product>
-		<AssemblyVersion>2025.10.11</AssemblyVersion>
-		<FileVersion>2025.10.11</FileVersion>
-		<Version>2025.10.11</Version>
+		<AssemblyVersion>2025.10.26</AssemblyVersion>
+		<FileVersion>2025.10.26</FileVersion>
+		<Version>2025.10.26</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -31,11 +31,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.9" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.10" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.10" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.10" />
 		<PackageReference Include="Microsoft.IdentityModel.JsonWebTokens" Version="8.14.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.10" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -18,11 +18,12 @@
 
   <ItemGroup>
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.9" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DevKit.ExecutionEngine.Excel\DevKit.ExecutionEngine.Excel.csproj" />
     <ProjectReference Include="..\DevKit.ExecutionEngine.MySql\DevKit.ExecutionEngine.MySQL.csproj" />
     <ProjectReference Include="..\DevKit.ExecutionEngine.PostgreSql\DevKit.ExecutionEngine.PostgreSQL.csproj" />
     <ProjectReference Include="..\DevKit.ExecutionEngine.SqlServer\DevKit.ExecutionEngine.SQLServer.csproj" />

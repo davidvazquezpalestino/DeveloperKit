@@ -10,9 +10,9 @@
 		<Copyright>Copyright  David Vázquez Palestino</Copyright>
 		<Company>David Vázquez Palestino</Company>
 		<PackageId>CoreControlesUsuario</PackageId>
-		<Version>2025.10.10</Version>
-		<FileVersion>2025.10.10</FileVersion>
-		<AssemblyVersion>2025.10.10</AssemblyVersion>
+		<Version>2025.10.26</Version>
+		<FileVersion>2025.10.26</FileVersion>
+		<AssemblyVersion>2025.10.26</AssemblyVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -81,8 +81,8 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="DevExpress.Win.Design" Version="24.2.7" />
-		<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.9" />
-		<PackageReference Include="System.Text.Json" Version="9.0.9" />
+		<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.10" />
+		<PackageReference Include="System.Text.Json" Version="9.0.10" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Update="Properties\Resources.resx">

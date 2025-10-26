@@ -2,6 +2,8 @@
 
 //cargar DI
 
+using DevKit.ExecutionEngine.Excel.Abstractions;
+using DevKit.ExecutionEngine.Excel.Implementations;
 using DevKit.ExecutionEngine.MySQL.Abstractions;
 using DevKit.ExecutionEngine.MySQL.Implementations;
 using DevKit.ExecutionEngine.MySQL.Settings;
@@ -12,12 +14,30 @@ using DevKit.ExecutionEngine.SQLServer.Abstractions;
 using DevKit.ExecutionEngine.SQLServer.Extensions;
 using DevKit.ExecutionEngine.SQLServer.Implementations;
 using DevKit.ExecutionEngine.SQLServer.Settings;
+using DevKit.Extensions;
+using DevKit.Extensions.DataTableExtension;
 using Microsoft.Extensions.Options;
 using System.Data;
 
 
 IHost host = CreateHostBuilder().Build();
 
+IExcelProvider excel =
+    new ExcelProvider("C:\\Users\\vazqu\\Downloads\\PLANTILLA NOMINA 31 oct 2025.xlsx");
+
+DataTable dataTable = excel.GetTable("Datos");
+DataTable table1 = dataTable
+    .Where(row =>
+    {
+        string value = row.GetValue<string>("Codigo");
+        return value != "0" && string.IsNullOrWhiteSpace(value) == false;
+    });
+
+dataTable.RemoveAll(row =>
+{
+    string value = row.GetValue<string>("Codigo");
+    return value == "0" || string.IsNullOrWhiteSpace(value);
+});
 
 ISQLServerProvider infomex = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
 
@@ -43,7 +63,7 @@ List<Asentamientos> asentamientosList2 = await infomex
 
 
 
-var registros = infomex
+int registros = infomex
     .From<Asentamientos>("Comprobante", "VW_Asentamientos")
     .Where(u => u.Estado == "VERACRUZ")
     .Count();
@@ -52,7 +72,7 @@ var registros = infomex
 int pageSize = 5;
 int totalPages = (int)Math.Ceiling((double)registros / pageSize);
 
-List<object> queryState = new List<object>();
+List<object> queryState = new();
 for (int pageNumber = 0; pageNumber < totalPages; pageNumber++)
 {
     var select = infomex
