@@ -1,7 +1,9 @@
-//IOracleRepository apex = new OracleRepository("Server=172.19.221.90;Database=MX_ATM_SPI;User Id=SpiConnectSQL;Password=59iC0@n3C75Ql1;encrypt=false;");
+﻿//IOracleRepository apex = new OracleRepository("Server=172.19.221.90;Database=MX_ATM_SPI;User Id=SpiConnectSQL;Password=59iC0@n3C75Ql1;encrypt=false;");
 
 //cargar DI
 
+using DevKit.ExecutionEngine.Excel.Abstractions;
+using DevKit.ExecutionEngine.Excel.Implementations;
 using DevKit.ExecutionEngine.MySQL.Abstractions;
 using DevKit.ExecutionEngine.MySQL.Implementations;
 using DevKit.ExecutionEngine.MySQL.Settings;
@@ -12,57 +14,84 @@ using DevKit.ExecutionEngine.SQLServer.Abstractions;
 using DevKit.ExecutionEngine.SQLServer.Extensions;
 using DevKit.ExecutionEngine.SQLServer.Implementations;
 using DevKit.ExecutionEngine.SQLServer.Settings;
+using DevKit.Extensions;
+using DevKit.Extensions.DataTableExtension;
 using Microsoft.Extensions.Options;
 using System.Data;
 
+
 IHost host = CreateHostBuilder().Build();
 
+IExcelProvider excel =
+    new ExcelProvider("C:\\Users\\vazqu\\Downloads\\PLANTILLA NOMINA 31 oct 2025.xlsx");
 
-ISQLServerProvider infomexDataBase = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
+DataTable dataTable = excel.GetTable("Datos");
+DataTable table1 = dataTable
+    .Where(row =>
+    {
+        string value = row.GetValue<string>("Codigo");
+        return value != "0" && string.IsNullOrWhiteSpace(value) == false;
+    });
 
-DateTime currentDateTime = await infomexDataBase.GetCurrentDateTimeAsync();
+dataTable.RemoveAll(row =>
+{
+    string value = row.GetValue<string>("Codigo");
+    return value == "0" || string.IsNullOrWhiteSpace(value);
+});
+
+ISQLServerProvider infomex = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
+
+DateTime currentDateTime = await infomex.GetCurrentDateTimeAsync();
 Console.WriteLine(currentDateTime);
 
 Console.WriteLine("Consultando SQL Sever");
 
-DataTable table = await infomexDataBase.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
+DataTable table = await infomex.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
 table.TableName = "Asentamientos";
 
 
-List<Asentamientos> asentamientosList = await infomexDataBase
-    .From<Asentamientos>()
-    .WithSchema("Comprobante")
-    .WithTableName("VW_Asentamientos")
-    .Where(u => u.Estado == "VERACRUZ" && u.Asentamiento.StartsWith("A") && u.Asentamiento.EndsWith("A"))
+List<Asentamientos> asentamientosList = await infomex
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
     .OrderBy(u => u.Asentamiento)
     .ToListAsync();
 
 
-List<Asentamientos> asentamientosList2 = await infomexDataBase
-    .From<Asentamientos>()
-    .WithSchema("Comprobante")
-    .WithTableName("VW_Asentamientos")
+List<Asentamientos> asentamientosList2 = await infomex
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
     .ToListAsync();
 
 
-IMySqlProvider mySqlDatabase = host.Services.GetRequiredService<IMySqlProvider>();
-await mySqlDatabase.ExecuteBulkInsertToTableAsync(table, table.TableName);
 
-Console.WriteLine("consultando MySQL");
-mySqlDatabase.ExecuteBulkInsertToTable(table, table.TableName);
+int registros = infomex
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+    .Where(u => u.Estado == "VERACRUZ")
+    .Count();
 
-DataTable asTable = mySqlDatabase.ExecuteQueryAsTable("SELECT * FROM Sepomex.Asentamientos");
-asTable.TableName = "AsentamientosV2";
 
-IPostgreSqlProvider postgreDatabase = host.Services.GetRequiredService<IPostgreSqlProvider>();
+int pageSize = 5;
+int totalPages = (int)Math.Ceiling((double)registros / pageSize);
 
-await postgreDatabase.ExecuteBulkInsertToTableAsync(table, table.TableName);
+List<object> queryState = new();
+for (int pageNumber = 0; pageNumber < totalPages; pageNumber++)
+{
+    var select = infomex
+        .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+        .Where(u => u.Estado == "VERACRUZ")
+        .OrderBy(u => u.Asentamiento)
+        .Skip(pageNumber * pageSize)
+        .Take(pageSize)
+        .Select(u => new { u.ColoniaID, u.Asentamiento })
+        .ToList();
 
-table.TableName = "AsentamientosV3";
-postgreDatabase.ExecuteBulkInsertToTable(table, table.TableName);
+    Console.WriteLine($"Página {pageNumber}");
+    queryState.Add(select);
+}
 
-DataTable tablaPostgres = await postgreDatabase.ExecuteQueryAsTableAsync("SELECT * FROM public.\"AsentamientosV3\";");
-Console.WriteLine("Consultando PostgreSQL");
+
+
+
+
 
 Console.WriteLine("Fin");
 

@@ -1,4 +1,4 @@
-﻿namespace DevKit.ExecutionEngine.SQLServer.Implementations;
+namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 
 public partial class SQLServerProvider
 {
@@ -6,7 +6,7 @@ public partial class SQLServerProvider
     public async Task<DataSet> ExecuteQueryMultiResultAsync(
         string query,
         Action<IDataParameterCollection> dbParameters = null,
-        Action<string> logger = null,
+        Action<string> logTo = null,
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -20,16 +20,17 @@ public partial class SQLServerProvider
             {
                 command.CommandText = query;
                 command.CommandType = CommandType.Text;
+                command.CommandTimeout = SqlOptions.CommandTimeout;
 
                 dbParameters?.Invoke(command.Parameters);
 
-                await connection.OpenAsync(cancellationToken);
+                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
 
-                using (DbDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.Default, cancellationToken))
+                using (DbDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken).ConfigureAwait(false))
                 {
                     // Modo DataSet
                     DataSet dataSet = new();
-                    int resultSetCount = 0;
+                    int resultSetCount = 1;
 
                     do
                     {
@@ -38,9 +39,9 @@ public partial class SQLServerProvider
                         dataSet.Tables.Add(table);
                         resultSetCount++;
 
-                    } while (await reader.NextResultAsync(cancellationToken));
+                    } while (await reader.NextResultAsync(cancellationToken).ConfigureAwait(false));
 
-                    logger?.Invoke($"Query executed with {resultSetCount} result sets.");
+                    logTo?.Invoke($"Query executed with {resultSetCount} result sets.");
                     return dataSet;
                 }
             }

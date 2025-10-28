@@ -3,36 +3,26 @@
 public partial class SQLServerProvider
 {
     /// <summary>Ejecuta un comando que no devuelve resultados.</summary>
-    public void ExecuteNonQuery(string command, Action<IDataParameterCollection> dbParameters = null)
+    public void ExecuteCommand(string command, Action<IDataParameterCollection> dbParameters = null)
     {
-        bool isConnectionOwner = false;
-        try
+        if (Connection.State == ConnectionState.Closed)
         {
-            if (Connection.State == ConnectionState.Closed)
-            {
-                Connection.Open();
-                isConnectionOwner = true;
-            }
-
-            using (DbCommand sqlCommand = Connection.CreateCommand())
-            {
-                sqlCommand.CommandTimeout = SqlOptions.CommandTimeout;
-                sqlCommand.Transaction = Transaccion;
-                sqlCommand.CommandText = command;
-                sqlCommand.CommandType = CommandType.Text;
-                dbParameters?.Invoke(sqlCommand.Parameters);
-
-                sqlCommand.ExecuteNonQuery();
-            }
+            Connection.Open();
         }
-        finally
+
+        using (DbCommand sqlCommand = Connection.CreateCommand())
         {
-            if (isConnectionOwner && Connection?.State == ConnectionState.Open)
-            {
-                Connection.Close();
-            }
+            sqlCommand.CommandTimeout = SqlOptions.CommandTimeout;
+            sqlCommand.Transaction = Transaccion;
+            sqlCommand.CommandText = command;
+            sqlCommand.CommandType = CommandType.Text;
+            dbParameters?.Invoke(sqlCommand.Parameters);
+
+            sqlCommand.ExecuteNonQuery();
         }
     }
+
+
     /// <summary>Ejecuta un procedimiento almacenado sin esperar resultados.</summary>
     public void ExecuteProcedureCommand(string storedProcedure, Action<IDataParameterCollection> dbParameters = null)
     {

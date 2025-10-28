@@ -81,7 +81,7 @@ public partial class SQLServerProvider
 
                 dbParameters?.Invoke(command.Parameters);
 
-                using (SqlDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.Default, cancellationToken)
+                using (IDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.CloseConnection, cancellationToken)
                            .ConfigureAwait(false))
                 {
                     DataTable table = new();

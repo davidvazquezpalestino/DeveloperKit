@@ -16,7 +16,7 @@ public partial interface ISQLServerProvider
     /// </summary>
     /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
     /// <param name="query">Consulta SQL a ejecutar</param>
-    /// <param name="parametros">Parámetros de la consulta</param>
+    /// <param name="dbParameters">Parámetros de la consulta</param>
     /// <param name="cancellationToken">Token de cancelación</param>
     /// <returns>Primer elemento que cumple con la condición</returns>
     Task<T> FirstAsync<T>(string query, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default) where T : class, new();
@@ -26,7 +26,7 @@ public partial interface ISQLServerProvider
     /// </summary>
     /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
     /// <param name="query">Consulta SQL a ejecutar</param>
-    /// <param name="parametros">Parámetros de la consulta</param>
+    /// <param name="dbParameters">Parámetros de la consulta</param>
     /// <param name="cancellationToken">Token de cancelación</param>
     /// <returns>Primer elemento que cumple con la condición o valor predeterminado</returns>
     Task<T> FirstOrDefaultAsync<T>(string query, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default) where T : class, new();

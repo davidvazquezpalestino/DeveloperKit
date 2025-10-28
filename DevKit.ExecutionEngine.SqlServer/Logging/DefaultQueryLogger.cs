@@ -37,12 +37,14 @@ namespace DevKit.ExecutionEngine.SQLServer.Logging
 
                 foreach (KeyValuePair<string, object> param in parameters)
                 {
-                    logMessage.AppendLine($"  {param.Key} = {param.Value} (Type: {param.Value?.GetType().Name ?? "null"})");
+                    logMessage.AppendLine($"{param.Key} = {param.Value}");
                 }
             }
 
-            // Escribir en la salida de depuración
-            Debug.WriteLine($"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{level}] {logMessage}");
+            // Escribir en la salida de depuración y en la consola
+            string formattedMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] [{level}] {logMessage}";
+            Debug.WriteLine(formattedMessage);
+            Console.WriteLine(formattedMessage);
         }
     }
 }

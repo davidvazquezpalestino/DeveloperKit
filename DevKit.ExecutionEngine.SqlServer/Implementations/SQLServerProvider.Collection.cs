@@ -8,7 +8,7 @@ public partial class SQLServerProvider
     /// <typeparam name="T">Tipo de entidad a devolver</typeparam>
     /// <param name="storedProcedure">Nombre del procedimiento almacenado</param>
     /// <param name="expression">Función para mapear cada registro a una entidad</param>
-    /// <param name="parametros">Parámetros del procedimiento</param>
+    /// <param name="dbParameters">Parámetros del procedimiento</param>
     /// <returns>Lista de entidades mapeadas</returns>
     public ICollection<T> ExecuteProcedureAsList<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null)
     {
@@ -49,14 +49,15 @@ public partial class SQLServerProvider
             Connection.Open();
         }
 
-        IDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection);
-
-        ICollection<T> collection = new List<T>();
-        while (reader.Read())
+        using (IDataReader reader = command.ExecuteReader(CommandBehavior.CloseConnection))
         {
-            collection.Add(expression(reader));
+            ICollection<T> collection = new List<T>();
+            while (reader.Read())
+            {
+                collection.Add(expression(reader));
+            }
+            return collection;
         }
-        return collection;
 
     }
     /// <summary>Ejecuta una consulta y devuelve los registros como colección de diccionarios.</summary>

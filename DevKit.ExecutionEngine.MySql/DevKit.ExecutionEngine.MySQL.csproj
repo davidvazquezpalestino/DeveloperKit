@@ -10,9 +10,9 @@
 		<Product>ExecutionEngineMySQL</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2025.08.14</AssemblyVersion>
-		<FileVersion>2025.08.14</FileVersion>
-		<Version>2025.08.14</Version>
+		<AssemblyVersion>2025.10.26</AssemblyVersion>
+		<FileVersion>2025.10.26</FileVersion>
+		<Version>2025.10.26</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -29,7 +29,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="MySqlConnector" Version="2.4.0" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.8" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.10" />
 	</ItemGroup>
 
 	<ItemGroup>

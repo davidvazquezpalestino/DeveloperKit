@@ -83,7 +83,7 @@ public void ConfigureServices(IServiceCollection services)
     services.AddFromAssembly(
         assembly: Assembly.GetExecutingAssembly(),
         filter: type => type.Name.EndsWith("Service"),
-        logger: message => Console.WriteLine($"[DI] {message}"),
+        LogTo: message => Console.WriteLine($"[DI] {message}"),
         lifetime: ServiceLifetime.Scoped
     );
 }
@@ -202,7 +202,7 @@ services.ConfigureServices()
 ```csharp
 services.AddFromAssembly(
     Assembly.GetExecutingAssembly(),
-    logger: message => _logger.LogInformation("[DI] {Message}", message)
+    LogTo: message => _LogTo.LogInformation("[DI] {Message}", message)
 );
 
 // Ver log de registros

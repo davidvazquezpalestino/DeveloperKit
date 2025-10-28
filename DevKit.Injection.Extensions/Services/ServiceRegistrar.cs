@@ -10,7 +10,7 @@ public class ServiceRegistrar(IServiceCollection services)
     /// <summary>
     /// Registra servicios basados en atributos desde un ensamblado.
     /// </summary>
-    public ServiceRegistrar RegisterFromAttributes(Assembly assembly, Action<string>? logger = null)
+    public ServiceRegistrar RegisterFromAttributes(Assembly assembly, Action<string>? logTo = null)
     {
         List<Type> typesWithAttributes = assembly.GetTypes()
                                         .Where(type => type.IsClass && !type.IsAbstract)
@@ -20,10 +20,10 @@ public class ServiceRegistrar(IServiceCollection services)
         foreach (Type type in typesWithAttributes)
         {
             ServiceAttribute attribute = type.GetCustomAttribute<ServiceAttribute>()!;
-            RegisterServiceWithAttribute(type, attribute, logger);
+            RegisterServiceWithAttribute(type, attribute, logTo);
         }
 
-        logger?.Invoke($"Registrados {typesWithAttributes.Count} servicios con atributos desde {assembly.GetName().Name}");
+        logTo?.Invoke($"Registrados {typesWithAttributes.Count} servicios con atributos desde {assembly.GetName().Name}");
         return this;
     }
 
@@ -33,7 +33,7 @@ public class ServiceRegistrar(IServiceCollection services)
     public ServiceRegistrar RegisterImplementationsOf<TInterface>(
         Assembly assembly,
         ServiceLifetime lifetime = ServiceLifetime.Scoped,
-        Action<string>? logger = null)
+        Action<string>? logTo = null)
     {
         Type interfaceType = typeof(TInterface);
         List<Type> implementations = assembly.GetTypes()
@@ -46,7 +46,7 @@ public class ServiceRegistrar(IServiceCollection services)
             services.Add(new ServiceDescriptor(interfaceType, implementation, lifetime));
             string message = $"Registrado {implementation.Name} como {interfaceType.Name} ({lifetime})";
             RegistrationLog.Add(message);
-            logger?.Invoke(message);
+            logTo?.Invoke(message);
         }
 
         return this;
@@ -113,7 +113,7 @@ public class ServiceRegistrar(IServiceCollection services)
     /// </summary>
     public IReadOnlyList<string> GetRegistrationLog() => RegistrationLog.AsReadOnly();
 
-    private void RegisterServiceWithAttribute(Type implementationType, ServiceAttribute attribute, Action<string>? logger)
+    private void RegisterServiceWithAttribute(Type implementationType, ServiceAttribute attribute, Action<string>? logTo)
     {
         Type serviceType = attribute.ServiceType ?? implementationType;
         ServiceDescriptor descriptor = new ServiceDescriptor(serviceType, implementationType, attribute.Lifetime);
@@ -129,7 +129,7 @@ public class ServiceRegistrar(IServiceCollection services)
 
         string message = $"Registrado {implementationType.Name} como {serviceType.Name} ({attribute.Lifetime})";
         RegistrationLog.Add(message);
-        logger?.Invoke(message);
+        logTo?.Invoke(message);
     }
 }
 

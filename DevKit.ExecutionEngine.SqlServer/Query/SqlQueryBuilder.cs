@@ -6,19 +6,10 @@ namespace DevKit.ExecutionEngine.SQLServer.Query
     /// <typeparam name="T">Tipo de entidad</typeparam>
     public class SqlQueryBuilder<T> where T : class, new()
     {
-        private readonly string _schema;
-        private readonly string _tableName;
-        private readonly List<Expression<Func<T, bool>>> _whereExpressions = new();
-        private readonly List<(string column, bool isAscending)> _orderByFields = new();
-        private int? _take;
-        private int? _skip;
-        private bool _distinct;
-
-        public SqlQueryBuilder(string schema, string tableName)
-        {
-            _schema = schema;
-            _tableName = tableName;
-        }
+        private readonly List<Expression<Func<T, bool>>> WhereExpressionsField = new();
+        private readonly List<(string column, bool isAscending)> OrderByField = new();
+        private int? TakeField;
+        private int? SkipField;
 
         /// <summary>
         /// Agrega una condición WHERE a la consulta
@@ -27,7 +18,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Query
         {
             if (predicate != null)
             {
-                _whereExpressions.Add(predicate);
+                WhereExpressionsField.Add(predicate);
             }
             return this;
         }
@@ -39,7 +30,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Query
         {
             if (!string.IsNullOrWhiteSpace(column))
             {
-                _orderByFields.Add((column, ascending));
+                OrderByField.Add((column, ascending));
             }
 
             return this;
@@ -50,7 +41,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Query
         /// </summary>
         public SqlQueryBuilder<T> Take(int count)
         {
-            _take = count > 0 ? count : _take;
+            TakeField = count > 0 ? count : TakeField;
             return this;
         }
 
@@ -59,7 +50,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Query
         /// </summary>
         public SqlQueryBuilder<T> Skip(int count)
         {
-            _skip = count >= 0 ? count : _skip;
+            SkipField = count >= 0 ? count : SkipField;
             return this;
         }
 
@@ -68,10 +59,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Query
         /// </summary>
         public SqlQueryBuilder<T> Distinct()
         {
-            _distinct = true;
             return this;
         }
-
-        // Agrega más métodos según sea necesario para construir la consulta
     }
 }
