@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>net9.0-windows</TargetFramework>
+		<TargetFrameworks>net9.0-windows;net10.0-windows;</TargetFrameworks>
 		<OutputType>Library</OutputType>
 		<UseWindowsForms>true</UseWindowsForms>
 		<Title>CoreControlesUsuario - Biblioteca de Extensiones para Controles DevExpress</Title>
@@ -10,9 +10,9 @@
 		<Copyright>Copyright  David Vázquez Palestino</Copyright>
 		<Company>David Vázquez Palestino</Company>
 		<PackageId>CoreControlesUsuario</PackageId>
-		<Version>2025.10.26</Version>
-		<FileVersion>2025.10.26</FileVersion>
-		<AssemblyVersion>2025.10.26</AssemblyVersion>
+		<Version>2025.11.11</Version>
+		<FileVersion>2025.11.11</FileVersion>
+		<AssemblyVersion>2025.11.11</AssemblyVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -81,8 +81,8 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="DevExpress.Win.Design" Version="24.2.7" />
-		<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.10" />
-		<PackageReference Include="System.Text.Json" Version="9.0.10" />
+		<PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.0" />
+		<PackageReference Include="System.Text.Json" Version="10.0.0" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Update="Properties\Resources.resx">

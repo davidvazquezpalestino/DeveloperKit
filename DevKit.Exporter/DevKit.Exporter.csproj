@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net8.0;net9.0;</TargetFrameworks>
+		<TargetFrameworks>net6.0;net8.0;net9.0;net10.0;</TargetFrameworks>
 		<OutputType>Library</OutputType>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<Company>David Vázquez Palestino</Company>
 		<Product>CoreComponentExporter</Product>
-		<AssemblyVersion>2025.10.26</AssemblyVersion>
-		<FileVersion>2025.10.26</FileVersion>
-		<Version>2025.10.26</Version>
+		<AssemblyVersion>2025.11.11</AssemblyVersion>
+		<FileVersion>2025.11.11</FileVersion>
+		<Version>2025.11.11</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

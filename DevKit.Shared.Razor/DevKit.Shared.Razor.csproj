@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFrameworks>net9.0;net10.0;</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Title>DevKit.Shared.RazorComponent - Componentes Reutilizables para Blazor</Title>
 		<Authors>David Vázquez Palestino</Authors>
 		<Company>David Vázquez Palestino</Company>
 		<Product>DevKit.Shared.RazorComponent</Product>
 		<Description>DotNet.Shared.RazorComponent es una biblioteca de componentes Razor reutilizables para aplicaciones Blazor. Proporciona componentes web modernos y optimizados para facilitar el desarrollo de interfaces de usuario en aplicaciones Blazor. Compatible con .NET 9.0 y utiliza Microsoft.AspNetCore.Components.Web para la implementación de componentes web interactivos.</Description>
-		<Version>2025.10.26</Version>
-		<AssemblyVersion>2025.10.26</AssemblyVersion>
-		<FileVersion>2025.10.26</FileVersion>
+		<Version>2025.11.11</Version>
+		<AssemblyVersion>2025.11.11</AssemblyVersion>
+		<FileVersion>2025.11.11</FileVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

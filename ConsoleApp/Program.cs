@@ -22,22 +22,6 @@ using System.Data;
 
 IHost host = CreateHostBuilder().Build();
 
-IExcelProvider excel =
-    new ExcelProvider("C:\\Users\\vazqu\\Downloads\\PLANTILLA NOMINA 31 oct 2025.xlsx");
-
-DataTable dataTable = excel.GetTable("Datos");
-DataTable table1 = dataTable
-    .Where(row =>
-    {
-        string value = row.GetValue<string>("Codigo");
-        return value != "0" && string.IsNullOrWhiteSpace(value) == false;
-    });
-
-dataTable.RemoveAll(row =>
-{
-    string value = row.GetValue<string>("Codigo");
-    return value == "0" || string.IsNullOrWhiteSpace(value);
-});
 
 ISQLServerProvider infomex = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
 
