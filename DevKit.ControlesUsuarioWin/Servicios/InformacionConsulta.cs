@@ -1,5 +1,3 @@
-using CoreInterfaces;
-
 namespace DevKit.ControlesUsuarioWin.Servicios;
 
 /// <summary>Clase que implementa la interfaz IInformacionConsulta para manejar información de consulta.</summary>

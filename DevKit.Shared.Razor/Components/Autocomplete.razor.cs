@@ -374,5 +374,8 @@ public partial class Autocomplete<T>
         }
     }
 
+    /// <summary>
+    /// Imprime un saludo en la consola.
+    /// </summary>
     public void HolaMundo() => Console.WriteLine("Hola Mundo");
 }

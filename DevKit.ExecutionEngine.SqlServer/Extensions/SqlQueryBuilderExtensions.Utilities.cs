@@ -270,10 +270,16 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Extension method to check if a type is an anonymous type
     /// </summary>
-    private static bool IsAnonymousType(this Type type)
+    extension(Type type)
     {
-        return type.Name.Contains("AnonymousType") &&
-               type.IsGenericType &&
-               type.Attributes.HasFlag(TypeAttributes.NotPublic);
+        /// <summary>
+        /// Extension method to check if a type is an anonymous type
+        /// </summary>
+        private bool IsAnonymousType()
+        {
+            return type.Name.Contains("AnonymousType") &&
+                   type.IsGenericType &&
+                   type.Attributes.HasFlag(TypeAttributes.NotPublic);
+        }
     }
 }

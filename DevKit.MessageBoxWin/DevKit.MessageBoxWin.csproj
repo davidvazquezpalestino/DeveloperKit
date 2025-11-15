@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFrameworks>net8.0-windows;net9.0-windows</TargetFrameworks>
+		<TargetFrameworks>net8.0-windows;net9.0-windows;net10.0-windows;</TargetFrameworks>
 		<OutputType>Library</OutputType>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<UseWindowsForms>true</UseWindowsForms>
@@ -12,9 +12,9 @@
 		<Company>David Vázquez Palestino</Company>
 		<Product>CoreMessage</Product>
 		<Description>CoreMessageBox es una biblioteca que proporciona componentes y métodos optimizados para mostrar mensajes personalizados en aplicaciones Windows Forms. Incluye extensiones para MessageBox, cuadros de diálogo personalizados y notificaciones. Compatible con .NET Framework 4.8 y proporciona una interfaz de usuario moderna y consistente para la comunicación con los usuarios.</Description>
-		<Version>2025.10.26</Version>
-		<AssemblyVersion>2025.10.26</AssemblyVersion>
-		<FileVersion>2025.10.26</FileVersion>
+		<Version>2025.11.11</Version>
+		<AssemblyVersion>2025.11.11</AssemblyVersion>
+		<FileVersion>2025.11.11</FileVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -52,8 +52,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.10" />
-		<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.10" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.0" />
 		<PackageReference Include="Serilog" Version="4.3.0" />
 	</ItemGroup>
 	

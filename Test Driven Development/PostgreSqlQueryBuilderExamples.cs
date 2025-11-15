@@ -35,6 +35,10 @@ namespace TestDrivenDevelopment
         {
             private readonly IPostgreSqlDatabaseProvider _dbProvider;
 
+            /// <summary>
+            /// Inicializa la clase de servicio con el proveedor de base de datos PostgreSQL.
+            /// </summary>
+            /// <param name="dbProvider">Proveedor utilizado para ejecutar las consultas.</param>
             public ProductService(IPostgreSqlDatabaseProvider dbProvider)
             {
                 _dbProvider = dbProvider ?? throw new ArgumentNullException(nameof(dbProvider));
@@ -149,6 +153,12 @@ namespace TestDrivenDevelopment
     // Extension methods to make the examples more concise
     public static class PostgreSqlQueryBuilderExtensions
     {
+        /// <summary>
+        /// Ejecuta el generador de consultas y devuelve la lista de resultados.
+        /// </summary>
+        /// <typeparam name="T">Tipo de entidad que se proyectará.</typeparam>
+        /// <param name="queryBuilder">Constructor de consultas que se desea materializar.</param>
+        /// <param name="provider">Proveedor encargado de ejecutar la consulta.</param>
         public static async Task<List<T>> ToListAsync<T>(this PostgreSqlQueryBuilder<T> queryBuilder, IPostgreSqlDatabaseProvider provider) 
             where T : class, new()
         {

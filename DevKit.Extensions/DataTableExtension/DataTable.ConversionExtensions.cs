@@ -2,29 +2,36 @@ namespace DevKit.Extensions.DataTableExtension;
 
 public static partial class DataTableExtensions
 {
-    /// <summary>Convierte un DataTable en una lista de objetos del tipo especificado.</summary>
-    public static List<T> ToDataList<T>(this DataTable table) where T : new()
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="table"></param>
+    extension(DataTable table)
     {
-        return table.Rows.Cast<DataRow>()
-            .Select(row => row.GetItem<T>())
-            .ToList();
-    }
+        /// <summary>Convierte un DataTable en una lista de objetos del tipo especificado.</summary>
+        public List<T> ToDataList<T>() where T : new()
+        {
+            return table.Rows.Cast<DataRow>()
+                .Select(row => row.GetItem<T>())
+                .ToList();
+        }
 
-    /// <summary>Convierte un DataTable en una lista de diccionarios.</summary>
-    public static IEnumerable<Dictionary<string, object>> ToDictionary(this DataTable dataTable)
-    {
-        return dataTable
-            .Rows
-            .Cast<DataRow>()
-            .Select(row =>
-            {
-                Dictionary<string, object> dict = new Dictionary<string, object>(dataTable.Columns.Count);
-                foreach (DataColumn column in dataTable.Columns)
+        /// <summary>Convierte un DataTable en una lista de diccionarios.</summary>
+        public IEnumerable<Dictionary<string, object>> ToDictionary()
+        {
+            return table
+                .Rows
+                .Cast<DataRow>()
+                .Select(row =>
                 {
-                    dict[column.ColumnName] = row[column];
-                }
-                return dict;
-            })
-            .ToList();
+                    Dictionary<string, object> dict = new Dictionary<string, object>(table.Columns.Count);
+                    foreach (DataColumn column in table.Columns)
+                    {
+                        dict[column.ColumnName] = row[column];
+                    }
+                    return dict;
+                })
+                .ToList();
+        }
     }
 }

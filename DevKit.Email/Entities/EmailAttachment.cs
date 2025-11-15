@@ -23,12 +23,12 @@ public class EmailAttachment
     /// <summary>
     /// Contenido del archivo como array de bytes.
     /// </summary>
-    public byte[]? ContentBytes { get; set; }
+    public byte[] ContentBytes { get; set; }
 
     /// <summary>
     /// Ruta del archivo en disco.
     /// </summary>
-    public string? FilePath { get; set; }
+    public string FilePath { get; set; }
 
     /// <summary>
     /// Crea un attachment desde un stream.

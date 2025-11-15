@@ -10,6 +10,7 @@ global using Microsoft.Extensions.Options;
 global using Microsoft.IdentityModel.JsonWebTokens;
 global using Microsoft.IdentityModel.Tokens;
 global using System.Collections.Concurrent;
+global using System.Net.Mail;
 global using System.Security.Claims;
 global using System.Security.Cryptography;
 global using System.Text;

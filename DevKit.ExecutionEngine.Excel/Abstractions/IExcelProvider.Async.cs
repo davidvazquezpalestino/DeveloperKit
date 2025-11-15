@@ -5,6 +5,10 @@ public partial interface IExcelProvider
 {
     /// <summary>Obtiene una tabla específica del archivo Excel de forma asíncrona.</summary>
     Task<DataTable> GetTableAsync(string tableName);
+
+    /// <summary>Obtiene una lista de tablas del archivo Excel de forma asíncrona.</summary>
+    Task<List<DataTable>> GetTablesAsync();
+
     /// <summary>Obtiene una colección de objetos de tipo T desde una tabla del archivo Excel de forma asíncrona.</summary>
     Task<ICollection<T>> GetItemsAsync<T>(string tableName) where T : new();
 

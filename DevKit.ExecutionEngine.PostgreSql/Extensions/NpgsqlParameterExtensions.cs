@@ -84,183 +84,178 @@ namespace DevKit.ExecutionEngine.PostgreSQL.Extensions
             }
         }
 
-        /// <summary>
-        /// Adds an NpgsqlParameter to the specified parameter collection.
-        /// </summary>
-        public static IDataParameterCollection AddPosgreParameter(
-            this IDataParameterCollection parameterCollection,
-            string parameterName,
-            object value,
-            NpgsqlDbType? npgsqlDbType = null,
-            int? size = null,
-            byte? precision = null,
-            byte? scale = null,
-            ParameterDirection? direction = null,
-            Action<string> log = null)
+        extension(IDataParameterCollection parameterCollection)
         {
-            try
+            /// <summary>
+            /// Adds an NpgsqlParameter to the specified parameter collection.
+            /// </summary>
+            public IDataParameterCollection AddPosgreParameter(string parameterName,
+                object value,
+                NpgsqlDbType? npgsqlDbType = null,
+                int? size = null,
+                byte? precision = null,
+                byte? scale = null,
+                ParameterDirection? direction = null,
+                Action<string> log = null)
             {
-                log?.Invoke($"Adding parameter to collection: {parameterName}");
-
-                if (parameterCollection == null)
+                try
                 {
-                    throw new ArgumentNullException(nameof(parameterCollection));
-                }
+                    log?.Invoke($"Adding parameter to collection: {parameterName}");
 
-                NpgsqlParameter parameter = CreatePosgreParameter(
-                    parameterName, value, npgsqlDbType, size, precision, scale, direction, log);
-
-                parameterCollection.Add(parameter);
-
-                log?.Invoke($"Parameter {parameterName} added to collection successfully");
-                return parameterCollection;
-            }
-            catch (Exception ex)
-            {
-                log?.Invoke($"ERROR adding parameter {parameterName} to collection: {ex.Message}");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Converts an object's properties to a collection of NpgsqlParameters.
-        /// </summary>
-        public static IDataParameterCollection AsPosgreParameters<T>(
-            this IDataParameterCollection parameterCollection,
-            T item,
-            Action<string> log = null)
-        {
-            try
-            {
-                log?.Invoke("Starting object to NpgsqlParameters conversion");
-
-                if (parameterCollection == null)
-                {
-                    throw new ArgumentNullException(nameof(parameterCollection));
-                }
-
-                if (item == null)
-                {
-                    throw new ArgumentNullException(nameof(item), "Object cannot be null");
-                }
-
-                Type type = item.GetType();
-                PropertyInfo[] properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-                log?.Invoke($"Processing {properties.Length} properties");
-
-                foreach (PropertyInfo property in properties)
-                {
-                    try
+                    if (parameterCollection == null)
                     {
-                        string propertyName = property.Name;
-                        log?.Invoke($"Processing property: {propertyName}");
-
-                        object value = property.GetValue(item);
-                        NpgsqlDbType dbType = GetNpgsqlDbType(property.PropertyType);
-                        string paramName = NormalizeNpgsqlParamName(propertyName);
-
-                        log?.Invoke($"Creating parameter: {paramName} with type {dbType}");
-
-                        parameterCollection.AddPosgreParameter(
-                            paramName,
-                            value,
-                            dbType,
-                            log: log);
+                        throw new ArgumentNullException(nameof(parameterCollection));
                     }
-                    catch (Exception ex)
-                    {
-                        string errorMsg = $"Error processing property '{property.Name}': {ex.Message}";
-                        log?.Invoke($"ERROR: {errorMsg}");
-                        if (log == null)
-                        {
-                            Console.WriteLine(errorMsg);
-                        }
-                    }
-                }
 
-                log?.Invoke("Object to NpgsqlParameters conversion completed successfully");
-                return parameterCollection;
-            }
-            catch (Exception ex)
-            {
-                log?.Invoke($"ERROR in AsNpgsqlParameters: {ex.Message}");
-                throw;
-            }
-        }
+                    NpgsqlParameter parameter = CreatePosgreParameter(
+                        parameterName, value, npgsqlDbType, size, precision, scale, direction, log);
 
-        /// <summary>
-        /// Converts a dictionary to a collection of NpgsqlParameters.
-        /// </summary>
-        public static IDataParameterCollection AsPosgreParameters(
-            this IDataParameterCollection parameterCollection,
-            Dictionary<string, object> parameters,
-            Action<string> log = null)
-        {
-            try
-            {
-                log?.Invoke("Starting dictionary to NpgsqlParameters conversion");
-
-                if (parameterCollection == null)
-                {
-                    throw new ArgumentNullException(nameof(parameterCollection));
-                }
-
-                if (parameters == null)
-                {
-                    throw new ArgumentNullException(nameof(parameters));
-                }
-
-                log?.Invoke($"Processing {parameters.Count} parameters");
-
-                foreach (KeyValuePair<string, object> param in parameters)
-                {
-                    try
-                    {
-                        string paramName = NormalizeNpgsqlParamName(param.Key);
-                        log?.Invoke($"Adding parameter: {paramName}");
-
-                        parameterCollection.AddPosgreParameter(
-                            paramName,
-                            param.Value,
-                            log: log);
-                    }
-                    catch (Exception ex)
-                    {
-                        string errorMsg = $"Error processing parameter '{param.Key}': {ex.Message}";
-                        log?.Invoke($"ERROR: {errorMsg}");
-                        if (log == null)
-                        {
-                            Console.Error.WriteLine(errorMsg);
-                        }
-                    }
-                }
-
-                log?.Invoke("Dictionary to NpgsqlParameters conversion completed successfully");
-                return parameterCollection;
-            }
-            catch (Exception ex)
-            {
-                log?.Invoke($"ERROR in AsNpgsqlParameters: {ex.Message}");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Adds a range of IDataParameter objects to an existing IDataParameterCollection.
-        /// </summary>
-        public static IDataParameterCollection AddRange(
-            this IDataParameterCollection parameterCollection,
-            params IEnumerable<IDataParameter>[] parameters)
-        {
-            foreach (IEnumerable<IDataParameter> paramList in parameters)
-            {
-                foreach (IDataParameter parameter in paramList)
-                {
                     parameterCollection.Add(parameter);
+
+                    log?.Invoke($"Parameter {parameterName} added to collection successfully");
+                    return parameterCollection;
+                }
+                catch (Exception ex)
+                {
+                    log?.Invoke($"ERROR adding parameter {parameterName} to collection: {ex.Message}");
+                    throw;
                 }
             }
-            return parameterCollection;
+
+            /// <summary>
+            /// Converts an object's properties to a collection of NpgsqlParameters.
+            /// </summary>
+            public IDataParameterCollection AsPosgreParameters<T>(T item,
+                Action<string> log = null)
+            {
+                try
+                {
+                    log?.Invoke("Starting object to NpgsqlParameters conversion");
+
+                    if (parameterCollection == null)
+                    {
+                        throw new ArgumentNullException(nameof(parameterCollection));
+                    }
+
+                    if (item == null)
+                    {
+                        throw new ArgumentNullException(nameof(item), "Object cannot be null");
+                    }
+
+                    Type type = item.GetType();
+                    PropertyInfo[] properties = type.GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+                    log?.Invoke($"Processing {properties.Length} properties");
+
+                    foreach (PropertyInfo property in properties)
+                    {
+                        try
+                        {
+                            string propertyName = property.Name;
+                            log?.Invoke($"Processing property: {propertyName}");
+
+                            object value = property.GetValue(item);
+                            NpgsqlDbType dbType = GetNpgsqlDbType(property.PropertyType);
+                            string paramName = NormalizeNpgsqlParamName(propertyName);
+
+                            log?.Invoke($"Creating parameter: {paramName} with type {dbType}");
+
+                            parameterCollection.AddPosgreParameter(
+                                paramName,
+                                value,
+                                dbType,
+                                log: log);
+                        }
+                        catch (Exception ex)
+                        {
+                            string errorMsg = $"Error processing property '{property.Name}': {ex.Message}";
+                            log?.Invoke($"ERROR: {errorMsg}");
+                            if (log == null)
+                            {
+                                Console.WriteLine(errorMsg);
+                            }
+                        }
+                    }
+
+                    log?.Invoke("Object to NpgsqlParameters conversion completed successfully");
+                    return parameterCollection;
+                }
+                catch (Exception ex)
+                {
+                    log?.Invoke($"ERROR in AsNpgsqlParameters: {ex.Message}");
+                    throw;
+                }
+            }
+
+            /// <summary>
+            /// Converts a dictionary to a collection of NpgsqlParameters.
+            /// </summary>
+            public IDataParameterCollection AsPosgreParameters(Dictionary<string, object> parameters,
+                Action<string> log = null)
+            {
+                try
+                {
+                    log?.Invoke("Starting dictionary to NpgsqlParameters conversion");
+
+                    if (parameterCollection == null)
+                    {
+                        throw new ArgumentNullException(nameof(parameterCollection));
+                    }
+
+                    if (parameters == null)
+                    {
+                        throw new ArgumentNullException(nameof(parameters));
+                    }
+
+                    log?.Invoke($"Processing {parameters.Count} parameters");
+
+                    foreach (KeyValuePair<string, object> param in parameters)
+                    {
+                        try
+                        {
+                            string paramName = NormalizeNpgsqlParamName(param.Key);
+                            log?.Invoke($"Adding parameter: {paramName}");
+
+                            parameterCollection.AddPosgreParameter(
+                                paramName,
+                                param.Value,
+                                log: log);
+                        }
+                        catch (Exception ex)
+                        {
+                            string errorMsg = $"Error processing parameter '{param.Key}': {ex.Message}";
+                            log?.Invoke($"ERROR: {errorMsg}");
+                            if (log == null)
+                            {
+                                Console.Error.WriteLine(errorMsg);
+                            }
+                        }
+                    }
+
+                    log?.Invoke("Dictionary to NpgsqlParameters conversion completed successfully");
+                    return parameterCollection;
+                }
+                catch (Exception ex)
+                {
+                    log?.Invoke($"ERROR in AsNpgsqlParameters: {ex.Message}");
+                    throw;
+                }
+            }
+
+            /// <summary>
+            /// Adds a range of IDataParameter objects to an existing IDataParameterCollection.
+            /// </summary>
+            public IDataParameterCollection AddRange(params IEnumerable<IDataParameter>[] parameters)
+            {
+                foreach (IEnumerable<IDataParameter> paramList in parameters)
+                {
+                    foreach (IDataParameter parameter in paramList)
+                    {
+                        parameterCollection.Add(parameter);
+                    }
+                }
+                return parameterCollection;
+            }
         }
 
         /// <summary>

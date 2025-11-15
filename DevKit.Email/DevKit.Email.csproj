@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net48;net8.0;net9.0</TargetFrameworks>
+		<TargetFrameworks>net48;net8.0;net9.0;net10.0;</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<PackageId>CoreMailKit</PackageId>
 		<Title>CoreMailKit - Biblioteca de Gestión de Correo Electrónico</Title>
@@ -12,9 +12,9 @@
 		<Description>CoreMailKit es una biblioteca completa para el manejo de correos electrónicos en aplicaciones .NET. Proporciona funcionalidades avanzadas para la creación, envío y recepción de emails, incluyendo soporte para adjuntos, HTML, múltiples destinatarios, configuración SMTP personalizada y manejo de errores. Compatible con múltiples versiones de .NET (4.8, 8.0 y 9.0) y utiliza MailKit para la implementación eficiente de protocolos de correo electrónico.</Description>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
 
-		<AssemblyVersion>2025.10.26</AssemblyVersion>
-		<Version>2025.10.26</Version>
-		<FileVersion>2025.10.26</FileVersion>
+		<AssemblyVersion>2025.11.11</AssemblyVersion>
+		<Version>2025.11.11</Version>
+		<FileVersion>2025.11.11</FileVersion>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -44,9 +44,9 @@
 
 	<ItemGroup>
 		<PackageReference Include="MailKit" Version="4.14.1" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.10" />
-		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.10" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.10" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

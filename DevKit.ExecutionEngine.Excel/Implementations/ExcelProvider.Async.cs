@@ -4,26 +4,14 @@ namespace DevKit.ExecutionEngine.Excel.Implementations;
 public partial class ExcelProvider
 {
     /// <inheritdoc/>
-    public Task<DataTable> GetTableAsync(string tableName)
-    {
-        return Task.FromResult(GetTable(tableName));
-    }
+    public Task<DataTable> GetTableAsync(string tableName) => Task.FromResult(GetTable(tableName));
 
     /// <inheritdoc/>
-    public Task<ICollection<T>> GetItemsAsync<T>(string tableName) where T : new()
-    {
-        return Task.FromResult(GetItems<T>(tableName));
-    }
-
+    public Task<ICollection<T>> GetItemsAsync<T>(string tableName) where T : new() => Task.FromResult(GetItems<T>(tableName));
+    
     /// <inheritdoc/>
-    public Task<List<DataTable>> GetTablesAsync()
-    {
-        return Task.FromResult(GetTables());
-    }
-
+    public Task<List<DataTable>> GetTablesAsync() => Task.FromResult(GetTables());
+    
     /// <inheritdoc/>
-    public Task<IReadOnlyList<string>> GetSheetNamesAsync()
-    {
-        return Task.FromResult(GetSheetNames());
-    }
+    public Task<IReadOnlyList<string>> GetSheetNamesAsync() => Task.FromResult(GetSheetNames());
 }

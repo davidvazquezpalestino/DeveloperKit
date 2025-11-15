@@ -11,6 +11,10 @@ public class MySqlQueryBuilderExamples
 {
     private readonly IMySQLDatabaseProvider _provider;
 
+    /// <summary>
+    /// Inicializa una nueva instancia con el proveedor de base de datos especificado.
+    /// </summary>
+    /// <param name="provider">Proveedor utilizado para ejecutar las consultas de ejemplo.</param>
     public MySqlQueryBuilderExamples(IMySQLDatabaseProvider provider)
     {
         _provider = provider;
