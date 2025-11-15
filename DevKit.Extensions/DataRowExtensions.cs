@@ -13,149 +13,162 @@ public static class DataRowExtensions
 {
     private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> PropertyCache = new();
 
-    /// <summary>
-    /// Obtiene el valor tipado de la columna. Si es DBNull retorna default(T).
-    /// </summary>
-    /// <typeparam name="T">Tipo de dato esperado</typeparam>
     /// <param name="row">DataRow de origen</param>
-    /// <param name="columnName">Nombre de la columna</param>
-    /// <param name="defaultValue">Valor por defecto opcional en caso de DBNull</param>
-    /// <returns>Valor convertido al tipo especificado</returns>
-    /// <exception cref="ArgumentNullException">Cuando el DataRow es nulo</exception>
-    /// <exception cref="ArgumentException">Cuando el nombre de la columna no existe</exception>
-    /// <exception cref="InvalidCastException">Cuando la conversión de tipo falla</exception>
-    public static T GetValue<T>(this DataRow row, string columnName, T defaultValue = default)
+    extension(DataRow row)
     {
-        if (row == null)
+        /// <summary>
+        /// Obtiene el valor tipado de la columna. Si es DBNull retorna default(T).
+        /// </summary>
+        /// <typeparam name="T">Tipo de dato esperado</typeparam>
+        /// <param name="columnName">Nombre de la columna</param>
+        /// <param name="defaultValue">Valor por defecto opcional en caso de DBNull</param>
+        /// <returns>Valor convertido al tipo especificado</returns>
+        /// <exception cref="ArgumentNullException">Cuando el DataRow es nulo</exception>
+        /// <exception cref="ArgumentException">Cuando el nombre de la columna no existe</exception>
+        /// <exception cref="InvalidCastException">Cuando la conversión de tipo falla</exception>
+        public T GetValue<T>(string columnName, T defaultValue = default)
         {
-            throw new ArgumentNullException(nameof(row));
-        }
-
-        if (string.IsNullOrWhiteSpace(columnName))
-        {
-            throw new ArgumentException("El nombre de la columna no puede estar vacío", nameof(columnName));
-        }
-
-        if (!row.Table.Columns.Contains(columnName))
-        {
-            throw new ArgumentException($"La columna '{columnName}' no existe en la tabla", nameof(columnName));
-        }
-
-        try
-        {
-            object value = row[columnName];
-
-            if (value == DBNull.Value)
+            if (row == null)
             {
-                return defaultValue;
+                throw new ArgumentNullException(nameof(row));
             }
 
-            // Si el tipo ya es el correcto, retornar directamente
-            if (value is T typedValue)
+            if (string.IsNullOrWhiteSpace(columnName))
             {
-                return typedValue;
+                throw new ArgumentException("El nombre de la columna no puede estar vacío", nameof(columnName));
             }
 
-            // Conversión especial para tipos comunes
-            return ConvertValue<T>(value);
-        }
-        catch (Exception ex) when (ex is InvalidCastException or FormatException)
-        {
-            object columnValue = row[columnName];
-            throw CreateConversionException<T>(columnName, columnValue, ex);
-        }
-    }
+            if (!row.Table.Columns.Contains(columnName))
+            {
+                throw new ArgumentException($"La columna '{columnName}' no existe en la tabla", nameof(columnName));
+            }
 
-    /// <summary>
-    /// Obtiene el valor de la columna de forma segura, sin lanzar excepciones
-    /// </summary>
-    public static bool TryGetValue<T>(this DataRow row, string columnName, out T result, T defaultValue = default)
-    {
-        result = defaultValue;
+            try
+            {
+                object value = row[columnName];
 
-        try
+                if (value == DBNull.Value)
+                {
+                    return defaultValue;
+                }
+
+                // Si el tipo ya es el correcto, retornar directamente
+                if (value is T typedValue)
+                {
+                    return typedValue;
+                }
+
+                // Conversión especial para tipos comunes
+                return ConvertValue<T>(value);
+            }
+            catch (Exception ex) when (ex is InvalidCastException or FormatException)
+            {
+                object columnValue = row[columnName];
+                throw CreateConversionException<T>(columnName, columnValue, ex);
+            }
+        }
+
+        /// <summary>
+        /// Obtiene el valor de la columna de forma segura, sin lanzar excepciones
+        /// </summary>
+        public bool TryGetValue<T>(string columnName, out T result, T defaultValue = default)
         {
-            if (row == null || !row.Table.Columns.Contains(columnName))
+            result = defaultValue;
+
+            try
+            {
+                if (row == null || !row.Table.Columns.Contains(columnName))
+                {
+                    return false;
+                }
+
+                object value = row[columnName];
+                if (value == DBNull.Value)
+                {
+                    return false;
+                }
+
+                result = ConvertValue<T>(value);
+                return true;
+            }
+            catch
             {
                 return false;
             }
+        }
 
-            object value = row[columnName];
-            if (value == DBNull.Value)
+        /// <summary>
+        /// Mapea los datos del DataRow a un objeto del tipo especificado
+        /// </summary>
+        public T GetItem<T>() where T : new()
+        {
+            if (row == null)
             {
-                return false;
+                throw new ArgumentNullException(nameof(row));
             }
 
-            result = ConvertValue<T>(value);
-            return true;
-        }
-        catch
-        {
-            return false;
+            T item = new T();
+            Type type = typeof(T);
+
+            Dictionary<string, PropertyInfo> properties = GetCachedProperties(type);
+
+            foreach (DataColumn column in row.Table.Columns)
+            {
+                string columnName = column.ColumnName;
+                object value = row[columnName];
+
+                if (value == DBNull.Value)
+                {
+                    continue;
+                }
+
+                // Intentar mapear a propiedad
+                if (properties.TryGetValue(columnName, out PropertyInfo property))
+                {
+                    SetPropertyValue(item, property, value);
+                }
+
+            }
+
+            return item;
         }
     }
-
-    /// <summary>
-    /// Mapea los datos del DataRow a un objeto del tipo especificado
-    /// </summary>
-    public static T GetItem<T>(this DataRow row) where T : new()
-    {
-        if (row == null)
-        {
-            throw new ArgumentNullException(nameof(row));
-        }
-
-        T item = new T();
-        Type type = typeof(T);
-
-        Dictionary<string, PropertyInfo> properties = GetCachedProperties(type);
-
-        foreach (DataColumn column in row.Table.Columns)
-        {
-            string columnName = column.ColumnName;
-            object value = row[columnName];
-
-            if (value == DBNull.Value)
-            {
-                continue;
-            }
-
-            // Intentar mapear a propiedad
-            if (properties.TryGetValue(columnName, out PropertyInfo property))
-            {
-                SetPropertyValue(item, property, value);
-            }
-
-        }
-
-        return item;
-    }
-
 
     /// <summary>
     /// Mapea una DataTable a una lista de objetos
     /// </summary>
-    public static List<T> GetItems<T>(this DataTable table) where T : new()
+    extension(DataTable table)
     {
-        if (table == null)
+        /// <summary>
+        /// Mapea una DataTable a una lista de objetos
+        /// </summary>
+        public List<T> GetItems<T>() where T : new()
         {
-            throw new ArgumentNullException(nameof(table));
+            if (table == null)
+            {
+                throw new ArgumentNullException(nameof(table));
+            }
+
+            return table.AsEnumerable().GetItems<T>();
         }
-
-        return table.AsEnumerable().GetItems<T>();
     }
-
     /// <summary>
     /// Mapea una colección de DataRows a una lista de objetos
     /// </summary>
-    public static List<T> GetItems<T>(this IEnumerable<DataRow> rows) where T : new()
+    extension(IEnumerable<DataRow> rows)
     {
-        if (rows == null)
+        /// <summary>
+        /// Mapea una colección de DataRows a una lista de objetos
+        /// </summary>
+        public List<T> GetItems<T>() where T : new()
         {
-            throw new ArgumentNullException(nameof(rows));
-        }
+            if (rows == null)
+            {
+                throw new ArgumentNullException(nameof(rows));
+            }
 
-        return rows.Select(row => row.GetItem<T>()).ToList();
+            return rows.Select(row => row.GetItem<T>()).ToList();
+        }
     }
 
     private static Dictionary<string, PropertyInfo> GetCachedProperties(Type type)

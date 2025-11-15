@@ -5,6 +5,9 @@ namespace DevKit.ExecutionEngine.MySQL.Settings;
 /// </summary>
 public class MySqlOptions
 {
+    /// <summary>
+    /// Inicializa la configuración con los valores predeterminados para conexiones y carga masiva.
+    /// </summary>
     public MySqlOptions()
     {
         ConnectionPooling = new ConnectionPoolingOptions();

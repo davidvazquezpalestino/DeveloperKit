@@ -1,5 +1,3 @@
-using System.Reflection;
-
 namespace DevKit.ExecutionEngine.MySQL.Extensions
 {
     /// <summary>
@@ -98,128 +96,128 @@ namespace DevKit.ExecutionEngine.MySQL.Extensions
         /// <summary>
         /// Adds a MySqlParameter to the specified parameter collection.
         /// </summary>
-        public static IDataParameterCollection AddMySqlParameter(
-            this IDataParameterCollection parameterCollection,
-            string parameterName,
-            object value,
-            MySqlDbType? mySqlDbType = null,
-            int? size = null,
-            byte? precision = null,
-            byte? scale = null,
-            ParameterDirection direction = ParameterDirection.Input,
-            Action<string> log = null)
+        extension(IDataParameterCollection parameterCollection)
         {
-            try
+            /// <summary>
+            /// Adds a MySqlParameter to the specified parameter collection.
+            /// </summary>
+            public IDataParameterCollection AddMySqlParameter(string parameterName,
+                object value,
+                MySqlDbType? mySqlDbType = null,
+                int? size = null,
+                byte? precision = null,
+                byte? scale = null,
+                ParameterDirection direction = ParameterDirection.Input,
+                Action<string> log = null)
             {
-                MySqlParameter parameter = CreateMySqlParameter(
-                    parameterName, value, mySqlDbType, size, precision, scale, direction, log);
-
-                parameterCollection.Add(parameter);
-                return parameterCollection;
-            }
-            catch (Exception ex)
-            {
-                log?.Invoke($"Error adding parameter {parameterName}: {ex.Message}");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Converts an object's properties to a collection of MySqlParameters.
-        /// </summary>
-        public static IDataParameterCollection AsMySqlParameters<T>(
-            this IDataParameterCollection parameterCollection,
-            T item,
-            Action<string> log = null)
-        {
-            if (item == null)
-            {
-                return parameterCollection;
-            }
-
-            try
-            {
-                PropertyInfo[] properties = typeof(T).GetProperties();
-                foreach (PropertyInfo property in properties)
+                try
                 {
-                    try
+                    MySqlParameter parameter = CreateMySqlParameter(
+                        parameterName, value, mySqlDbType, size, precision, scale, direction, log);
+
+                    parameterCollection.Add(parameter);
+                    return parameterCollection;
+                }
+                catch (Exception ex)
+                {
+                    log?.Invoke($"Error adding parameter {parameterName}: {ex.Message}");
+                    throw;
+                }
+            }
+
+            /// <summary>
+            /// Converts an object's properties to a collection of MySqlParameters.
+            /// </summary>
+            public IDataParameterCollection AsMySqlParameters<T>(T item,
+                Action<string> log = null)
+            {
+                if (item == null)
+                {
+                    return parameterCollection;
+                }
+
+                try
+                {
+                    PropertyInfo[] properties = typeof(T).GetProperties();
+                    foreach (PropertyInfo property in properties)
                     {
-                        // Skip indexers and other non-serializable properties
-                        if (property.GetIndexParameters().Length > 0)
+                        try
                         {
-                            continue;
+                            // Skip indexers and other non-serializable properties
+                            if (property.GetIndexParameters().Length > 0)
+                            {
+                                continue;
+                            }
+
+                            string paramName = $"@{property.Name}";
+                            object value = property.GetValue(item);
+
+                            // Get the appropriate MySqlDbType for the property
+                            MySqlDbType dbType = GetMySqlDbType(property.PropertyType);
+
+                            log?.Invoke($"Creating parameter: {paramName} with type {dbType}");
+
+                            parameterCollection.AddMySqlParameter(
+                                paramName,
+                                value,
+                                dbType,
+                                log: log);
                         }
-
-                        string paramName = $"@{property.Name}";
-                        object value = property.GetValue(item);
-
-                        // Get the appropriate MySqlDbType for the property
-                        MySqlDbType dbType = GetMySqlDbType(property.PropertyType);
-
-                        log?.Invoke($"Creating parameter: {paramName} with type {dbType}");
-
-                        parameterCollection.AddMySqlParameter(
-                            paramName,
-                            value,
-                            dbType,
-                            log: log);
+                        catch (Exception ex)
+                        {
+                            log?.Invoke($"Error processing property {property.Name}: {ex.Message}");
+                            // Continue with next property
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        log?.Invoke($"Error processing property {property.Name}: {ex.Message}");
-                        // Continue with next property
-                    }
+
+                    return parameterCollection;
                 }
-
-                return parameterCollection;
-            }
-            catch (Exception ex)
-            {
-                log?.Invoke($"Error converting object to parameters: {ex.Message}");
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Converts a dictionary to a collection of MySqlParameters.
-        /// </summary>
-        public static IDataParameterCollection AsMySqlParameters(
-            this IDataParameterCollection parameterCollection,
-            Dictionary<string, object> parameters,
-            Action<string> log = null)
-        {
-            if (parameters == null || parameters.Count == 0)
-            {
-                return parameterCollection;
-            }
-
-            try
-            {
-                foreach (KeyValuePair<string, object> param in parameters)
+                catch (Exception ex)
                 {
-                    try
-                    {
-                        string paramName = NormalizeMySqlParamName(param.Key);
-                        log?.Invoke($"Adding parameter: {paramName}");
+                    log?.Invoke($"Error converting object to parameters: {ex.Message}");
+                    throw;
+                }
+            }
 
-                        parameterCollection.AddMySqlParameter(
-                            paramName,
-                            param.Value,
-                            log: log);
-                    }
-                    catch (Exception ex)
-                    {
-                        log?.Invoke($"Error adding parameter {param.Key}: {ex.Message}");
-                        // Continue with next parameter
-                    }
+            /// <summary>
+            /// Converts a dictionary to a collection of MySqlParameters.
+            /// </summary>
+            public IDataParameterCollection AsMySqlParameters(Dictionary<string, object> parameters,
+                Action<string> log = null)
+            {
+                if (parameters == null || parameters.Count == 0)
+                {
+                    return parameterCollection;
                 }
 
-                return parameterCollection;
-            }
-            catch (Exception ex)
-            {
-                log?.Invoke($"Error converting dictionary to parameters: {ex.Message}");
-                throw;
+                try
+                {
+                    foreach (KeyValuePair<string, object> param in parameters)
+                    {
+                        try
+                        {
+                            string paramName = NormalizeMySqlParamName(param.Key);
+                            log?.Invoke($"Adding parameter: {paramName}");
+
+                            parameterCollection.AddMySqlParameter(
+                                paramName,
+                                param.Value,
+                                log: log);
+                        }
+                        catch (Exception ex)
+                        {
+                            log?.Invoke($"Error adding parameter {param.Key}: {ex.Message}");
+                            // Continue with next parameter
+                        }
+                    }
+
+                    return parameterCollection;
+                }
+                catch (Exception ex)
+                {
+                    log?.Invoke($"Error converting dictionary to parameters: {ex.Message}");
+                    throw;
+                }
             }
         }
 

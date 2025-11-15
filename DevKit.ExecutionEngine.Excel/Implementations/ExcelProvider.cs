@@ -44,13 +44,15 @@ public partial class ExcelProvider : IExcelProvider
         return GetWorksheetTables();
     }
 
-    /// <summary>Inicializa una nueva instancia de la clase ExcelDatabaseProvider.</summary>
+    /// <summary>Inicializa una nueva instancia predeterminada de <see cref="ExcelProvider"/>.</summary>
     public ExcelProvider() { }
 
-    /// <summary>Inicializa una nueva instancia de la clase ExcelDatabaseProvider con la ruta del archivo Excel.</summary>
+    /// <summary>Inicializa una nueva instancia de <see cref="ExcelProvider"/> usando una cadena de conexión al archivo Excel.</summary>
+    /// <param name="connectionString">Cadena de conexión que apunta al archivo Excel que se leerá.</param>
     public ExcelProvider(string connectionString) => SetDatabaseLogon(connectionString);
 
-    /// <summary>Inicializa una nueva instancia de la clase ExcelDatabaseProvider con un Stream que contiene el archivo Excel.</summary>
+    /// <summary>Inicializa una nueva instancia de <see cref="ExcelProvider"/> usando un flujo que contiene el archivo Excel.</summary>
+    /// <param name="stream">Stream con el contenido del archivo Excel.</param>
     public ExcelProvider(Stream stream) => SetDatabaseLogon(stream);
 
     /// <inheritdoc/>
@@ -100,6 +102,7 @@ public partial class ExcelProvider : IExcelProvider
         }
     }
 
+    /// <inheritdoc/>
     ~ExcelProvider() => Dispose(false);
 
 

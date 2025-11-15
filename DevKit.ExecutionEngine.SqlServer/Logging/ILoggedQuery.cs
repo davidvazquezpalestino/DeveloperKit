@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace DevKit.ExecutionEngine.SQLServer.Logging
 {
     /// <summary>

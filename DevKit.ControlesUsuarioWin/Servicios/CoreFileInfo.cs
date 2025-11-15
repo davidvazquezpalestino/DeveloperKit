@@ -9,6 +9,9 @@ public class CoreFileInfo : IFileInfo
     public string SelectedPath { get; set; }
 
     /// <summary>Muestra un diálogo para seleccionar un directorio.</summary>
+    /// <summary>
+    /// Obtiene la ruta del directorio seleccionado por el usuario.
+    /// </summary>
     /// <returns>Ruta del directorio seleccionado o cadena vacía si se cancela.</returns>
     public string GetPathDirectory()
     {
@@ -21,6 +24,9 @@ public class CoreFileInfo : IFileInfo
     }
     /// <summary>Muestra un diálogo para seleccionar un archivo.</summary>
     /// <param name="filter">Filtro de archivos a mostrar en el diálogo.</param>
+    /// <summary>
+    /// Obtiene la ruta del archivo seleccionado por el usuario.
+    /// </summary>
     /// <returns>Ruta del archivo seleccionado o cadena vacía si se cancela.</returns>
     public string GetPathFile(string filter = "Excel 2007, 2010, 2013|*.xlsx|Todos los archivos (*.*)|*.*")
     {

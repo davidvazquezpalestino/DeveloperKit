@@ -173,7 +173,7 @@ public partial class ComboBox<TItem, TValue>
     private string ConvertToKey(TValue value) => value?.ToString() ?? string.Empty;
 
     /// <summary>
-    /// Maneja el evento de cambio del <select>.
+    /// Maneja el evento de cambio del <select/>.
     /// Resuelve la clave seleccionada a un elemento y obtiene su <typeparamref name="TValue"/> para propagar el cambio.
     /// </summary>
     /// <param name="e">Argumentos del evento de cambio.</param>

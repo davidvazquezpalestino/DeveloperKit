@@ -3,24 +3,28 @@ namespace DevKit.Extensions.DataTableExtension;
 public static partial class DataTableExtensions
 {
     /// <summary>Determina si un tipo es considerado simple.</summary>
-    public static bool IsSimpleType(this Type type)
+    extension(Type type)
     {
-        Type underlyingType = Nullable.GetUnderlyingType(type) ?? type;
-        if (underlyingType.IsEnum)
+        /// <summary>Determina si un tipo es considerado simple.</summary>
+        public bool IsSimpleType()
         {
-            return true;
-        }
+            Type underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+            if (underlyingType.IsEnum)
+            {
+                return true;
+            }
 
-        return underlyingType.IsPrimitive ||
-               underlyingType == typeof(string) ||
-               underlyingType == typeof(DateTime) ||
-               underlyingType == typeof(DateTimeOffset) ||
-               underlyingType == typeof(TimeSpan) ||
-               underlyingType == typeof(double) ||
-               underlyingType == typeof(decimal) ||
-               underlyingType == typeof(float) ||
-               underlyingType == typeof(bool) ||
-               underlyingType == typeof(Guid);
+            return underlyingType.IsPrimitive ||
+                   underlyingType == typeof(string) ||
+                   underlyingType == typeof(DateTime) ||
+                   underlyingType == typeof(DateTimeOffset) ||
+                   underlyingType == typeof(TimeSpan) ||
+                   underlyingType == typeof(double) ||
+                   underlyingType == typeof(decimal) ||
+                   underlyingType == typeof(float) ||
+                   underlyingType == typeof(bool) ||
+                   underlyingType == typeof(Guid);
+        }
     }
 
     /// <summary>Valida que el tipo genérico no sea primitivo.</summary>
@@ -33,28 +37,36 @@ public static partial class DataTableExtensions
         }
     }
 
-    /// <summary>Convierte una secuencia de DataRow en DataTable, devolviendo una tabla vacía si no hay filas.</summary>
-    public static DataTable ToDataTable(this IEnumerable<DataRow> rows, DataTable schema)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="rows"></param>
+    extension(IEnumerable<DataRow> rows)
     {
-        if (rows == null)
+        /// <summary>Convierte una secuencia de DataRow en DataTable, devolviendo una tabla vacía si no hay filas.</summary>
+        public DataTable ToDataTable(DataTable schema)
         {
-            return schema?.Clone() ?? new DataTable();
-        }
-
-        using (IEnumerator<DataRow> enumerator = rows.GetEnumerator())
-        {
-            if (!enumerator.MoveNext())
+            if (rows == null)
             {
                 return schema?.Clone() ?? new DataTable();
             }
-        }
-        return rows.CopyToDataTable();
-    }
 
-    /// <summary>Alias de ToDataTable para escenarios que esperan una tabla vacía cuando no hay filas.</summary>
-    public static DataTable ToDataTableOrEmpty(this IEnumerable<DataRow> rows, DataTable schema)
-    {
-        return ToDataTable(rows, schema);
+            IEnumerable<DataRow> dataRows = rows.ToList();
+            using (IEnumerator<DataRow> enumerator = dataRows.GetEnumerator())
+            {
+                if (!enumerator.MoveNext())
+                {
+                    return schema?.Clone() ?? new DataTable();
+                }
+            }
+            return dataRows.CopyToDataTable();
+        }
+
+        /// <summary>Alias de ToDataTable para escenarios que esperan una tabla vacía cuando no hay filas.</summary>
+        public DataTable ToDataTableOrEmpty(DataTable schema)
+        {
+            return ToDataTable(rows, schema);
+        }
     }
 
     /// <summary>Normaliza DBNull a null.</summary>

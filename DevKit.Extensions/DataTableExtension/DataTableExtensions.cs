@@ -3,34 +3,86 @@ namespace DevKit.Extensions.DataTableExtension;
 /// <summary>Proporciona métodos de extensión para trabajar con DataTables de manera más eficiente.</summary>
 public static partial class DataTableExtensions
 {
-    /// <summary>Convierte una colección de objetos en un DataTable.</summary>
-    public static DataTable ToDataTable<TSource>(this IEnumerable<TSource> source, string tableName = null, Action<string> log = null) where TSource : class
+    /// <summary>Proporciona métodos de extensión para trabajar con DataTables de manera más eficiente.</summary>
+    extension<TSource>(IEnumerable<TSource> source) where TSource : class
     {
-        if (log != null)
+        /// <summary>Convierte una colección de objetos en un DataTable.</summary>
+        public DataTable ToDataTable(string tableName = null, Action<string> log = null)
         {
-            log.Invoke($"Iniciando conversión de colección a DataTable. Tipo: {typeof(TSource).Name}");
-        }
-        GuardNotPrimitiveType<TSource>();
-
-        DataTable dataTable = new DataTable(tableName ?? typeof(TSource).Name);
-
-        // Obtiene todas las propiedades públicas de la clase T
-        PropertyInfo[] properties = typeof(TSource).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-        // Crea las columnas en el DataTable basadas en las propiedades
-        foreach (PropertyInfo prop in properties)
-        {
-            if (prop.PropertyType.IsSimpleType())
+            if (log != null)
             {
-                dataTable.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+                log.Invoke($"Iniciando conversión de colección a DataTable. Tipo: {typeof(TSource).Name}");
             }
-        }
+            GuardNotPrimitiveType<TSource>();
 
-        // Llena el DataTable con los valores de la lista
-        foreach (TSource item in source.AsEnumerable())
+            DataTable dataTable = new DataTable(tableName ?? typeof(TSource).Name);
+
+            // Obtiene todas las propiedades públicas de la clase T
+            PropertyInfo[] properties = typeof(TSource).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            // Crea las columnas en el DataTable basadas en las propiedades
+            foreach (PropertyInfo prop in properties)
+            {
+                if (prop.PropertyType.IsSimpleType())
+                {
+                    dataTable.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+                }
+            }
+
+            // Llena el DataTable con los valores de la lista
+            foreach (TSource item in source.AsEnumerable())
+            {
+                DataRow row = dataTable.NewRow();
+
+                foreach (PropertyInfo prop in properties)
+                {
+                    if (prop.PropertyType.IsSimpleType())
+                    {
+                        row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+                    }
+                }
+
+                dataTable.Rows.Add(row);
+            }
+
+            if (log != null)
+            {
+                log.Invoke($"Conversión completada exitosamente. Filas generadas: {dataTable.Rows.Count}");
+            }
+            return dataTable;
+        }
+    }
+
+    /// <summary>Convierte un solo objeto en un DataTable con una sola fila.</summary>
+    extension<T>(T item) where T : class, new()
+    {
+        /// <summary>Convierte un solo objeto en un DataTable con una sola fila.</summary>
+        public DataTable ToDataTable(string tableName = null, Action<string> log = null)
         {
+            if (log != null)
+            {
+                log.Invoke($"Iniciando conversión de objeto a DataTable. Tipo: {typeof(T).Name}");
+            }
+            GuardNotPrimitiveType<T>();
+
+            DataTable dataTable = new DataTable(tableName ?? typeof(T).Name);
+
+            // Obtiene todas las propiedades públicas de la clase T
+            PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+            // Crea una columna en el DataTable por cada propiedad de la clase
+            foreach (PropertyInfo prop in properties)
+            {
+                if (prop.PropertyType.IsSimpleType())
+                {
+                    dataTable.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+                }
+            }
+
+            // Crea una nueva fila
             DataRow row = dataTable.NewRow();
 
+            // Llena la fila con los valores de las propiedades
             foreach (PropertyInfo prop in properties)
             {
                 if (prop.PropertyType.IsSimpleType())
@@ -39,59 +91,15 @@ public static partial class DataTableExtensions
                 }
             }
 
+            // Agrega la fila al DataTable
             dataTable.Rows.Add(row);
-        }
 
-        if (log != null)
-        {
-            log.Invoke($"Conversión completada exitosamente. Filas generadas: {dataTable.Rows.Count}");
-        }
-        return dataTable;
-    }
-
-    /// <summary>Convierte un solo objeto en un DataTable con una sola fila.</summary>
-    public static DataTable ToDataTable<T>(this T item, string tableName = null, Action<string> log = null) where T : class, new()
-    {
-        if (log != null)
-        {
-            log.Invoke($"Iniciando conversión de objeto a DataTable. Tipo: {typeof(T).Name}");
-        }
-        GuardNotPrimitiveType<T>();
-
-        DataTable dataTable = new DataTable(tableName ?? typeof(T).Name);
-
-        // Obtiene todas las propiedades públicas de la clase T
-        PropertyInfo[] properties = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance);
-
-        // Crea una columna en el DataTable por cada propiedad de la clase
-        foreach (PropertyInfo prop in properties)
-        {
-            if (prop.PropertyType.IsSimpleType())
+            if (log != null)
             {
-                dataTable.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+                log.Invoke($"Conversión completada exitosamente. Filas generadas: {dataTable.Rows.Count}");
             }
+            return dataTable;
         }
-
-        // Crea una nueva fila
-        DataRow row = dataTable.NewRow();
-
-        // Llena la fila con los valores de las propiedades
-        foreach (PropertyInfo prop in properties)
-        {
-            if (prop.PropertyType.IsSimpleType())
-            {
-                row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
-            }
-        }
-
-        // Agrega la fila al DataTable
-        dataTable.Rows.Add(row);
-
-        if (log != null)
-        {
-            log.Invoke($"Conversión completada exitosamente. Filas generadas: {dataTable.Rows.Count}");
-        }
-        return dataTable;
     }
 
     /// <summary>Convierte una cadena JSON que representa un arreglo de objetos simples (con valores primarios como string, number, bool) en un DataTable.</summary>
@@ -145,50 +153,57 @@ public static partial class DataTableExtensions
         return table;
     }
 
-    /// <summary>Convierte un DataTable a una cadena en formato CSV.</summary>
-    public static string WriteToCsv(this DataTable table, string delimiter = ",")
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="table"></param>
+    extension(DataTable table)
     {
-        StringBuilder stringBuilder = new StringBuilder();
-
-        // Encabezados
-        stringBuilder.AppendLine(string.Join(delimiter,
-            table.Columns.Cast<DataColumn>().Select(column => column.ColumnName)));
-
-        // Datos
-        foreach (DataRow row in table.Rows)
+        /// <summary>Convierte un DataTable a una cadena en formato CSV.</summary>
+        public string WriteToCsv(string delimiter = ",")
         {
+            StringBuilder stringBuilder = new StringBuilder();
+
+            // Encabezados
             stringBuilder.AppendLine(string.Join(delimiter,
-                row.ItemArray.Select(field =>
-                {
-                    string text = field == DBNull.Value ? string.Empty : (field != null ? field.ToString() : string.Empty);
-                    return $"\"{text.Replace("\"", "\"\"")}\"";
-                })));
-        }
+                table.Columns.Cast<DataColumn>().Select(column => column.ColumnName)));
 
-        return stringBuilder.ToString();
-    }
-
-    /// <summary>Convierte el contenido de un DataTable a JSON.</summary>
-    public static string WriteToJson(this DataTable table)
-    {
-        List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
-
-        foreach (DataRow row in table.Rows)
-        {
-            Dictionary<string, object> dictionary = new Dictionary<string, object>();
-            foreach (DataColumn column in table.Columns)
+            // Datos
+            foreach (DataRow row in table.Rows)
             {
-                object value = row[column];
-                dictionary[column.ColumnName] = value == DBNull.Value ? null : value;
+                stringBuilder.AppendLine(string.Join(delimiter,
+                    row.ItemArray.Select(field =>
+                    {
+                        string text = field == DBNull.Value ? string.Empty : (field != null ? field.ToString() : string.Empty);
+                        return $"\"{text.Replace("\"", "\"\"")}\"";
+                    })));
             }
-            rows.Add(dictionary);
+
+            return stringBuilder.ToString();
         }
 
-        JsonSerializerOptions options = new JsonSerializerOptions
+        /// <summary>Convierte el contenido de un DataTable a JSON.</summary>
+        public string WriteToJson()
         {
-            WriteIndented = true
-        };
+            List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
 
-        return JsonSerializer.Serialize(rows, options);
+            foreach (DataRow row in table.Rows)
+            {
+                Dictionary<string, object> dictionary = new Dictionary<string, object>();
+                foreach (DataColumn column in table.Columns)
+                {
+                    object value = row[column];
+                    dictionary[column.ColumnName] = value == DBNull.Value ? null : value;
+                }
+                rows.Add(dictionary);
+            }
+
+            JsonSerializerOptions options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+
+            return JsonSerializer.Serialize(rows, options);
+        }
     }
 }

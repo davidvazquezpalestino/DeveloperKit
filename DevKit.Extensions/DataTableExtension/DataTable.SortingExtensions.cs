@@ -2,17 +2,24 @@ namespace DevKit.Extensions.DataTableExtension;
 
 public static partial class DataTableExtensions
 {
-    /// <summary>Ordena un DataTable por la columna especificada.</summary>
-    public static DataTable OrderBy(this DataTable table, string columnName, bool ascending = true)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="table"></param>
+    extension(DataTable table)
     {
-        if (table == null)
+        /// <summary>Ordena un DataTable por la columna especificada.</summary>
+        public DataTable OrderBy(string columnName, bool ascending = true)
         {
-            return new DataTable();
-        }
+            if (table == null)
+            {
+                return new DataTable();
+            }
 
-        IEnumerable<DataRow> orderedRows = ascending
-            ? table.AsEnumerable().OrderBy(row => row[columnName])
-            : table.AsEnumerable().OrderByDescending(row => row[columnName]);
-        return orderedRows.ToDataTableOrEmpty(table);
+            IEnumerable<DataRow> orderedRows = ascending
+                ? table.AsEnumerable().OrderBy(row => row[columnName])
+                : table.AsEnumerable().OrderByDescending(row => row[columnName]);
+            return orderedRows.ToDataTableOrEmpty(table);
+        }
     }
 }

@@ -1,5 +1,3 @@
-using System.Net.Mail;
-
 namespace DevKit.JWT.Validation;
 
 /// <summary>
@@ -10,6 +8,9 @@ public class ClaimsValidator
     private readonly Dictionary<string, Func<string, bool>> Validators;
     private readonly ILogger<ClaimsValidator> Logger;
 
+    /// <summary>
+    /// Registra un validador personalizado.
+    /// </summary>
     public ClaimsValidator(ILogger<ClaimsValidator> logger)
     {
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -171,15 +172,41 @@ public class ClaimsValidator
 /// </summary>
 public class ValidationResult
 {
+    /// <summary>
+    /// Indicates if the validation was successful.
+    /// </summary>
+    /// <summary>
+    /// Indicates if the validation was successful.
+    /// </summary>
     public bool IsValid { get; private set; }
-    public string[] Errors { get; private set; } = Array.Empty<string>();
 
+    /// <summary>
+    /// Array of validation errors.
+    /// </summary>
+    /// <summary>
+    /// Array of validation errors.
+    /// </summary>
+    public string[] Errors { get; private set; }
+
+    /// <summary>
+    /// Initializes a new instance of ValidationResult.
+    /// </summary>
     private ValidationResult(bool isValid, params string[] errors)
     {
         IsValid = isValid;
         Errors = errors ?? Array.Empty<string>();
     }
 
+    /// <summary>
+    /// Creates a successful validation result.
+    /// </summary>
+    /// <summary>
+    /// Creates a successful validation result.
+    /// </summary>
     public static ValidationResult Success() => new(true);
+
+    /// <summary>
+    /// Creates a failed validation result with errors.
+    /// </summary>
     public static ValidationResult Failed(params string[] errors) => new(false, errors);
 }
