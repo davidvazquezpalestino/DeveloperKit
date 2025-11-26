@@ -24,12 +24,12 @@ public static partial class DataTableExtensions
                 .Cast<DataRow>()
                 .Select(row =>
                 {
-                    Dictionary<string, object> dict = new Dictionary<string, object>(table.Columns.Count);
+                    Dictionary<string, object> dictionary = new Dictionary<string, object>(table.Columns.Count);
                     foreach (DataColumn column in table.Columns)
                     {
-                        dict[column.ColumnName] = row[column];
+                        dictionary[column.ColumnName] = row[column];
                     }
-                    return dict;
+                    return dictionary;
                 })
                 .ToList();
         }

@@ -1,15 +1,13 @@
 namespace DevKit.Extensions;
 
-/// <summary>Proporciona métodos de extensión para IDataReader que facilitan la lectura de datos de forma segura.</summary>
+/// <summary>Proporciona métodos de extensión sencillos para <see cref="IDataReader" />.</summary>
 public static class DataReaderExtensions
 {
-    private static readonly ConcurrentDictionary<Type, Dictionary<string, PropertyInfo>> PropertyCache = new();
 
-    /// <summary>Proporciona métodos de extensión para IDataReader que facilitan la lectura de datos de forma segura.</summary>
-    /// <param name="reader"></param>
+    /// <summary>Proporciona métodos de extensión sencillos para <see cref="IDataReader" />.</summary>
     extension(IDataReader reader)
     {
-        /// <summary>Obtiene el valor tipado de la columna. Si es DBNull retorna default(T).</summary>
+        /// <summary>Obtiene el valor tipado de la columna; retorna <c>default</c> si es <see cref="DBNull" />.</summary>
         public T GetValue<T>(string columnName)
         {
             try
@@ -17,20 +15,22 @@ public static class DataReaderExtensions
                 object value = reader[columnName];
                 return value == DBNull.Value ? default : (T)value;
             }
-            catch (Exception ex) when (ex is InvalidCastException or FormatException)
+            catch (Exception ex)
             {
-                throw CreateConversionException<T>(reader, columnName, ex);
+                throw new InvalidCastException($"No fue posible convertir la columna '{columnName}' al tipo {typeof(T).Name}.", ex);
             }
         }
 
-        /// <summary>Obtiene el valor de forma segura, retornando default(T) si la columna no existe o es nula.</summary>
+        /// <summary>Obtiene el valor de forma segura o devuelve el valor predeterminado si la columna no existe o es nula.</summary>
         public T GetValueSafe<T>(string columnName, T defaultValue = default)
         {
+            if (reader == null || !reader.ColumnExists(columnName))
+            {
+                return defaultValue;
+            }
+
             try
             {
-                if (!ColumnExists(reader, columnName))
-                    return defaultValue;
-
                 object value = reader[columnName];
                 return value == DBNull.Value ? defaultValue : (T)value;
             }
@@ -40,94 +40,136 @@ public static class DataReaderExtensions
             }
         }
 
-        /// <summary>Verifica si una columna existe en el lector.</summary>
+        /// <summary>Indica si la columna especificada existe en el lector.</summary>
         public bool ColumnExists(string columnName)
         {
+            if (reader == null)
+            {
+                throw new ArgumentNullException(nameof(reader));
+            }
+
             for (int i = 0; i < reader.FieldCount; i++)
             {
                 if (reader.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
+                {
                     return true;
+                }
             }
+
             return false;
         }
 
-        /// <summary>Mapea los datos del IDataReader a un objeto del tipo especificado.</summary>
+        /// <summary>Mapea el registro actual hacia una instancia del tipo indicado.</summary>
         public T GetItem<T>() where T : new()
         {
-            T item = new T();
-            Type type = typeof(T);
+            if (reader == null)
+            {
+                throw new ArgumentNullException(nameof(reader));
+            }
 
-            Dictionary<string, PropertyInfo> properties = GetCachedProperties(type);
+            T item = new();
+            Type itemType = typeof(T);
 
             for (int i = 0; i < reader.FieldCount; i++)
             {
-                string columnName = reader.GetName(i);
-
-                if (properties.TryGetValue(columnName, out PropertyInfo prop) && !reader.IsDBNull(i))
+                if (reader.IsDBNull(i))
                 {
-                    SetPropertyValue(item, prop, reader[i]);
+                    continue;
+                }
+
+                PropertyInfo property = itemType.GetProperty(reader.GetName(i), BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+
+                if (property == null || !property.CanWrite)
+                {
+                    continue;
+                }
+
+                object value = reader[i];
+
+                try
+                {
+                    Type targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
+                    object convertedValue = targetType.IsInstanceOfType(value) ? value : Convert.ChangeType(value, targetType);
+                    property.SetValue(item, convertedValue);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Error setting property {property.Name}: {ex.Message}");
                 }
             }
 
             return item;
         }
 
-        /// <summary>Mapea todos los registros del lector a una lista de objetos.</summary>
+        /// <summary>Lee todos los registros restantes y los convierte en una lista del tipo indicado.</summary>
         public List<T> GetItems<T>() where T : new()
         {
-            List<T> results = new List<T>();
+            if (reader == null)
+            {
+                throw new ArgumentNullException(nameof(reader));
+            }
+
+            List<T> items = new();
 
             while (reader.Read())
             {
-                results.Add(reader.GetItem<T>());
+                items.Add(reader.GetItem<T>());
             }
 
-            return results;
+            return items;
         }
 
-        /// <summary>Obtiene un diccionario con los nombres y valores de todas las columnas del registro actual.</summary>
+        /// <summary>Convierte el registro actual en un diccionario <c>nombre-valor</c>.</summary>
         public Dictionary<string, object> ToDictionary()
         {
-            Dictionary<string, object> dict = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            if (reader == null)
+            {
+                throw new ArgumentNullException(nameof(reader));
+            }
+
+            Dictionary<string, object> result = new(StringComparer.OrdinalIgnoreCase);
 
             for (int i = 0; i < reader.FieldCount; i++)
             {
-                string columnName = reader.GetName(i);
-                object value = reader.IsDBNull(i) ? null : reader[i];
-                dict[columnName] = value;
+                result[reader.GetName(i)] = reader.IsDBNull(i) ? null : reader[i];
             }
 
-            return dict;
+            return result;
         }
 
-        /// <summary>Convierte todos los registros del lector a una lista de diccionarios.</summary>
+        /// <summary>Convierte todos los registros en una lista de diccionarios.</summary>
         public List<Dictionary<string, object>> ToDictionaryList()
         {
-            List<Dictionary<string, object>> results = new List<Dictionary<string, object>>();
+            if (reader == null)
+            {
+                throw new ArgumentNullException(nameof(reader));
+            }
+
+            List<Dictionary<string, object>> items = new();
 
             while (reader.Read())
             {
-                results.Add(reader.ToDictionary());
+                items.Add(reader.ToDictionary());
             }
 
-            return results;
+            return items;
         }
 
-        /// <summary>Convierte el IDataReader a un DataTable.</summary>
+        /// <summary>Convierte el resultado del lector en un <see cref="DataTable" />.</summary>
         public DataTable ToDataTable()
         {
-            DataTable table = new DataTable();
-
-            // Agregar columnas al DataTable
-            for (int i = 0; i < reader.FieldCount; i++)
+            if (reader == null)
             {
-                string columnName = reader.GetName(i);
-                Type columnType = reader.GetFieldType(i);
-
-                table.Columns.Add(columnName, columnType);
+                throw new ArgumentNullException(nameof(reader));
             }
 
-            // Agregar filas con los datos
+            DataTable table = new();
+
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                table.Columns.Add(reader.GetName(i), reader.GetFieldType(i));
+            }
+
             while (reader.Read())
             {
                 DataRow row = table.NewRow();
@@ -143,66 +185,12 @@ public static class DataReaderExtensions
             return table;
         }
 
-        /// <summary>Convierte el IDataReader a un DataTable con un nombre específico.</summary>
+        /// <summary>Convierte el lector a <see cref="DataTable" /> y asigna el nombre proporcionado.</summary>
         public DataTable ToDataTable(string tableName)
         {
             DataTable table = reader.ToDataTable();
             table.TableName = tableName;
             return table;
-        }
-    }
-
-    private static Dictionary<string, PropertyInfo> GetCachedProperties(Type type)
-    {
-        return PropertyCache.GetOrAdd(type, t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                             .Where(p => p.CanWrite)
-                             .ToDictionary(p => p.Name, p => p, StringComparer.OrdinalIgnoreCase));
-    }
-
-    private static void SetPropertyValue<T>(T item, PropertyInfo property, object value)
-    {
-        try
-        {
-            if (value == DBNull.Value)
-                return;
-
-            // Conversión directa si los tipos son compatibles
-            if (property.PropertyType.IsInstanceOfType(value))
-            {
-                property.SetValue(item, value);
-                return;
-            }
-
-            // Conversión para tipos nullable
-            Type targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-            object convertedValue = Convert.ChangeType(value, targetType);
-            property.SetValue(item, convertedValue);
-        }
-        catch (Exception ex)
-        {
-            // Log silencioso del error
-            System.Diagnostics.Debug.WriteLine($"Error setting property {property.Name}: {ex.Message}");
-        }
-    }
-
-    private static InvalidCastException CreateConversionException<T>(IDataReader reader, string columnName, Exception innerException)
-    {
-        try
-        {
-            object columnValue = reader[columnName];
-            string valueType = columnValue?.GetType().Name ?? "null";
-            string valueString = columnValue?.ToString() ?? "null";
-
-            return new InvalidCastException(
-                $"Error converting column '{columnName}' to type {typeof(T).Name}. " +
-                $"Value type: {valueType}, Value: {valueString}",
-                innerException);
-        }
-        catch
-        {
-            return new InvalidCastException(
-                $"Error converting column '{columnName}' to type {typeof(T).Name}",
-                innerException);
         }
     }
 }
