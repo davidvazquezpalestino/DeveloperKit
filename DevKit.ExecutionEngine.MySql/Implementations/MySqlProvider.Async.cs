@@ -345,23 +345,44 @@ public partial class MySqlProvider
             await Connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        // Detect temporary-table marker (#) and prepare sanitized table name
+        bool temporary = !string.IsNullOrWhiteSpace(target) && target.StartsWith("#");
+        string sanitizedTarget = temporary ? target.TrimStart('#').Trim() : target?.Trim();
+
         using (MySqlCommand command = Connection.CreateCommand())
         {
             command.CommandTimeout = Options.CommandTimeout;
 
             // Elimina la tabla si existe
-            command.CommandText = DropTableScriptMySQL(target);
+            if (temporary)
+            {
+                // Use DROP TEMPORARY TABLE for temporary tables
+                string dropTemp = $"DROP TEMPORARY TABLE IF EXISTS `{sanitizedTarget.Replace("`", "``")}`;";
+                command.CommandText = dropTemp;
+            }
+            else
+            {
+                command.CommandText = DropTableScriptMySQL(sanitizedTarget);
+            }
+
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
 
             // Crea la tabla
-            command.CommandText = CreateTableScriptMySQL(source, target);
+            string createSql = CreateTableScriptMySQL(source, sanitizedTarget);
+            if (temporary)
+            {
+                // Replace the CREATE TABLE with CREATE TEMPORARY TABLE (case-insensitive)
+                createSql = createSql.Replace("CREATE TABLE", "CREATE TEMPORARY TABLE", StringComparison.InvariantCultureIgnoreCase);
+            }
+
+            command.CommandText = createSql;
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 
         // Inserción masiva con MySqlBulkCopy (sin archivos temporales)
         MySqlBulkCopy bulkCopy = new MySqlBulkCopy(Connection)
         {
-            DestinationTableName = target,
+            DestinationTableName = sanitizedTarget,
             BulkCopyTimeout = Options.BulkCopy.BulkCopyTimeout
         };
 

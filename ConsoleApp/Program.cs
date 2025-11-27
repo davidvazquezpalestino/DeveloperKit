@@ -12,6 +12,7 @@ using DevKit.ExecutionEngine.SQLServer.Abstractions;
 using DevKit.ExecutionEngine.SQLServer.Extensions;
 using DevKit.ExecutionEngine.SQLServer.Implementations;
 using DevKit.ExecutionEngine.SQLServer.Settings;
+using DevKit.Extensions.DataTableExtension;
 using Microsoft.Extensions.Options;
 using System.Data;
 
@@ -20,6 +21,7 @@ IHost host = CreateHostBuilder().Build();
 
 
 ISQLServerProvider infomex = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
+IMySqlProvider mySqlProvider = host.Services.GetRequiredService<IMySqlProvider>();
 
 DateTime currentDateTime = await infomex.GetCurrentDateTimeAsync();
 Console.WriteLine(currentDateTime);
@@ -30,43 +32,11 @@ DataTable table = await infomex.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.
 table.TableName = "Asentamientos";
 
 
-List<Asentamientos> asentamientosList = await infomex
-    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
-    .OrderBy(u => u.Asentamiento)
-    .ToListAsync();
 
-
-List<Asentamientos> asentamientosList2 = await infomex
-    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-    .ToListAsync();
+await mySqlProvider.ExecuteBulkInsertToTableAsync(table, table.TableName);
 
 
 
-int registros = infomex
-    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-    .Where(u => u.Estado == "VERACRUZ")
-    .Count();
-
-
-int pageSize = 5;
-int totalPages = (int)Math.Ceiling((double)registros / pageSize);
-
-List<object> queryState = new();
-for (int pageNumber = 0; pageNumber < totalPages; pageNumber++)
-{
-    var select = infomex
-        .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-        .Where(u => u.Estado == "VERACRUZ")
-        .OrderBy(u => u.Asentamiento)
-        .Skip(pageNumber * pageSize)
-        .Take(pageSize)
-        .Select(u => new { u.ColoniaID, u.Asentamiento })
-        .ToList();
-
-    Console.WriteLine($"Página {pageNumber}");
-    queryState.Add(select);
-}
 
 
 
