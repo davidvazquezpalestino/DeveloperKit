@@ -3,7 +3,6 @@ namespace DevKit.Extensions;
 /// <summary>Proporciona métodos de extensión sencillos para <see cref="IDataReader" />.</summary>
 public static class DataReaderExtensions
 {
-
     /// <summary>Proporciona métodos de extensión sencillos para <see cref="IDataReader" />.</summary>
     extension(IDataReader reader)
     {
@@ -12,8 +11,7 @@ public static class DataReaderExtensions
         {
             try
             {
-                object value = reader[columnName];
-                return value == DBNull.Value ? default : (T)value;
+                return (T)reader[columnName];
             }
             catch (Exception ex)
             {
@@ -21,33 +19,99 @@ public static class DataReaderExtensions
             }
         }
 
-        /// <summary>Obtiene el valor de forma segura o devuelve el valor predeterminado si la columna no existe o es nula.</summary>
-        public T GetValueSafe<T>(string columnName, T defaultValue = default)
+        /// <summary>Obtiene el valor de forma segura o devuelve el valor predeterminado del tipo si la columna no existe o es nula.</summary>
+        public T TryGetValue<T>(string columnName)
         {
-            if (reader == null || !reader.ColumnExists(columnName))
-            {
-                return defaultValue;
-            }
-
             try
             {
                 object value = reader[columnName];
-                return value == DBNull.Value ? defaultValue : (T)value;
+                return value == DBNull.Value ? DefaultValueProvider.GetDefaultValue<T>() : (T)value;
             }
-            catch
+            catch (Exception ex)
             {
-                return defaultValue;
+                throw new InvalidCastException($"No fue posible convertir la columna '{columnName}' al tipo {typeof(T).Name}.", ex);
             }
+        }
+
+        /// <summary>Mapea el registro actual hacia una instancia del tipo indicado.</summary>
+        public T GetItem<T>() where T : new()
+        {
+            T item = new T();
+            Type type = typeof(T);
+
+            foreach (int i in Enumerable.Range(0, reader.FieldCount))
+            {
+                if (reader.IsDBNull(i)) continue;
+
+                PropertyInfo propertyInfo = type.GetProperty(reader.GetName(i),
+                    BindingFlags.Public |
+                    BindingFlags.Instance |
+                    BindingFlags.IgnoreCase);
+
+                if (propertyInfo?.CanWrite == true)
+                {
+                    try
+                    {
+                        object value = reader[i];
+                        Type targetType = Nullable.GetUnderlyingType(propertyInfo.PropertyType) ?? propertyInfo.PropertyType;
+                        object converted = targetType.IsInstanceOfType(value) ? value : Convert.ChangeType(value, targetType);
+                        propertyInfo.SetValue(item, converted);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidCastException($"No fue posible convertir la columna '{reader.GetName(i)}' al tipo {typeof(T).Name}.", ex);
+                    }
+                }
+            }
+            return item;
+        }
+
+        /// <summary>Mapea el registro actual hacia una instancia del tipo indicado, asignando valores predeterminados si son nulos.</summary>
+        public T TryGetItem<T>() where T : new()
+        {
+            T item = new T();
+            Type type = typeof(T);
+
+            foreach (int i in Enumerable.Range(0, reader.FieldCount))
+            {
+                PropertyInfo propertyInfo = type.GetProperty(reader.GetName(i),
+                    BindingFlags.Public |
+                    BindingFlags.Instance |
+                    BindingFlags.IgnoreCase);
+
+                if (propertyInfo?.CanWrite == true)
+                {
+                    try
+                    {
+                        object converted;
+                        if (reader.IsDBNull(i))
+                        {
+                            converted = DefaultValueProvider.GetDefaultValue(propertyInfo.PropertyType);
+                        }
+                        else
+                        {
+                            object value = reader[i];
+                            Type targetType = Nullable.GetUnderlyingType(propertyInfo.PropertyType) ?? propertyInfo.PropertyType;
+                            converted = targetType.IsInstanceOfType(value) ? value : Convert.ChangeType(value, targetType);
+                        }
+
+                        propertyInfo.SetValue(item, converted);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error setting {propertyInfo?.Name}: {ex.Message}");
+                        // On error, set default
+                        object defaultValue = DefaultValueProvider.GetDefaultValue(propertyInfo.PropertyType);
+                        propertyInfo.SetValue(item, defaultValue);
+                    }
+                }
+            }
+            return item;
         }
 
         /// <summary>Indica si la columna especificada existe en el lector.</summary>
         public bool ColumnExists(string columnName)
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
-
             for (int i = 0; i < reader.FieldCount; i++)
             {
                 if (reader.GetName(i).Equals(columnName, StringComparison.OrdinalIgnoreCase))
@@ -59,74 +123,9 @@ public static class DataReaderExtensions
             return false;
         }
 
-        /// <summary>Mapea el registro actual hacia una instancia del tipo indicado.</summary>
-        public T GetItem<T>() where T : new()
-        {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
-
-            T item = new();
-            Type itemType = typeof(T);
-
-            for (int i = 0; i < reader.FieldCount; i++)
-            {
-                if (reader.IsDBNull(i))
-                {
-                    continue;
-                }
-
-                PropertyInfo property = itemType.GetProperty(reader.GetName(i), BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
-
-                if (property == null || !property.CanWrite)
-                {
-                    continue;
-                }
-
-                object value = reader[i];
-
-                try
-                {
-                    Type targetType = Nullable.GetUnderlyingType(property.PropertyType) ?? property.PropertyType;
-                    object convertedValue = targetType.IsInstanceOfType(value) ? value : Convert.ChangeType(value, targetType);
-                    property.SetValue(item, convertedValue);
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Error setting property {property.Name}: {ex.Message}");
-                }
-            }
-
-            return item;
-        }
-
-        /// <summary>Lee todos los registros restantes y los convierte en una lista del tipo indicado.</summary>
-        public List<T> GetItems<T>() where T : new()
-        {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
-
-            List<T> items = new();
-
-            while (reader.Read())
-            {
-                items.Add(reader.GetItem<T>());
-            }
-
-            return items;
-        }
-
         /// <summary>Convierte el registro actual en un diccionario <c>nombre-valor</c>.</summary>
         public Dictionary<string, object> ToDictionary()
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
-
             Dictionary<string, object> result = new(StringComparer.OrdinalIgnoreCase);
 
             for (int i = 0; i < reader.FieldCount; i++)
@@ -140,11 +139,6 @@ public static class DataReaderExtensions
         /// <summary>Convierte todos los registros en una lista de diccionarios.</summary>
         public List<Dictionary<string, object>> ToDictionaryList()
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
-
             List<Dictionary<string, object>> items = new();
 
             while (reader.Read())
@@ -158,11 +152,6 @@ public static class DataReaderExtensions
         /// <summary>Convierte el resultado del lector en un <see cref="DataTable" />.</summary>
         public DataTable ToDataTable()
         {
-            if (reader == null)
-            {
-                throw new ArgumentNullException(nameof(reader));
-            }
-
             DataTable table = new();
 
             for (int i = 0; i < reader.FieldCount; i++)
