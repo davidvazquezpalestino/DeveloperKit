@@ -28,19 +28,22 @@ Console.WriteLine(currentDateTime);
 
 Console.WriteLine("Consultando SQL Sever");
 
-DataTable table = await infomex.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
-table.TableName = "Asentamientos";
+//DataTable table = await infomex.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
+//table.TableName = "Asentamientos";
 
 
 
-await mySqlProvider.ExecuteBulkInsertToTableAsync(table, table.TableName);
+List<Asentamientos> asentamientosList = await infomex
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
+    .OrderBy(u => u.Asentamiento)
+    .ToListAsync();
 
 
-
-
-
-
-
+Asentamientos asentamiento = await infomex
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
+    .FirstOrDefaultAsync();
 
 
 Console.WriteLine("Fin");

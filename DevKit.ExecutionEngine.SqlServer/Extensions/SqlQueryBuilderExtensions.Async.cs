@@ -74,11 +74,8 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions
                 QueryResult queryResult = BuildQuery(queryState);
 
                 // Registrar la consulta que se va a ejecutar
-                QueryLogger.LogQuery(
-                    queryResult.SQL,
-                    queryResult.Parameters,
-                    IQueryLogger.LogLevel.Debug,
-                    $"Iniciando consulta asíncrona FirstOrDefault para {typeof(T).Name}");
+                QueryLogger.LogQuery(queryResult.SQL, queryResult.Parameters,
+                  message: $"Iniciando consulta asíncrona FirstOrDefault para {typeof(T).Name}");
 
                 try
                 {
@@ -93,9 +90,7 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions
                     T result = results.FirstOrDefault();
 
                     // Registrar el resultado
-                    QueryLogger.LogQuery(
-                        queryResult.SQL,
-                        queryResult.Parameters,
+                    QueryLogger.LogQuery(queryResult.SQL, queryResult.Parameters,
                         IQueryLogger.LogLevel.Debug,
                         $"Consulta asíncrona FirstOrDefault completada. Se encontró {(result != null ? "1 registro" : "ningún registro")} de {typeof(T).Name}");
 
