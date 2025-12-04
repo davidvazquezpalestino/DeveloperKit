@@ -1,4 +1,3 @@
-using DevKit.ExecutionEngine.SQLServer.Logging;
 
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
@@ -20,13 +19,6 @@ public static partial class SqlQueryBuilderExtensions
         {
             QueryResult queryResult = BuildQuery(queryState);
 
-            // Registrar la consulta que se va a ejecutar
-            QueryLogger.LogQuery(
-                queryResult.SQL,
-                queryResult.Parameters,
-                IQueryLogger.LogLevel.Debug,
-                $"Ejecutando consulta proyectada ToList para {typeof(T).Name} -> {typeof(TResult).Name}");
-
             // For anonymous types or complex projections, we need to use dynamic mapping
             if (typeof(TResult).IsAnonymousType() || typeof(TResult) != typeof(T))
             {
@@ -36,13 +28,6 @@ public static partial class SqlQueryBuilderExtensions
                     collection => collection.AddSqlParameters(queryResult.Parameters));
 
                 List<TResult> resultList = result.ToList();
-
-                // Registrar el resultado
-                QueryLogger.LogQuery(
-                    queryResult.SQL,
-                    queryResult.Parameters,
-                    IQueryLogger.LogLevel.Debug,
-                    $"Consulta proyectada ToList completada. Se encontraron {resultList.Count} registros proyectados");
 
                 return resultList;
             }
@@ -54,13 +39,6 @@ public static partial class SqlQueryBuilderExtensions
                     collection => collection.AddSqlParameters(queryResult.Parameters));
 
                 List<TResult> resultList = result.ToList();
-
-                // Registrar el resultado
-                QueryLogger.LogQuery(
-                    queryResult.SQL,
-                    queryResult.Parameters,
-                    IQueryLogger.LogLevel.Debug,
-                    $"Consulta proyectada ToList completada. Se encontraron {resultList.Count} registros");
 
                 return resultList;
             }
