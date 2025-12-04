@@ -1,3 +1,5 @@
+using DevKit.ExecutionEngine.SQLServer.Logging;
+
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
 /// <summary>
@@ -32,7 +34,7 @@ public static partial class SqlQueryBuilderExtensions
                 ICollection<TResult> result = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
                     reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
                     collection => collection.AddSqlParameters(queryResult.Parameters));
-            
+
                 List<TResult> resultList = result.ToList();
 
                 // Registrar el resultado
@@ -50,7 +52,7 @@ public static partial class SqlQueryBuilderExtensions
                 ICollection<TResult> result = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
                     reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
                     collection => collection.AddSqlParameters(queryResult.Parameters));
-            
+
                 List<TResult> resultList = result.ToList();
 
                 // Registrar el resultado

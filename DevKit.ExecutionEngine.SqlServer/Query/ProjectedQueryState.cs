@@ -1,3 +1,5 @@
+using DevKit.ExecutionEngine.SQLServer.Logging;
+
 namespace DevKit.ExecutionEngine.SQLServer.Query;
 
 /// <summary>

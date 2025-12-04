@@ -144,45 +144,42 @@ public static partial class SqlQueryBuilderExtensions
                 {
                     string instance = methodCall.Object != null ? ProcessExpression(visitor, methodCall.Object) : null;
 
-                    string[] arguments = methodCall.Arguments
-                        .Select(arg => ProcessExpression(visitor, arg))
-                        .ToArray();
+                    Expression arg = methodCall.Arguments[0];
+                    //string paramName;
+                    string baseValue;
 
-                    // Obtener el valor del argumento
-                    object value;
-                    string searchParam = visitor.GetNextParameterName();
-
-                    // Si el argumento es una constante
-                    if (methodCall.Arguments[0] is ConstantExpression constantExpression)
+                    // If the argument was already converted to a parameter (e.g. @p0),
+                    // reuse that same parameter and transform its value into the LIKE pattern
+                    if (arg is ParameterExpression paramExpr && visitor.Parameters.TryGetValue(paramExpr.Name, out object existingValue))
                     {
-                        value = constantExpression.Value?.ToString() ?? string.Empty;
+                        baseValue = existingValue?.ToString() ?? string.Empty;
+                        paramName = paramExpr.Name;
                     }
-                    // Si el argumento es un parámetro existente
-                    else if (arguments[0].StartsWith("@p") && visitor.Parameters.TryGetValue(arguments[0], out object paramValue))
-                    {
-                        value = paramValue?.ToString() ?? string.Empty;
-                    }
-                    // Si es un valor literal entre comillas
-                    else if (arguments[0].StartsWith("'"))
-                    {
-                        value = arguments[0].Trim('\'');
-                    }
-                    // Cualquier otro caso
                     else
                     {
-                        value = arguments[0];
+                        // Otherwise, evaluate the argument (constant or closure variable)
+                        if (arg is ConstantExpression constExpr)
+                        {
+                            baseValue = constExpr.Value?.ToString() ?? string.Empty;
+                        }
+                        else
+                        {
+                            baseValue = Expression.Lambda(arg).Compile().DynamicInvoke()?.ToString() ?? string.Empty;
+                        }
+
+                        paramName = visitor.GetNextParameterName();
                     }
 
-                    // Aplicar el patrón correspondiente según el método
-                    visitor.Parameters[searchParam] = methodCall.Method.Name switch
+                    // Apply the corresponding pattern according to the method
+                    visitor.Parameters[paramName] = methodCall.Method.Name switch
                     {
-                        nameof(string.StartsWith) => $"{value}%",
-                        nameof(string.EndsWith) => $"%{value}",
-                        nameof(string.Contains) => $"%{value}%",
-                        _ => value
+                        nameof(string.StartsWith) => $"{baseValue}%",
+                        nameof(string.EndsWith) => $"%{baseValue}",
+                        nameof(string.Contains) => $"%{baseValue}%",
+                        _ => baseValue
                     };
 
-                    return $"{instance} LIKE {searchParam}";
+                    return $"{instance} LIKE {paramName}";
                 }
                 throw new NotSupportedException($"Method calls on type {methodCall.Method.DeclaringType?.Name} are not supported");
 

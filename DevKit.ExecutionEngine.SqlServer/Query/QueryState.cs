@@ -1,3 +1,5 @@
+using DevKit.ExecutionEngine.SQLServer.Logging;
+
 namespace DevKit.ExecutionEngine.SQLServer.Query;
 
 /// <summary>
@@ -37,7 +39,7 @@ public class QueryState<T> : ILoggedQuery where T : class, new()
 
     internal Expression<Func<T, object>> SelectExpression { get; set; }
 
-    internal QueryState(ISQLServerProvider dbProvider, string schema , string tableName )
+    internal QueryState(ISQLServerProvider dbProvider, string schema, string tableName)
     {
         DbProvider = dbProvider ?? throw new ArgumentNullException(nameof(dbProvider));
         Schema = schema;

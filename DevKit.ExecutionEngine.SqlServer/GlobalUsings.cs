@@ -1,6 +1,5 @@
 global using DevKit.ExecutionEngine.SQLServer.Abstractions;
 global using DevKit.ExecutionEngine.SQLServer.Extensions;
-global using DevKit.ExecutionEngine.SQLServer.Logging;
 global using DevKit.ExecutionEngine.SQLServer.Query;
 global using DevKit.ExecutionEngine.SQLServer.Settings;
 global using DevKit.Extensions;

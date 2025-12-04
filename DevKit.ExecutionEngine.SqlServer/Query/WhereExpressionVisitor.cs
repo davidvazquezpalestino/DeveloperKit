@@ -61,22 +61,8 @@ public class WhereExpressionVisitor(Dictionary<string, object> parametersField, 
             return node; // Return the member expression as-is for parameter access
         }
 
-        // For static members or other complex expressions, evaluate them
-        try
-        {
-            object constant = Expression.Lambda<Func<object>>(node).Compile()();
-            return Expression.Constant(constant, node.Type);
-        }
-        catch
-        {
-            // If we can't evaluate, try to visit the expression first
-            Expression visited = Visit(node.Expression);
-            if (visited != node.Expression)
-            {
-                return Expression.MakeMemberAccess(visited, node.Member);
-            }
-            throw;
-        }
+        // Don't evaluate here, let ProcessExpression handle it
+        return node;
     }
 
     /// <summary>

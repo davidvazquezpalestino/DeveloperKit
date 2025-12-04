@@ -12,6 +12,7 @@ using DevKit.ExecutionEngine.SQLServer.Abstractions;
 using DevKit.ExecutionEngine.SQLServer.Extensions;
 using DevKit.ExecutionEngine.SQLServer.Implementations;
 using DevKit.ExecutionEngine.SQLServer.Settings;
+using DevKit.Extensions;
 using DevKit.Extensions.DataTableExtension;
 using Microsoft.Extensions.Options;
 using System.Data;
@@ -33,16 +34,18 @@ Console.WriteLine("Consultando SQL Sever");
 
 
 
-List<Asentamientos> asentamientosList = await infomex
-    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
-    .OrderBy(u => u.Asentamiento)
-    .ToListAsync();
+//List<Asentamientos> asentamientosList = await infomex
+//    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+//    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
+//    .OrderBy(u => u.Asentamiento)
+//    .ToListAsync();
 
+
+string estado = "puebla";
 
 Asentamientos asentamiento = await infomex
     .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
+    .Where(u => u.Estado == estado && u.Asentamiento.StartsWith("santa maria"))
     .FirstOrDefaultAsync();
 
 
@@ -143,6 +146,7 @@ namespace ConsoleNet8
 /// </summary>
 public class Asentamientos
 {
+    public Asentamientos() { }
     /// <summary>
     /// Gets or sets the colony ID.
     /// </summary>
