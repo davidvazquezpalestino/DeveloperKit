@@ -34,11 +34,11 @@ Console.WriteLine("Consultando SQL Sever");
 
 
 
-//List<Asentamientos> asentamientosList = await infomex
-//    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
-//    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
-//    .OrderBy(u => u.Asentamiento)
-//    .ToListAsync();
+List<Asentamientos> asentamientosList = await infomex
+    .From<Asentamientos>("Comprobante", "VW_Asentamientos")
+    .Where(u => u.Estado == "puebla" && u.Asentamiento.StartsWith("santa maria"))
+    .OrderBy(u => u.Asentamiento)
+    .ToListAsync();
 
 
 string estado = "puebla";

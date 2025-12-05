@@ -32,7 +32,7 @@ public static partial class SqlQueryBuilderExtensions
                     }
                     else if (constantExpression.Type == typeof(bool))
                     {
-                        whereConditions.Add((bool)constantExpression.Value ? "1 = 1" : "1 = 0");
+                        whereConditions.Add((bool)constantExpression.Value! ? "1 = 1" : "1 = 0");
                     }
                     else
                     {

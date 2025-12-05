@@ -19,29 +19,11 @@ public static partial class SqlQueryBuilderExtensions
         {
             QueryResult queryResult = BuildQuery(queryState);
 
-            // For anonymous types or complex projections, we need to use dynamic mapping
-            if (typeof(TResult).IsAnonymousType() || typeof(TResult) != typeof(T))
-            {
-                // Use dynamic reader that can handle projections
-                ICollection<TResult> result = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
-                    reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
-                    collection => collection.AddSqlParameters(queryResult.Parameters));
+            ICollection<TResult> result = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
+                reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
+                collection => collection.AddSqlParameters(queryResult.Parameters));
 
-                List<TResult> resultList = result.ToList();
-
-                return resultList;
-            }
-            else
-            {
-                // For same-type projections, use the standard mapping
-                ICollection<TResult> result = queryState.DbProvider.ExecuteQueryAsList(queryResult.SQL,
-                    reader => MapToProjectedType<TResult>(reader, queryState.SelectExpression.Body),
-                    collection => collection.AddSqlParameters(queryResult.Parameters));
-
-                List<TResult> resultList = result.ToList();
-
-                return resultList;
-            }
+            return result.ToList();
         }
 
         /// <summary>
@@ -83,13 +65,11 @@ public static partial class SqlQueryBuilderExtensions
         /// <returns>El número total de elementos</returns>
         public int Count()
         {
-            // Guardar el estado original
             int? originalTake = queryState.TakeField;
             int? originalSkip = queryState.SkipField;
 
             try
             {
-                // Modificar la consulta para contar
                 queryState.TakeField = null;
                 queryState.SkipField = 0;
 
@@ -101,7 +81,6 @@ public static partial class SqlQueryBuilderExtensions
             }
             finally
             {
-                // Restaurar el estado original
                 queryState.TakeField = originalTake;
                 queryState.SkipField = originalSkip;
             }
