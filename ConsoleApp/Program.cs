@@ -12,11 +12,8 @@ using DevKit.ExecutionEngine.SQLServer.Abstractions;
 using DevKit.ExecutionEngine.SQLServer.Extensions;
 using DevKit.ExecutionEngine.SQLServer.Implementations;
 using DevKit.ExecutionEngine.SQLServer.Settings;
-using DevKit.Extensions;
-using DevKit.Extensions.DataTableExtension;
+using DevKit.Extensions.Uris;
 using Microsoft.Extensions.Options;
-using System.Data;
-
 
 IHost host = CreateHostBuilder().Build();
 
@@ -32,6 +29,23 @@ Console.WriteLine("Consultando SQL Sever");
 //DataTable table = await infomex.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
 //table.TableName = "Asentamientos";
 
+
+
+
+
+var person = new Person
+{
+    Name = "Juan Pérez",
+    Age = 30,
+    BirthDate = new DateTime(1993, 5, 15)
+};
+
+string result = HttpExtensions.UrlFormatQuery("https://example.com/api", person);
+
+
+string getComprobantesPorCategoria = "/api/Billing/company/{0}/categories";
+string urlFormat = HttpExtensions.UrlFormat(
+    getComprobantesPorCategoria, "Juan Pérez", 5, DateTime.Now);
 
 
 List<Asentamientos> asentamientosList = await infomex
@@ -146,7 +160,6 @@ namespace ConsoleNet8
 /// </summary>
 public class Asentamientos
 {
-    public Asentamientos() { }
     /// <summary>
     /// Gets or sets the colony ID.
     /// </summary>
@@ -239,4 +252,11 @@ public class Asentamientos
     /// Gets or sets the country name.
     /// </summary>
     public string Pais { get; set; }
+}
+
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public DateTime BirthDate { get; set; }
 }

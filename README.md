@@ -17,19 +17,16 @@ DeveloperKit V2 es un conjunto integral de bibliotecas y utilidades reutilizable
 
 | Componente | Descripción |
 |------------|-------------|
-| **CoreCrystalReports** | Integración avanzada con Crystal Reports para generación de reportes profesionales |
-| **CoreDatabase** | Utilidades para acceso unificado a bases de datos SQL |
-| **CoreExcelPackage** | Manejo eficiente de archivos Excel con soporte para formatos modernos |
-| **CoreInterfaces** | Contratos y definiciones comunes para todo el ecosistema |
-| **CoreMailKit** | Servicio de correo electrónico robusto y configurable |
-| **CoreMessageBox** | Componentes de interfaz de usuario para mensajes al usuario |
-| **CoreOracleDatabase** | Implementación específica para bases de datos Oracle |
-| **CoreSpecificationValidation** | Patrón de especificación para validaciones complejas |
-| **CoreUtilerias** | Utilidades generales y extensiones de uso común |
-| **DotNet.CoreAuthorizationJwt** | Autenticación y autorización basada en JWT |
-| **DotNet.CoreExportToDisk** | Utilidades para exportación segura de archivos |
-| **DotNet.DependencyInjection** | Extensiones para el sistema de inyección de dependencias |
-| **DotNet.Shared.RazorComponent** | Componentes Razor reutilizables |
+| **DevKit.ControlesUsuarioWin** | Controles de usuario personalizados para aplicaciones Windows Forms |
+| **DevKit.CoreInterfaces** | Interfaces y contratos comunes para el ecosistema DevKit |
+| **DevKit.CrystalToolkit** | Integración avanzada con Crystal Reports para generación de reportes profesionales |
+| **DevKit.Email** | Servicio de correo electrónico robusto y configurable con MailKit |
+| **DevKit.ExecutionEngine** | Motor de ejecución unificado para acceso a bases de datos (SQL Server, MySQL, Oracle, PostgreSQL, Excel) |
+| **DevKit.Extensions** | Extensiones útiles para URLs, consultas HTTP y utilidades generales |
+| **DevKit.ExecutionEngine.Excel** | Implementación específica para manejo de archivos Excel |
+| **DevKit.ExecutionEngine.MySql** | Proveedor de datos para bases de datos MySQL |
+| **DevKit.ExecutionEngine.Oracle** | Proveedor de datos para bases de datos Oracle |
+| **DevKit.ExecutionEngine.PostgreSql** | Proveedor de datos para bases de datos PostgreSQL |
 
 ## 🚀 Requisitos Previos
 
@@ -61,18 +58,19 @@ DeveloperKit V2 es un conjunto integral de bibliotecas y utilidades reutilizable
 
 Cada componente está diseñado para ser independiente. Para usarlos en tu proyecto, agrega la referencia al paquete NuGet correspondiente o referencia el proyecto directamente.
 
-### Ejemplo de uso de CoreUtilerias:
+### Ejemplo de uso de DevKit.Extensions:
 
 ```csharp
-using CoreUtilerias.Extensions;
+using DevKit.Extensions.Uris;
 
-// Ejemplo de extensión para DataTable
-var dataTable = new DataTable();
-dataTable.AddColumnIfNotExist("Id", typeof(int));
-dataTable.AddColumnIfNotExist("Nombre", typeof(string));
+// Ejemplo de construcción de URL con parámetros de consulta
+var parameters = new { Name = "John", Age = 25 };
+string url = parameters.AppendQueryString("https://api.example.com/users");
+// Resultado: https://api.example.com/users?Name=John&Age=25
 
-// Convertir DataTable a lista de objetos
-var lista = dataTable.ToDataList<MiClase>();
+// Ejemplo de formato de URL con placeholders
+string templateUrl = "api/{0}/{1}".UrlFormat("users", "123");
+// Resultado: api/users/123
 ```
 
 ## 📚 Documentación

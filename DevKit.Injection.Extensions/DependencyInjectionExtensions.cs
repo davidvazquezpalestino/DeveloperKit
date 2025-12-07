@@ -115,4 +115,54 @@ public static class DependencyInjectionExtensions
             return services.AddFromAssembly(callingAssembly, logTo: logTo);
         }
     }
+
+    /// <summary>
+    /// Lista los nombres de las clases en un ensamblado sin registrarlas en el contenedor.
+    /// </summary>
+    /// <param name="assembly">El ensamblado a analizar.</param>
+    /// <param name="filter">Filtro opcional para los tipos a incluir.</param>
+    /// <param name="logTo">Acción opcional para registrar los resultados.</param>
+    /// <returns>Una lista con los nombres de las clases encontradas.</returns>
+    public static IReadOnlyList<string> ListTypesInAssembly(Assembly assembly,
+        Func<Type, bool> filter = null,
+        Action<string> logTo = null)
+    {
+        if (assembly == null)
+        {
+            throw new ArgumentNullException(nameof(assembly));
+        }
+
+        bool IsCandidate(Type type)
+        {
+            if (type == null || !type.IsClass || type.IsAbstract)
+            {
+                return false;
+            }
+
+            string fullName = type.FullName ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(fullName) ||
+                fullName.Contains("<>") ||
+                fullName.Contains("Microsoft") ||
+                fullName.Contains("System.Runtime"))
+            {
+                return false;
+            }
+
+            return filter == null || filter(type);
+        }
+
+        List<string> types = assembly.GetTypes()
+            .Where(IsCandidate)
+            .Select(t => t.FullName ?? t.Name)
+            .OrderBy(name => name)
+            .ToList();
+
+        logTo?.Invoke($"Se encontraron {types.Count} tipos en el ensamblado {assembly.GetName().Name}:");
+        foreach (string typeName in types)
+        {
+            logTo?.Invoke($"- {typeName}");
+        }
+
+        return types.AsReadOnly();
+    }
 }

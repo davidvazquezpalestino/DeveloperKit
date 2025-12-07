@@ -186,6 +186,26 @@ services.ConfigureServices()
 | `AddImplementationsOf<T>` | Todas las implementaciones de una interfaz |
 | `AddCurrentAssembly` | Registro automático del ensamblado actual |
 | `ConfigureServices` | Configuración fluida avanzada |
+| `ListTypesInAssembly` | Lista los nombres de las clases en un ensamblado sin registrarlas |
+
+## 🔍 Inspección de Ensamblados
+
+### **Listado de Tipos sin Registro**
+
+```csharp
+// Obtener lista de tipos en un ensamblado
+var types = DependencyInjectionExtensions.ListTypesInAssembly(
+    assembly: Assembly.GetExecutingAssembly(),
+    filter: type => type.Name.EndsWith("Service"),
+    logTo: message => Console.WriteLine($"[DEBUG] {message}")
+);
+
+// Usar la lista de tipos
+foreach (var typeName in types)
+{
+    Console.WriteLine($"Tipo encontrado: {typeName}");
+}
+```
 
 ## 🛡️ Validaciones y Debugging
 
