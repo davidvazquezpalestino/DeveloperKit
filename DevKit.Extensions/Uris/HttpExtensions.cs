@@ -1,4 +1,6 @@
 
+using System.Text.RegularExpressions;
+
 namespace DevKit.Extensions.Uris;
 
 /// <summary>Proporciona métodos de extensión para trabajar con URLs y consultas HTTP.</summary>
@@ -17,7 +19,7 @@ public static class HttpExtensions
     /// string url = obj.AppendQueryString("https://api.example.com/users");
     /// // Resultado: https://api.example.com/users?Name=John&Age=25
     /// </example>
-    public static string UrlFormatQuery<T>(string url, T item, string defaultDateFormat = "yyyy-MM-dd")
+    public static string UrlFormatQuery<T>(string url, T item, string defaultDateFormat = "yyyy-MM-dd") where T : class
     {
         if (item == null)
         {
@@ -81,9 +83,18 @@ public static class HttpExtensions
     public static string UrlFormat(string url, params object[] values)
     {
         if (string.IsNullOrEmpty(url))
-        {
-            return url;
-        }
+            throw new ArgumentException("La URL no puede ser nula o vacía.");
+
+        MatchCollection matches = Regex.Matches(url, @"\{(\d+)\}");
+        if (matches.Count == 0)
+            throw new FormatException("La URL no contiene ningún marcador {0}, {1}, etc.");
+
+        if (values == null || values.Length == 0)
+            throw new ArgumentException("No se proporcionaron parámetros para reemplazar los marcadores.");
+
+        int maxIndex = matches.Cast<Match>().Max(m => int.Parse(m.Groups[1].Value));
+        if (maxIndex >= values.Length)
+            throw new ArgumentException($"La URL requiere al menos {maxIndex + 1} parámetros, pero solo se recibieron {values.Length}.");
 
 
         object[] encodedValues = new object[values.Length];
