@@ -9,102 +9,139 @@ using DevKit.ExecutionEngine.PostgreSQL;
 using DevKit.ExecutionEngine.PostgreSQL.Abstractions;
 using DevKit.ExecutionEngine.PostgreSQL.Settings;
 using DevKit.ExecutionEngine.SQLServer.Abstractions;
-using DevKit.ExecutionEngine.SQLServer.Extensions;
 using DevKit.ExecutionEngine.SQLServer.Implementations;
 using DevKit.ExecutionEngine.SQLServer.Settings;
-using DevKit.Extensions.DataTableExtension;
 using Microsoft.Extensions.Options;
-using System.Data;
-
-
-IHost host = CreateHostBuilder().Build();
-
-
-ISQLServerProvider infomex = host.Services.GetRequiredKeyedService<ISQLServerProvider>("Infomex");
-IMySqlProvider mySqlProvider = host.Services.GetRequiredService<IMySqlProvider>();
-
-DateTime currentDateTime = await infomex.GetCurrentDateTimeAsync();
-Console.WriteLine(currentDateTime);
-
-Console.WriteLine("Consultando SQL Sever");
-
-DataTable table = await infomex.ExecuteQueryAsTableAsync("SELECT * FROM Sepomex.Asentamientos");
-table.TableName = "Asentamientos";
-
-
-
-await mySqlProvider.ExecuteBulkInsertToTableAsync(table, table.TableName);
+using System.Diagnostics;
 
 
 
 
-
-
-
-
-
-Console.WriteLine("Fin");
-
-static IHostBuilder CreateHostBuilder()
+internal class Program
 {
-    return Host.CreateDefaultBuilder()
-        .ConfigureAppConfiguration(configurationBuilder =>
+    private static readonly HttpClient Client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+    static async Task Main(string[] args)
+    {
+        string url = "https://api-cat-cfdi.infosoft.mx/api/cfdi/products?search=leña";
+        var stopwatch = Stopwatch.StartNew(); // iniciar cronómetro
+
+        var tasks = new List<Task>();
+        var semaphore = new SemaphoreSlim(25); // máximo 10 en paralelo
+
+        for (int i = 0; i < 10000; i++)
         {
-            configurationBuilder.AddJsonFile("appsettings.json");
-        }).ConfigureServices((builder, services) =>
+            int requestNumber = i + 1;
+            await semaphore.WaitAsync(); // esperar turno
+
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    await SendRequestAsync(url, requestNumber);
+                }
+                finally
+                {
+                    semaphore.Release(); // liberar slot
+                }
+            }));
+        }
+
+        Console.WriteLine($"✅ Todas las peticiones han finalizado en {stopwatch.Elapsed.TotalSeconds:F2} segundos.");
+
+        // Ejecutar todas en paralelo y esperar a que terminen
+        await Task.WhenAll(tasks);
+
+        stopwatch.Stop(); // detener cronómetro
+        Console.WriteLine($"✅ Todas las peticiones han finalizado en {stopwatch.Elapsed.TotalSeconds:F2} segundos.");
+
+    }
+
+    static async Task SendRequestAsync(string url, int requestNumber)
+    {
+        try
         {
-            services.Configure<RepositoryOptions>(builder.Configuration.GetSection(RepositoryOptions.SectionKey));
+            HttpResponseMessage response = await Client.GetAsync(url);
 
-            services.AddKeyedScoped<ISQLServerProvider>("Infomex", (provider, _) =>
+            response.EnsureSuccessStatusCode();
+            await response.Content.ReadAsStringAsync();
+
+            // Mostrar en consola cuando cada tarea se complete
+            Console.WriteLine($"[{requestNumber}] Completada con éxito");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{requestNumber}] Error: {ex.Message}");
+        }
+    }
+
+
+    static IHostBuilder CreateHostBuilder()
+    {
+        return Host.CreateDefaultBuilder()
+            .ConfigureAppConfiguration(configurationBuilder =>
             {
-                RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
-
-                SqlOptions options = new SqlOptions
-                {
-                    ConnectionString = repositoryOptions.ConnectionStringInfomex
-                };
-
-                return new SQLServerProvider(Options.Create(options));
-            });
-
-            services.AddScoped<ISQLServerProvider>(provider =>
+                configurationBuilder.AddJsonFile("appsettings.json");
+            }).ConfigureServices((builder, services) =>
             {
-                RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                services.Configure<RepositoryOptions>(builder.Configuration.GetSection(RepositoryOptions.SectionKey));
 
-                SqlOptions options = new SqlOptions
+                services.AddKeyedScoped<ISQLServerProvider>("Infomex",
+                    (provider, _) =>
                 {
-                    ConnectionString = repositoryOptions.ConnectionStringInfomex
-                };
+                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
 
-                return new SQLServerProvider(Options.Create(options));
-            });
-
-            services.AddScoped<IMySqlProvider>(provider =>
-            {
-                RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
-                MySqlOptions options = new MySqlOptions
-                {
-                    ConnectionString = repositoryOptions.MySql,
-                    BulkCopy =
+                    SqlOptions options = new SqlOptions
                     {
-                        AllowLoadLocalInfile = true
-                    }
-                };
-                return new MySqlProvider(Options.Create(options));
-            });
+                        ConnectionString = repositoryOptions.ConnectionStringInfomex
+                    };
 
-            services.AddScoped<IPostgreSqlProvider>(provider =>
-            {
-                RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
-                PostgreOptions options = new PostgreOptions
+                    return new SQLServerProvider(Options.Create(options));
+                });
+
+                services.AddScoped<ISQLServerProvider>(provider =>
                 {
-                    ConnectionString = repositoryOptions.PosgreSql
-                };
-                return new PostgreSqlProvider(Options.Create(options));
-            });
+                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
 
-        });
+                    SqlOptions options = new SqlOptions
+                    {
+                        ConnectionString = repositoryOptions.ConnectionStringInfomex
+                    };
+
+                    return new SQLServerProvider(Options.Create(options));
+                });
+
+                services.AddScoped<IMySqlProvider>(provider =>
+                {
+                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                    MySqlOptions options = new MySqlOptions
+                    {
+                        ConnectionString = repositoryOptions.MySql,
+                        BulkCopy =
+                        {
+                                AllowLoadLocalInfile = true
+                        }
+                    };
+                    return new MySqlProvider(Options.Create(options));
+                });
+
+                services.AddScoped<IPostgreSqlProvider>(provider =>
+                {
+                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                    PostgreOptions options = new PostgreOptions
+                    {
+                        ConnectionString = repositoryOptions.PosgreSql
+                    };
+                    return new PostgreSqlProvider(Options.Create(options));
+                });
+
+                services.AddMcpServer()
+                        .WithStdioServerTransport()
+                        .WithToolsFromAssembly();
+
+            });
+    }
 }
+
 
 namespace ConsoleNet8
 {
@@ -232,4 +269,11 @@ public class Asentamientos
     /// Gets or sets the country name.
     /// </summary>
     public string Pais { get; set; }
+}
+
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public DateTime BirthDate { get; set; }
 }

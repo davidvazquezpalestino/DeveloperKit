@@ -80,7 +80,7 @@ public static partial class DataTableExtensions
         /// 
         /// Ejemplo de uso:
         /// <code>
-        /// dataTable.RemoveAll(row => (int)row["Age"] < 18);
+        /// dataTable.RemoveAll(row => (int)row["Age"] == 18);
         /// </code>
         /// El ejemplo anterior elimina todas las filas donde la edad es menor a 18.
         /// </remarks>

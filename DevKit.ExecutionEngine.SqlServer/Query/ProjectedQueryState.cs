@@ -1,3 +1,4 @@
+
 namespace DevKit.ExecutionEngine.SQLServer.Query;
 
 /// <summary>
@@ -5,19 +6,9 @@ namespace DevKit.ExecutionEngine.SQLServer.Query;
 /// </summary>
 /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
 /// <typeparam name="TResult">El tipo del resultado proyectado</typeparam>
-public class ProjectedQueryState<T, TResult> : ILoggedQuery where T : class, new()
+public class ProjectedQueryState<T, TResult> where T : class, new()
 {
     internal ISQLServerProvider DbProvider { get; set; }
-
-    /// <summary>
-    /// SQL que se ejecutó (para logging)
-    /// </summary>
-    public string ExecutedSql { get; private set; }
-
-    /// <summary>
-    /// Parámetros de la consulta (para logging)
-    /// </summary>
-    public IDictionary<string, object> Parameters { get; private set; } = new Dictionary<string, object>();
 
     /// <summary>
     /// Obtiene o establece el nombre del esquema para la consulta.
@@ -53,13 +44,6 @@ public class ProjectedQueryState<T, TResult> : ILoggedQuery where T : class, new
     public string Build()
     {
         QueryResult queryInfo = BuildQueryInternal();
-
-        // Registrar la consulta SQL generada
-        QueryLogger.LogQuery(
-            queryInfo.SQL,
-            queryInfo.Parameters,
-            IQueryLogger.LogLevel.Debug,
-            "Consulta SQL proyectada generada");
 
         return queryInfo.SQL;
     }

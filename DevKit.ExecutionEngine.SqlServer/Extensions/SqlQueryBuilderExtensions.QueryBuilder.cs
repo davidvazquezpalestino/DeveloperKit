@@ -32,7 +32,7 @@ public static partial class SqlQueryBuilderExtensions
                     }
                     else if (constantExpression.Type == typeof(bool))
                     {
-                        whereConditions.Add((bool)constantExpression.Value ? "1 = 1" : "1 = 0");
+                        whereConditions.Add((bool)constantExpression.Value! ? "1 = 1" : "1 = 0");
                     }
                     else
                     {
@@ -266,7 +266,8 @@ public static partial class SqlQueryBuilderExtensions
         }
 
         // Build the final query
-        result.SQL = $"SELECT {selectClause} FROM {tableName}";
+        string topClause = (query.TakeField.HasValue && query.TakeField > 0 && (query.SkipField == null || query.SkipField <= 0)) ? $"TOP {query.TakeField} " : "";
+        result.SQL = $"SELECT {topClause}{selectClause} FROM {tableName}";
 
         if (!string.IsNullOrEmpty(where))
         {
@@ -279,16 +280,9 @@ public static partial class SqlQueryBuilderExtensions
         }
 
         // Add pagination if needed
-        if (query.TakeField.HasValue && query.TakeField > 0)
+        if (query.SkipField > 0 && query.TakeField.HasValue && query.TakeField > 0)
         {
-            if (query.SkipField > 0)
-            {
-                result.SQL += $" OFFSET {query.SkipField} ROWS FETCH NEXT {query.TakeField} ROWS ONLY";
-            }
-            else
-            {
-                result.SQL += $" TOP {query.TakeField}";
-            }
+            result.SQL += $" OFFSET {query.SkipField} ROWS FETCH NEXT {query.TakeField} ROWS ONLY";
         }
 
         return result;
