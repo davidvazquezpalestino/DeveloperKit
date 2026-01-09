@@ -19,22 +19,39 @@ Extensión de utilidades para .NET que simplifica el manejo de datos, incluyendo
 
 ### 🧩 DataReaderExtensions
 
-Extensiones para `IDataReader` que permiten acceder a columnas por nombre de forma segura y mapear a objetos.
+Extensiones para `IDataReader` que permiten leer datos de forma segura, manejando automáticamente valores nulos y conversiones de tipos.
 
 ```csharp
-// Ejemplo de uso básico
 using (var reader = command.ExecuteReader())
 {
+    // Opción 1: Convertir todo a una lista (¡Nuevo!)
+    List<Usuario> usuarios = reader.ToList<Usuario>();
+
+    // Opción 2: Leer fila por fila
     while (reader.Read())
     {
+        // Mapeo automático a objeto
+        var usuario = reader.GetItem<Usuario>();
+
+        // O lectura manual de columnas
         int id = reader.GetValue<int>("Id");
         string nombre = reader.GetValue<string>("Nombre");
-        DateTime fecha = reader.GetValue<DateTime>("FechaRegistro");
-
-        // O convertir directamente a un objeto
-        var usuario = reader.GetItem<Usuario>();
     }
 }
+```
+
+### 🔑 ExpressionConditionExtractor (Nuevo)
+
+Genera claves de texto únicas a partir de expresiones lógicas (Lambdas). Es ideal para crear claves de caché (como en Redis) que sean consistentes y fáciles de leer.
+
+```csharp
+// Ejemplo: Crear una clave para caché basada en filtros
+var clave = ExpressionConditionExtractor.BuildRedisKey<Usuario>(
+    u => u.Activo == true && u.Id > 100
+);
+
+// Resultado generado: "Usuario:Activo=1:Id>100"
+// Nota: Ordena automáticamente las condiciones para que el orden no afecte la clave.
 ```
 
 ### 🧠 JsonExtensions
