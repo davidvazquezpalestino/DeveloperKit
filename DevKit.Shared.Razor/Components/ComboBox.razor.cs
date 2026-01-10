@@ -31,7 +31,7 @@ public partial class ComboBox<TItem, TValue>
     /// <summary>
     /// Lista de elementos disponibles para seleccionar.
     /// </summary>
-    [Parameter] public IEnumerable<TItem> Items { get; set; }
+    [Parameter] public List<TItem> Items { get; set; }
 
     /// <summary>
     /// Texto a mostrar cuando no hay selección.

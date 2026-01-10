@@ -21,7 +21,7 @@ public partial class Autocomplete<T>
     /// <summary>
     /// Función que maneja la búsqueda de elementos.
     /// </summary>
-    [Parameter] public Func<string, CancellationToken, Task<IEnumerable<T>>> SearchHandler { get; set; }
+    [Parameter] public Func<string, CancellationToken, Task<List<T>>> SearchHandler { get; set; }
 
     /// <summary>
     /// Función que define cómo se muestra cada elemento en la lista.
@@ -186,7 +186,7 @@ public partial class Autocomplete<T>
         {
             try
             {
-                IEnumerable<T> results = await SearchHandler(DisplayItem(Value), CancellationToken.None);
+                List<T> results = await SearchHandler(DisplayItem(Value), CancellationToken.None);
                 ItemsField = results?.ToList() ?? new List<T>();
 
                 // Ensure the current value is in the list
@@ -247,7 +247,7 @@ public partial class Autocomplete<T>
         {
             try
             {
-                IEnumerable<T> results = await SearchHandler(SearchText, token);
+                List<T> results = await SearchHandler(SearchText, token);
                 ItemsField = results?.ToList() ?? new List<T>();
             }
             catch (OperationCanceledException)
@@ -373,9 +373,4 @@ public partial class Autocomplete<T>
             CancellationTokenSourceField?.Dispose();
         }
     }
-
-    /// <summary>
-    /// Imprime un saludo en la consola.
-    /// </summary>
-    public void HolaMundo() => Console.WriteLine("Hola Mundo");
 }
