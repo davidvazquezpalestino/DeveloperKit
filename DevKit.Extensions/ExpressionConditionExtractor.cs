@@ -201,13 +201,17 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         if (value is bool b)
             return b ? "1" : "0";
 
-        if (value is System.Collections.IEnumerable enumerable && value is not string)
+        if (value is System.Collections.IEnumerable enumerable)
         {
-            IEnumerable<string> items = enumerable.Cast<object>()
-                                  .Select(item => item?.ToString() ?? "NULL");
-            return $"[{string.Join(",", items)}]";
+            if (value is not string)
+            {
+                IEnumerable<string> items = enumerable
+                    .Cast<object>()
+                    .Select(item => item?.ToString() ?? "NULL");
+                return $"[{string.Join(",", items)}]";
+            }
         }
 
-        return value.ToString().Trim();
+        return value.ToString()?.Trim();
     }
 }

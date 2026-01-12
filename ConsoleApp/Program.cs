@@ -22,13 +22,13 @@ internal class Program
     private static readonly HttpClient Client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
     static async Task Main(string[] args)
     {
-        string url = "https://api-cat-cfdi.infosoft.mx/api/cfdi/products?search=leña";
+        string url = "https://api-inegi.infosoft.mx/api/localidades?estado=veracru&municipio=zongolica";
         var stopwatch = Stopwatch.StartNew(); // iniciar cronómetro
 
         var tasks = new List<Task>();
-        var semaphore = new SemaphoreSlim(25); // máximo 10 en paralelo
+        var semaphore = new SemaphoreSlim(50); // máximo 10 en paralelo
 
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < 100000; i++)
         {
             int requestNumber = i + 1;
             await semaphore.WaitAsync(); // esperar turno
