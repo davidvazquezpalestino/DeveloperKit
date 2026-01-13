@@ -12,6 +12,25 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     public List<(string Property, string Operator, object Value)> Conditions { get; } = new();
 
     /// <summary>
+    /// Construye una clave de Redis a partir de una expresion Lambda.
+    /// Soporta tanto llamadas a métodos (ej. () => repo.GetAsync(id)) 
+    /// como predicados (ej. x => x.Prop == valor).
+    /// </summary>
+    /// <param name="expression">Expresión Lambda a procesar.</param>
+    /// <param name="pagina">Número de página opcional para incluir en la clave.</param>
+    /// <returns>Una cadena formateada para ser usada como clave de Redis.</returns>
+    public static string BuildRedisKey(LambdaExpression expression, int pagina = 0)
+    {
+        List<string> parts = expression.ReturnType == typeof(bool)
+            ? GetPredicateParts(expression)
+            : GetMethodCallParts(expression);
+
+        if (pagina > 0) parts.Add($"Page:{pagina}");
+
+        return string.Join(":", parts);
+    }
+
+    /// <summary>
     /// Extrae condiciones de expresiones binarias (ej. x.Prop == valor).
     /// </summary>
     protected override Expression VisitBinary(BinaryExpression node)
@@ -44,19 +63,14 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         return base.VisitMethodCall(node);
     }
 
-    /// <summary>
-    /// Evalúa un valor desde una expresión (constante o miembro).
-    /// </summary>
-    /// <summary>
-    /// Evalúa un <see cref="Expression"/> y devuelve su valor.
-    /// Soporta constantes y miembros (propiedades/campos).
-    /// </summary>
-    /// <param name="expr">Expresión a evaluar.</param>
-    /// <returns>El valor evaluado, o null si no se puede resolver.</returns>
+    #region Private Methods
+
     /// <summary>
     /// Evalúa un <see cref="Expression"/> y devuelve su valor.
     /// Soporta constantes, miembros, conversiones, llamadas a métodos y parámetros.
     /// </summary>
+    /// <param name="expr">Expresión a evaluar.</param>
+    /// <returns>El valor evaluado, o un diccionario si es un tipo complejo.</returns>
     private static object GetValue(Expression expr)
     {
         // Caso 1: expresión constante (ej. x => 5)
@@ -139,57 +153,47 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     }
 
     /// <summary>
-    /// Construye una clave de Redis a partir de una expresion Lambda (ej. () => repo.Metodo(args)).
+    /// Procesa una expresión de predicado (bool) y extrae sus componentes para la clave.
     /// </summary>
-    public static string BuildRedisKey(LambdaExpression expression, int pagina = 0)
+    private static List<string> GetPredicateParts(LambdaExpression expression)
     {
-        Expression body = expression.Body;
+        ExpressionConditionExtractor extractor = new();
+        extractor.Visit(expression.Body);
 
-        // Si es una llamada asíncrona que no ha sido esperada (Task<T>), el cuerpo es la llamada al método.
-        // Si usamos await, el compilador genera una máquina de estados, pero en una expresión lambda expression tree,
-        // normalmente tenemos la invocación directa.
+        string typeName = expression.Parameters.Count > 0
+            ? GetCleanTypeName(expression.Parameters[0].Type)
+            : "Predicate";
 
-        MethodCallExpression methodCall = null;
-        if (body is MethodCallExpression mc)
+        List<string> parts = new List<string> { typeName };
+        List<string> conditions = BuildConditionParts(extractor.Conditions);
+
+        if (conditions.Any()) parts.AddRange(conditions);
+        else parts.Add("ALL");
+
+        return parts;
+    }
+
+    /// <summary>
+    /// Procesa una expresión de llamada a método y extrae sus componentes para la clave.
+    /// </summary>
+    private static List<string> GetMethodCallParts(LambdaExpression expression)
+    {
+        MethodCallExpression methodCall = expression.Body switch
         {
-            methodCall = mc;
-        }
-        else if (body is UnaryExpression unary)
+            MethodCallExpression mc => mc,
+            UnaryExpression { Operand: MethodCallExpression mc } => mc,
+            _ => throw new ArgumentException("La expresión debe ser una llamada a un método o un predicado.")
+        };
+
+        List<string> parts = new List<string>
         {
-            if (unary.Operand is MethodCallExpression mcFromUnary)
-            {
-                // Conversiones implícitas o explicatas
-                methodCall = mcFromUnary;
-            }
-        }
+            GetCleanTypeName(methodCall.Method.ReturnType),
+            methodCall.Method.Name
+        };
 
-        if (methodCall == null)
-        {
-            throw new ArgumentException("La expresión debe ser una llamada a un método.");
-        }
+        parts.AddRange(methodCall.Arguments.Select(arg => FormatValue(GetValue(arg))));
 
-        // Obtener el nombre del tipo de retorno limpio
-        string typeName = GetCleanTypeName(methodCall.Method.ReturnType);
-
-        // Obtener el nombre del método
-        string methodName = methodCall.Method.Name;
-
-        // Extraer argumentos
-        List<string> arguments = new();
-        foreach (Expression arg in methodCall.Arguments)
-        {
-            object val = GetValue(arg);
-            arguments.Add(FormatValue(val));
-        }
-
-        if (pagina > 0)
-        {
-            arguments.Add($"Page:{pagina}");
-        }
-
-        // Formato: TipoRetorno:Metodo:Arg1:Arg2...
-        // Ejemplo: Impuesto:GetImpuestoAsync:1
-        return $"{typeName}:{methodName}{(arguments.Any() ? ":" + string.Join(":", arguments) : "")}";
+        return parts;
     }
 
     /// <summary>
@@ -211,24 +215,39 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         if (type.IsGenericType)
         {
             Type[] genArgs = type.GetGenericArguments();
-            // Tomamos el nombre del tipo sin el `1
             string name = type.Name;
             int tickIndex = name.IndexOf('`');
             if (tickIndex > 0) name = name.Substring(0, tickIndex);
 
-            // Concatenamos argumentos genéricos. Ej: List<Impuesto> -> List<Impuesto> 
-            // Ojo: Redis keys no deben tener caracteres muy raros, pero <> suele pasar o se puede simplificar.
-            // Usuario prefiere: "Impuesto" para lista? El usuario dijo "collection or list... <repository>PGetImpuestosAsyncNULL"
-            // Vamos a intentar devolver el nombre del genérico principal si es una colección, o algo legible.
-            // Preferencia personal: "ImpuestoList" o "ListOfImpuesto".
-            // Para simplificar y seguir el estilo del usuario "Impuesto", si es una colección de T, podríamos usar T.
-            // Pero si retorna List<int>, "Int32" sería confuso. 
-            // Dejemoslo como "List<Impuesto>" limpiando.
-
-            return $"{name}<{string.Join(",", genArgs.Select(GetCleanTypeName))}>";
+            return $"{name}|{string.Join("|", genArgs.Select(GetCleanTypeName))}|";
         }
 
         return type.Name;
+    }
+
+    /// <summary>
+    /// Convierte todas las condiciones en fragmentos de clave, ordenadas para consistencia.
+    /// </summary>
+    private static List<string> BuildConditionParts(IEnumerable<(string Property, string Operator, object Value)> conditions)
+    {
+        return conditions
+            .OrderBy(c => c.Property)
+            .ThenBy(c => c.Operator)
+            .Select(c => BuildConditionPart(c.Property, c.Operator, c.Value))
+            .ToList();
+    }
+
+    /// <summary>
+    /// Convierte una condición en un fragmento de clave.
+    /// </summary>
+    private static string BuildConditionPart(string property, string op, object value)
+    {
+        string normalizedOperator = NormalizeOperator(op);
+        string formattedValue = FormatValue(value);
+
+        return string.IsNullOrEmpty(property)
+            ? $"{normalizedOperator}{formattedValue}"
+            : $"{property}{normalizedOperator}{formattedValue}";
     }
 
     /// <summary>
@@ -272,10 +291,9 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             return s;
         }
 
-        // Manejar diccionarios (tipos complejos extraídos)
         if (value is Dictionary<string, object> dict)
         {
-            var parts = dict.Select(kvp => $"{kvp.Key}|{FormatValue(kvp.Value)}");
+            IEnumerable<string> parts = dict.Select(kvp => $"{kvp.Key}|{FormatValue(kvp.Value)}");
             return string.Join(",", parts);
         }
 
@@ -295,7 +313,6 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     /// </summary>
     private static bool IsComplexType(Type type)
     {
-        // Tipos simples que no consideramos complejos
         if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal) ||
             type == typeof(DateTime) || type == typeof(DateTimeOffset) ||
             type == typeof(TimeSpan) || type == typeof(Guid) || type.IsEnum)
@@ -303,13 +320,11 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             return false;
         }
 
-        // Si es una colección, no es un tipo complejo en este contexto
         if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string))
         {
             return false;
         }
 
-        // Es un tipo complejo (clase personalizada)
         return type.IsClass || type.IsValueType;
     }
 
@@ -321,7 +336,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         Dictionary<string, object> properties = new();
         Type type = obj.GetType();
 
-        foreach (var prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             try
             {
@@ -330,11 +345,12 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             }
             catch
             {
-                // Si no se puede leer la propiedad, la ignoramos
                 properties[prop.Name] = null;
             }
         }
 
         return properties;
     }
+
+    #endregion
 }
