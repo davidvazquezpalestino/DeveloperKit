@@ -25,7 +25,10 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             ? GetPredicateParts(expression)
             : GetMethodCallParts(expression);
 
-        if (pagina > 0) parts.Add($"Page:{pagina}");
+        if (pagina > 0)
+        {
+            parts.Add($"Page:{pagina}");
+        }
 
         return string.Join(":", parts);
     }
@@ -167,8 +170,14 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         List<string> parts = new List<string> { typeName };
         List<string> conditions = BuildConditionParts(extractor.Conditions);
 
-        if (conditions.Any()) parts.AddRange(conditions);
-        else parts.Add("ALL");
+        if (conditions.Any())
+        {
+            parts.AddRange(conditions);
+        }
+        else
+        {
+            parts.Add("ALL");
+        }
 
         return parts;
     }
@@ -217,7 +226,10 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             Type[] genArgs = type.GetGenericArguments();
             string name = type.Name;
             int tickIndex = name.IndexOf('`');
-            if (tickIndex > 0) name = name.Substring(0, tickIndex);
+            if (tickIndex > 0)
+            {
+                name = name.Substring(0, tickIndex);
+            }
 
             return $"{name}|{string.Join("|", genArgs.Select(GetCleanTypeName))}|";
         }
@@ -278,13 +290,19 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     private static string FormatValue(object value)
     {
         if (value == null)
+        {
             return "NULL";
+        }
 
         if (value is DateTime dt)
+        {
             return dt.ToString("yyyy-MM-ddTHH:mm:ss");
+        }
 
         if (value is bool b)
+        {
             return b ? "1" : "0";
+        }
 
         if (value is string s)
         {
