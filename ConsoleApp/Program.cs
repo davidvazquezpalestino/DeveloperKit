@@ -50,6 +50,22 @@ try {
     Console.WriteLine($"Key 5 (Complex Type): {key5}");
 } catch (Exception ex) { Console.WriteLine($"Error 5: {ex.Message}"); }
 
+// Case 6: Predicate (Single condition)
+Expression<Func<CfdiAsentamiento, bool>> expr6 = a => a.Estado.Contains("Sonora");
+try {
+    string key6 = ExpressionConditionExtractor.BuildRedisKey(expr6);
+    Console.WriteLine($"Key 6 (Predicate): {key6}");
+} catch (Exception ex) { Console.WriteLine($"Error 6: {ex.Message}"); }
+
+// Case 7: Predicate (Multiple conditions)
+string state = "Sonora";
+string municipality = "Hermosillo";
+Expression<Func<CfdiAsentamiento, bool>> expr7 = a => a.Estado.Contains(state) && a.Municipio.Contains(municipality);
+try {
+    string key7 = ExpressionConditionExtractor.BuildRedisKey(expr7);
+    Console.WriteLine($"Key 7 (Multi Predicate): {key7}");
+} catch (Exception ex) { Console.WriteLine($"Error 7: {ex.Message}"); }
+
 
 class TestRepo
 {
@@ -69,4 +85,10 @@ class ClienteRequest
     public int RegistrosPagina { get; set; } = 10;
     public int EmpresaID { get; set; }
     public string Search { get; set; }
+}
+
+class CfdiAsentamiento
+{
+    public string Estado { get; set; }
+    public string Municipio { get; set; }
 }

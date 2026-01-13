@@ -9,9 +9,9 @@
 		<Product>CoreDatabase</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2026.01.16</AssemblyVersion>
-		<FileVersion>2026.01.16</FileVersion>
-		<Version>2026.01.16</Version>
+		<AssemblyVersion>2026.01.17</AssemblyVersion>
+		<FileVersion>2026.01.17</FileVersion>
+		<Version>2026.01.17</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
