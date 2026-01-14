@@ -7,9 +7,9 @@
 		<Product>DevKit.ExecutionEngine.Redis</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2026.01.13</AssemblyVersion>
-		<FileVersion>2026.01.13</FileVersion>
-		<Version>2026.01.13</Version>
+		<AssemblyVersion>2026.01.15</AssemblyVersion>
+		<FileVersion>2026.01.15</FileVersion>
+		<Version>2026.01.15</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

@@ -13,11 +13,11 @@ public class ExpressionConditionExtractor : ExpressionVisitor
 
     /// <summary>
     /// Construye una clave de Redis a partir de una expresion Lambda.
-    /// Genera un hash SHA256 de la representación formateada de la expresión para una clave corta y única.
+    /// Genera una cadena formateada legible con las condiciones extraídas.
     /// </summary>
     /// <param name="expression">Expresión Lambda a procesar.</param>
     /// <param name="pagina">Número de página opcional para incluir en la clave.</param>
-    /// <returns>Un hash SHA256 como clave de Redis.</returns>
+    /// <returns>Una cadena formateada como clave de Redis.</returns>
     public static string BuildRedisKey(LambdaExpression expression, int pagina = 0)
     {
         List<string> parts = expression.ReturnType == typeof(bool)
@@ -29,7 +29,8 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             parts.Add($"Page:{pagina}");
         }
 
-        return string.Join(":", parts);
+        return string.Join("|", parts)
+                        .Replace("||", "|");
     }
 
     /// <summary>
@@ -87,6 +88,11 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             LambdaExpression lambda = Expression.Lambda(member);
             Delegate compiled = lambda.Compile();
             object result = compiled.DynamicInvoke();
+
+            if (result is LambdaExpression lambdaResult)
+            {
+                return lambdaResult;
+            }
 
             // Si el resultado es un tipo complejo, extraer sus propiedades
             if (result != null && IsComplexType(result.GetType()))
@@ -162,10 +168,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         ExpressionConditionExtractor extractor = new();
         extractor.Visit(expression.Body);
 
-        string typeName = expression.Parameters.Count > 0
-            ? GetCleanTypeName(expression.Parameters[0].Type) : "Predicate";
-
-        List<string> parts = new() { typeName };
+        List<string> parts = new();
         List<string> conditions = BuildConditionParts(extractor.Conditions);
 
         if (conditions.Any())
@@ -313,17 +316,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
 
         if (value is LambdaExpression lambda)
         {
-            ExpressionConditionExtractor extractor = new();
-            extractor.Visit(lambda.Body);
-            if (extractor.Conditions.Any())
-            {
-                string conditions = string.Join(",", extractor.Conditions
-                    .Select(c => $"{c.Property}{NormalizeOperator(c.Operator)}{FormatValue(c.Value)}"));
-
-                return conditions;
-            }
-
-            return lambda.ToString();
+            return BuildRedisKey(lambda);
         }
 
         if (value is Dictionary<string, object> dict)

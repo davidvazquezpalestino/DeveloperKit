@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using DevKit.ExecutionEngine.Redis;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
-using DevKit.Extensions;
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
@@ -10,30 +7,38 @@ TestRepo repo = new();
 
 // Case 1: Async Task<List<Impuesto>>
 Expression<Func<Task<List<Impuesto>>>> expr1 = () => repo.GetImpuestosAsync(1, "MX");
-try {
+try
+{
     string key1 = ExpressionConditionExtractor.BuildRedisKey(expr1);
     Console.WriteLine($"Key 1 (Async List): {key1}");
-} catch (Exception ex) { Console.WriteLine($"Error 1: {ex.Message}"); }
+}
+catch (Exception ex) { Console.WriteLine($"Error 1: {ex.Message}"); }
 
 // Case 2: Sync List<Impuesto>
 Expression<Func<List<Impuesto>>> expr2 = () => repo.GetImpuestos(2);
-try {
+try
+{
     string key2 = ExpressionConditionExtractor.BuildRedisKey(expr2);
     Console.WriteLine($"Key 2 (Sync List): {key2}");
-} catch (Exception ex) { Console.WriteLine($"Error 2: {ex.Message}"); }
+}
+catch (Exception ex) { Console.WriteLine($"Error 2: {ex.Message}"); }
 
 // Case 3: Simple Async Task<int>
 Expression<Func<Task<int>>> expr3 = () => repo.CountAsync();
-try {
+try
+{
     string key3 = ExpressionConditionExtractor.BuildRedisKey(expr3);
     Console.WriteLine($"Key 3 (Async Int): {key3}");
-} catch (Exception ex) { Console.WriteLine($"Error 3: {ex.Message}"); }
+}
+catch (Exception ex) { Console.WriteLine($"Error 3: {ex.Message}"); }
 
 // Case 4: Page argument
-try {
+try
+{
     string key4 = ExpressionConditionExtractor.BuildRedisKey(expr1, 5);
     Console.WriteLine($"Key 4 (With Page): {key4}");
-} catch (Exception ex) { Console.WriteLine($"Error 4: {ex.Message}"); }
+}
+catch (Exception ex) { Console.WriteLine($"Error 4: {ex.Message}"); }
 
 // Case 5: Complex type (ClienteRequest)
 ClienteRequest request = new()
@@ -45,26 +50,43 @@ ClienteRequest request = new()
 };
 
 Expression<Func<Task<List<Cliente>>>> expr5 = () => repo.GetClientesAsync(request);
-try {
+try
+{
     string key5 = ExpressionConditionExtractor.BuildRedisKey(expr5);
     Console.WriteLine($"Key 5 (Complex Type): {key5}");
-} catch (Exception ex) { Console.WriteLine($"Error 5: {ex.Message}"); }
+}
+catch (Exception ex) { Console.WriteLine($"Error 5: {ex.Message}"); }
 
 // Case 6: Predicate (Single condition)
 Expression<Func<CfdiAsentamiento, bool>> expr6 = a => a.Estado.Contains("Sonora");
-try {
+try
+{
     string key6 = ExpressionConditionExtractor.BuildRedisKey(expr6);
     Console.WriteLine($"Key 6 (Predicate): {key6}");
-} catch (Exception ex) { Console.WriteLine($"Error 6: {ex.Message}"); }
+}
+catch (Exception ex) { Console.WriteLine($"Error 6: {ex.Message}"); }
 
 // Case 7: Predicate (Multiple conditions)
 string state = "Sonora";
 string municipality = "Hermosillo";
 Expression<Func<CfdiAsentamiento, bool>> expr7 = a => a.Estado.Contains(state) && a.Municipio.Contains(municipality);
-try {
+try
+{
     string key7 = ExpressionConditionExtractor.BuildRedisKey(expr7);
     Console.WriteLine($"Key 7 (Multi Predicate): {key7}");
-} catch (Exception ex) { Console.WriteLine($"Error 7: {ex.Message}"); }
+}
+catch (Exception ex) { Console.WriteLine($"Error 7: {ex.Message}"); }
+
+// Case 8: Method with lambda predicate
+string estado = "Puebla";
+string municipio = "San Martin";
+Expression<Func<Task<ICollection<Localidad>>>> expr8 = () => repo.GetLocalidadesAsync(localidad => localidad.Estado.Contains(estado) && localidad.Municipio.Contains(municipio));
+try
+{
+    string key8 = ExpressionConditionExtractor.BuildRedisKey(expr8);
+    Console.WriteLine($"Key 8 (Method with Lambda): {key8}");
+}
+catch (Exception ex) { Console.WriteLine($"Error 8: {ex.Message}"); }
 
 
 class TestRepo
@@ -73,6 +95,7 @@ class TestRepo
     public List<Impuesto> GetImpuestos(int id) => new List<Impuesto>();
     public Task<int> CountAsync() => Task.FromResult(0);
     public Task<List<Cliente>> GetClientesAsync(ClienteRequest request) => Task.FromResult(new List<Cliente>());
+    public Task<ICollection<Localidad>> GetLocalidadesAsync(Expression<Func<Localidad, bool>> predicate = null) => Task.FromResult((ICollection<Localidad>)new List<Localidad>());
 }
 
 class Impuesto { }
@@ -91,4 +114,15 @@ class CfdiAsentamiento
 {
     public string Estado { get; set; }
     public string Municipio { get; set; }
+}
+public class Localidad
+{
+    public int LocalidadID { get; set; }
+    public string AsentamientoID { get; set; }
+    public string Asentamiento { get; set; }
+    public string MunicipioID { get; set; }
+    public string Municipio { get; set; }
+    public string EstadoID { get; set; }
+    public string Estado { get; set; }
+    public string Pais { get; set; }
 }
