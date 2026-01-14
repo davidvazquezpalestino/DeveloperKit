@@ -1,8 +1,8 @@
-namespace DevKit.Extensions;
+namespace DevKit.ExecutionEngine.Redis;
 
 /// <summary>
-/// Extracts conditions from lambda expressions used in queries, storing them as property-operator-value tuples.
-/// This class is useful for analyzing and transforming LINQ expressions into structured condition lists.
+/// Extrae condiciones de expresiones lambda utilizadas en consultas, almacenándolas como tuplas propiedad-operador-valor.
+/// Esta clase es útil para analizar y transformar expresiones LINQ en listas de condiciones estructuradas.
 /// </summary>
 public class ExpressionConditionExtractor : ExpressionVisitor
 {
@@ -164,10 +164,9 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         extractor.Visit(expression.Body);
 
         string typeName = expression.Parameters.Count > 0
-            ? GetCleanTypeName(expression.Parameters[0].Type)
-            : "Predicate";
+            ? GetCleanTypeName(expression.Parameters[0].Type) : "Predicate";
 
-        List<string> parts = new List<string> { typeName };
+        List<string> parts = new() { typeName };
         List<string> conditions = BuildConditionParts(extractor.Conditions);
 
         if (conditions.Any())
@@ -194,7 +193,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             _ => throw new ArgumentException("La expresión debe ser una llamada a un método o un predicado.")
         };
 
-        List<string> parts = new List<string>
+        List<string> parts = new()
         {
             GetCleanTypeName(methodCall.Method.ReturnType),
             methodCall.Method.Name
