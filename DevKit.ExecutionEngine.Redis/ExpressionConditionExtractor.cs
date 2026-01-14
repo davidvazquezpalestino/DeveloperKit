@@ -13,12 +13,11 @@ public class ExpressionConditionExtractor : ExpressionVisitor
 
     /// <summary>
     /// Construye una clave de Redis a partir de una expresion Lambda.
-    /// Soporta tanto llamadas a métodos (ej. () => repo.GetAsync(id)) 
-    /// como predicados (ej. x => x.Prop == valor).
+    /// Genera un hash SHA256 de la representación formateada de la expresión para una clave corta y única.
     /// </summary>
     /// <param name="expression">Expresión Lambda a procesar.</param>
     /// <param name="pagina">Número de página opcional para incluir en la clave.</param>
-    /// <returns>Una cadena formateada para ser usada como clave de Redis.</returns>
+    /// <returns>Un hash SHA256 como clave de Redis.</returns>
     public static string BuildRedisKey(LambdaExpression expression, int pagina = 0)
     {
         List<string> parts = expression.ReturnType == typeof(bool)
@@ -199,7 +198,11 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             methodCall.Method.Name
         };
 
-        parts.AddRange(methodCall.Arguments.Select(arg => FormatValue(GetValue(arg))));
+        List<string> collection = methodCall.Arguments
+                                            .Select(arg => FormatValue(GetValue(arg)))
+                                            .ToList();
+
+        parts.AddRange(collection);
 
         return parts;
     }
@@ -308,6 +311,21 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             return s;
         }
 
+        if (value is LambdaExpression lambda)
+        {
+            ExpressionConditionExtractor extractor = new();
+            extractor.Visit(lambda.Body);
+            if (extractor.Conditions.Any())
+            {
+                string conditions = string.Join(",", extractor.Conditions
+                    .Select(c => $"{c.Property}{NormalizeOperator(c.Operator)}{FormatValue(c.Value)}"));
+
+                return conditions;
+            }
+
+            return lambda.ToString();
+        }
+
         if (value is Dictionary<string, object> dict)
         {
             IEnumerable<string> parts = dict.Select(kvp => $"{kvp.Key}|{FormatValue(kvp.Value)}");
@@ -368,6 +386,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
 
         return properties;
     }
+
 
     #endregion
 }
