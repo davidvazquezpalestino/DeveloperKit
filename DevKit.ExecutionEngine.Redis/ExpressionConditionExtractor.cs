@@ -29,8 +29,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             parts.Add($"Page:{pagina}");
         }
 
-        return string.Join("|", parts)
-                        .Replace("||", "|");
+        return string.Join(":", parts);
     }
 
     /// <summary>
