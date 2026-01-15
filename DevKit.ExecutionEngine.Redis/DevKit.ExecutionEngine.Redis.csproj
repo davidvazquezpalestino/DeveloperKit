@@ -1,36 +1,34 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net8.0;net9.0;net10.0;</TargetFrameworks>
+		<TargetFrameworks>net10.0;</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
-	</PropertyGroup>
-
-	<PropertyGroup>
 		<Company>David Vázquez Palestino</Company>
-		<Product>ExecutionEngineMySQL</Product>
+		<Product>DevKit.ExecutionEngine.Redis</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2025.11.11</AssemblyVersion>
-		<FileVersion>2025.11.11</FileVersion>
-		<Version>2025.11.11</Version>
+		<AssemblyVersion>2026.01.16</AssemblyVersion>
+		<FileVersion>2026.01.16</FileVersion>
+		<Version>2026.01.16</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-		<Title>ExecutionEngineMySQL - Biblioteca de Integración para MySQL y ADO.NET</Title>
+		<Title>DevKit.ExecutionEngine.Redis - Biblioteca de Caché para Redis</Title>
 		<Authors>David Vázquez Palestino</Authors>
-		<Description>ExecutionEngineMySQL es una biblioteca de extensiones y utilidades para ADO.NET</Description>
-		<PackageId>ExecutionEngineMySQL</PackageId>
-		<PackageOutputPath>C:\Github\Packages\ExecutionEngineMySQL</PackageOutputPath>
+		<Description>DevKit.ExecutionEngine.Redis es una biblioteca para integrar Redis como sistema de caché en aplicaciones .NET. Proporciona métodos asíncronos para almacenar y recuperar datos, con invalidación inteligente basada en expresiones lambda. Compatible con .NET 8.0 y superiores.</Description>
+		<PackageId>DevKit.ExecutionEngine.Redis</PackageId>
+		<PackageOutputPath>C:\Github\Packages\RedisCache</PackageOutputPath>
 		<PackageIcon>102042_tools_icon.png</PackageIcon>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-		<PackageTags>sql-server ado-net database orm data-access</PackageTags>
+		<PackageTags>redis cache dotnet async lambda</PackageTags>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="MySqlConnector" Version="2.5.0" />
 		<PackageReference Include="Microsoft.Extensions.Options" Version="10.0.1" />
+		<PackageReference Include="StackExchange.Redis" Version="2.10.1" />
 	</ItemGroup>
+
 
 	<ItemGroup>
 		<None Include="Imagenes\102042_tools_icon.png">
@@ -64,17 +62,18 @@
 	<ItemGroup>
 		<None Include="LICENSE">
 			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
-
-
-
+	
 	<ItemGroup>
 		<None Update="LICENSE">
 			<Pack>True</Pack>
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
+
+
 
 
 </Project>

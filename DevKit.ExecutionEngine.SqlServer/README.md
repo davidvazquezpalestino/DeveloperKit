@@ -1,11 +1,147 @@
-# SQL Server Database Provider for DeveloperKit
+# DevKit.ExecutionEngine.SqlServer
 
-[![NuGet](https://img.shields.io/nuget/v/DevKit.ExecutionEngine.SqlServer.svg?style=flat-square)](https://www.nuget.org/packages/DevKit.ExecutionEngine.SqlServer/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![.NET Standard](https://img.shields.io/badge/.NET%20Standard-2.1-blue)](https://dotnet.microsoft.com/)
-[![SQL Server](https://img.shields.io/badge/SQL%20Server-2012%2B-red)](https://www.microsoft.com/sql-server/)
+Proveedor de base de datos SQL Server de alto rendimiento para aplicaciones .NET, construido sobre ADO.NET con una API limpia y consistente para operaciones síncronas y asíncronas.
 
-High-performance SQL Server database provider for .NET applications, built on top of ADO.NET with a clean, consistent API for both synchronous and asynchronous operations.
+## Características Principales
+
+- **API Unificada**: Nombres de métodos consistentes en todas las operaciones de base de datos
+- **Soporte Completo Async**: Patrones async/await optimizados con soporte adecuado para cancelación
+- **Operaciones Bulk**: Alto rendimiento en operaciones bulk con timeouts configurables
+- **Soporte de Transacciones**: Gestión completa de transacciones con soporte async
+- **Procedimientos Almacenados**: Soporte completo para ejecutar procedimientos almacenados con parámetros
+- **Seguridad de Tipos**: Mapeo de resultados fuertemente tipado y manejo de parámetros
+- **Inyección de Dependencias**: Soporte de primera clase para DI de .NET Core
+- **Configurable**: Control granular sobre timeouts y comportamiento de conexión
+- **Múltiples Conjuntos de Resultados**: Soporte para consultas complejas con múltiples result sets
+- **Estándares .NET Modernos**: Construido con .NET 6.0+ y .NET Standard 2.1+ en mente
+
+## Instalación
+
+```bash
+dotnet add package DevKit.ExecutionEngine.SqlServer
+```
+
+## Configuración
+
+### Configuración Básica
+
+```csharp
+using DevKit.ExecutionEngine.SqlServer;
+using Microsoft.Extensions.DependencyInjection;
+
+var services = new ServiceCollection();
+
+// Configuración básica
+services.AddSQLServerProvider(options =>
+{
+    options.ConnectionString = "Server=localhost;Database=myapp;User ID=user;Password=password;";
+    options.CommandTimeout = 30; // segundos
+});
+```
+
+## Uso Básico
+
+### Consulta Simple
+
+```csharp
+public class Customer
+{
+    public int Id { get; set; }
+    public string Name { get; set; }
+    public string Email { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class CustomerService
+{
+    private readonly ISQLServerDatabaseProvider _dbProvider;
+
+    public CustomerService(ISQLServerDatabaseProvider dbProvider)
+    {
+        _dbProvider = dbProvider;
+    }
+
+    public async Task<Customer> GetCustomerByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        const string query = "SELECT * FROM Customers WHERE Id = @Id";
+
+        var customers = await _dbProvider.ExecuteQueryAsListAsync(query,
+            reader => new Customer
+            {
+                Id = reader.GetInt32(reader.GetOrdinal("Id")),
+                Name = reader.GetString(reader.GetOrdinal("Name")),
+                Email = reader.GetString(reader.GetOrdinal("Email")),
+                CreatedAt = reader.GetDateTime(reader.GetOrdinal("CreatedAt"))
+            },
+            parameters =>
+            {
+                parameters.AddWithValue("@Id", id);
+            },
+            cancellationToken);
+
+        return customers.FirstOrDefault();
+    }
+}
+```
+
+### Constructor de Consultas
+
+```csharp
+// Construcción de consultas fluida
+public async Task<List<Customer>> SearchCustomersAsync(string searchTerm, int page = 1, int pageSize = 20)
+{
+    return await _dbProvider
+        .From<Customer>()
+        .Where(c => c.Name.Contains(searchTerm) || c.Email.Contains(searchTerm))
+        .OrderBy(c => c.Name)
+        .Skip((page - 1) * pageSize)
+        .Take(pageSize)
+        .ToListAsync();
+}
+```
+
+### Transacciones
+
+```csharp
+public async Task<bool> TransferFundsAsync(int fromAccountId, int toAccountId, decimal amount)
+{
+    using (var transaction = _dbProvider.BeginTransaction())
+    {
+        try
+        {
+            // Retirar de cuenta origen
+            await _dbProvider.ExecuteNonQueryAsync(
+                "UPDATE Accounts SET Balance = Balance - @Amount WHERE Id = @Id AND Balance >= @Amount",
+                parameters =>
+                {
+                    parameters.AddWithValue("@Id", fromAccountId);
+                    parameters.AddWithValue("@Amount", amount);
+                });
+
+            // Depositar en cuenta destino
+            await _dbProvider.ExecuteNonQueryAsync(
+                "UPDATE Accounts SET Balance = Balance + @Amount WHERE Id = @Id",
+                parameters =>
+                {
+                    parameters.AddWithValue("@Id", toAccountId);
+                    parameters.AddWithValue("@Amount", amount);
+                });
+
+            transaction.Commit();
+            return true;
+        }
+        catch
+        {
+            transaction.Rollback();
+            throw;
+        }
+    }
+}
+```
+
+## Licencia
+
+Este proyecto está bajo licencia MIT. Consulta el archivo LICENSE para más detalles.
 
 ## ✨ Features
 

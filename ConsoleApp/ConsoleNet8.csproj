@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net9.0;;net10.0;</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <Title>ConsoleNet8 - Aplicación de Consola con Integración de Servicios</Title>
@@ -18,8 +18,8 @@
 
   <ItemGroup>
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
     <PackageReference Include="ModelContextProtocol" Version="0.5.0-preview.1" />
   </ItemGroup>
 
@@ -27,8 +27,10 @@
     <ProjectReference Include="..\DevKit.ExecutionEngine.Excel\DevKit.ExecutionEngine.Excel.csproj" />
     <ProjectReference Include="..\DevKit.ExecutionEngine.MySql\DevKit.ExecutionEngine.MySQL.csproj" />
     <ProjectReference Include="..\DevKit.ExecutionEngine.PostgreSql\DevKit.ExecutionEngine.PostgreSQL.csproj" />
+    <ProjectReference Include="..\DevKit.ExecutionEngine.Redis\DevKit.ExecutionEngine.Redis.csproj" />
     <ProjectReference Include="..\DevKit.ExecutionEngine.SqlServer\DevKit.ExecutionEngine.SQLServer.csproj" />
     <ProjectReference Include="..\DevKit.Exporter\DevKit.Exporter.csproj" />
+    <ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
   </ItemGroup>
 
   <ItemGroup>
