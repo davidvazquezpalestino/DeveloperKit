@@ -1,5 +1,0 @@
-﻿d:\Github\DeveloperKit\Test Driven Development\MySqlQueryBuilderExamples.cs:14: public MySqlQueryBuilderExamples(IMySQLDatabaseProvider provider)
-d:\Github\DeveloperKit\Test Driven Development\PostgreSqlQueryBuilderExamples.cs:38: public ProductService(IPostgreSqlDatabaseProvider dbProvider)
-d:\Github\DeveloperKit\Test Driven Development\PostgreSqlQueryBuilderExamples.cs:152: public static async Task<List<T>> ToListAsync<T>(this PostgreSqlQueryBuilder<T> queryBuilder, IPostgreSqlDatabaseProvider provider)
-d:\Github\DeveloperKit\DevKit.ExecutionEngine.SqlServer\Implementations\EnumerableExtensions.cs:5: public static IEnumerable<IEnumerable<TSource>> Chunk<TSource>(this IEnumerable<TSource> source, int size)
-d:\Github\DeveloperKit\DevKit.ExecutionEngine.MySql\Settings\MySqlOptions.cs:8: public MySqlOptions()
