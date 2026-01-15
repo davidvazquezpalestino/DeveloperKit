@@ -44,7 +44,9 @@ internal class CacheService : ICacheService
         // Compilar y ejecutar el factory
         Func<Task<T>> factory = expression.Compile();
         T value = await factory();
-        if (value is null)
+
+        // Validar null o vacío
+        if (IsNullOrEmpty(value))
         {
             return default;
         }
@@ -54,7 +56,6 @@ internal class CacheService : ICacheService
         await SetInternalAsync(fullKey, value, effectiveTtl);
         return value;
     }
-
 
     /// <inheritdoc/>
     public async Task InvalidateCacheAsync(params Expression[] expressions)
@@ -90,7 +91,30 @@ internal class CacheService : ICacheService
             }
         }
     }
+    /// <summary>
+    /// Evalúa si un objeto es null o vacío (colecciones, strings).
+    /// </summary>
+    private static bool IsNullOrEmpty<T>(T value)
+    {
+        if (value == null) return true;
 
+        switch (value)
+        {
+            case string s:
+                return string.IsNullOrWhiteSpace(s);
+
+            case System.Collections.IEnumerable enumerable:
+                // Verificar si la colección tiene elementos
+                foreach (var _ in enumerable)
+                {
+                    return false; // tiene al menos uno
+                }
+                return true;
+
+            default:
+                return false;
+        }
+    }
     /// <summary>
     /// Construye la clave completa incluyendo el nombre del entorno.
     /// </summary>
