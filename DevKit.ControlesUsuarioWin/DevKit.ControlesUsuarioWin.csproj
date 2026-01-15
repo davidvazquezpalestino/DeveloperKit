@@ -81,8 +81,8 @@
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="DevExpress.Win.Design" Version="25.2.3" />
-		<PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.1" />
-		<PackageReference Include="System.Text.Json" Version="10.0.1" />
+		<PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.2" />
+		<PackageReference Include="System.Text.Json" Version="10.0.2" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Update="Properties\Resources.resx">
