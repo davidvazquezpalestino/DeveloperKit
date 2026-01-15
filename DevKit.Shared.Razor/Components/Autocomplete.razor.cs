@@ -187,7 +187,7 @@ public partial class Autocomplete<T>
             try
             {
                 List<T> results = await SearchHandler(DisplayItem(Value), CancellationToken.None);
-                ItemsField = results?.ToList() ?? new List<T>();
+                ItemsField = results?.Distinct(Comparer).ToList() ?? new List<T>();
 
                 // Ensure the current value is in the list
                 if (Value != null && !ItemsField.Any(item => Comparer.Equals(item, Value)))
@@ -248,7 +248,7 @@ public partial class Autocomplete<T>
             try
             {
                 List<T> results = await SearchHandler(SearchText, token);
-                ItemsField = results?.ToList() ?? new List<T>();
+                ItemsField = results?.Distinct(Comparer).ToList() ?? new List<T>();
             }
             catch (OperationCanceledException)
             {
