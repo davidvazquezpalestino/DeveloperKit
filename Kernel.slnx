@@ -1,0 +1,43 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Folder Name="/Microsoft DotNet/" />
+  <Folder Name="/Microsoft DotNet/1. Enterprise Business Rules/">
+    <Project Path="DevKit.CoreInterfaces/DevKit.CoreInterfaces.csproj" />
+    <Project Path="DevKit.CrystalToolkit/DevKit.CrystalToolkit.csproj" />
+    <Project Path="DevKit.Email/DevKit.Email.csproj" />
+    <Project Path="DevKit.Exporter/DevKit.Exporter.csproj" />
+    <Project Path="DevKit.Extensions/DevKit.Extensions.csproj">
+      <Platform Solution="*|x86" Project="x86" />
+      <Platform Solution="Release|x64" Project="x64" />
+    </Project>
+    <Project Path="DevKit.Injection.Extensions/DevKit.Injection.Extensions.csproj" />
+    <Project Path="DevKit.JWT/DevKit.JWT.csproj" />
+  </Folder>
+  <Folder Name="/Microsoft DotNet/1. Enterprise Business Rules/Providers/">
+    <Project Path="DevKit.ExecutionEngine.Excel/DevKit.ExecutionEngine.Excel.csproj" />
+    <Project Path="DevKit.ExecutionEngine.MySql/DevKit.ExecutionEngine.MySQL.csproj" />
+    <Project Path="DevKit.ExecutionEngine.Oracle/DevKit.ExecutionEngine.Oracle.csproj" />
+    <Project Path="DevKit.ExecutionEngine.PostgreSql/DevKit.ExecutionEngine.PostgreSQL.csproj" />
+    <Project Path="DevKit.ExecutionEngine.Redis/DevKit.ExecutionEngine.Redis.csproj" />
+    <Project Path="DevKit.ExecutionEngine.SqlServer/DevKit.ExecutionEngine.SQLServer.csproj">
+      <Platform Solution="*|x86" Project="x86" />
+      <Platform Solution="Release|x64" Project="x64" />
+    </Project>
+  </Folder>
+  <Folder Name="/Microsoft DotNet/1. Enterprise Business Rules/UI/">
+    <Project Path="DevKit.ControlesUsuarioWin/DevKit.ControlesUsuarioWin.csproj">
+      <Platform Solution="Release|x64" Project="x64" />
+    </Project>
+    <Project Path="DevKit.MessageBoxWin/DevKit.MessageBoxWin.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="DevKit.Shared.Razor/DevKit.Shared.Razor.csproj" />
+  </Folder>
+  <Folder Name="/Microsoft DotNet/2. Test Driven Development/">
+    <Project Path="ConsoleApp/ConsoleNet8.csproj" />
+  </Folder>
+</Solution>

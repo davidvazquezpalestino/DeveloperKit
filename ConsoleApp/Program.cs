@@ -1,128 +1,278 @@
-﻿using DevKit.ExecutionEngine.Redis;
-using System.Linq.Expressions;
+﻿//IOracleRepository apex = new OracleRepository("Server=172.19.221.90;Database=MX_ATM_SPI;User Id=SpiConnectSQL;Password=59iC0@n3C75Ql1;encrypt=false;");
 
-Console.OutputEncoding = System.Text.Encoding.UTF8;
+//cargar DI
 
-TestRepo repo = new();
+using ConsoleNet8;
+using DevKit.ExecutionEngine.MySQL.Abstractions;
+using DevKit.ExecutionEngine.MySQL.Implementations;
+using DevKit.ExecutionEngine.MySQL.Settings;
+using DevKit.ExecutionEngine.PostgreSQL;
+using DevKit.ExecutionEngine.PostgreSQL.Abstractions;
+using DevKit.ExecutionEngine.PostgreSQL.Settings;
+using DevKit.ExecutionEngine.SQLServer.Abstractions;
+using DevKit.ExecutionEngine.SQLServer.Implementations;
+using DevKit.ExecutionEngine.SQLServer.Settings;
+using Microsoft.Extensions.Options;
+using System.Diagnostics;
 
-// Case 1: Async Task<List<Impuesto>>
-Expression<Func<Task<List<Impuesto>>>> expr1 = () => repo.GetImpuestosAsync(1, "MX");
-try
+
+internal class Program
 {
-    string key1 = ExpressionConditionExtractor.BuildRedisKey(expr1);
-    Console.WriteLine($"Key 1 (Async List): {key1}");
+    private static readonly HttpClient Client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+    static async Task Main(string[] args)
+    {
+        string url = "https://api-cat-cfdi.infosoft.mx/api/cfdi/services";
+        var stopwatch = Stopwatch.StartNew(); // iniciar cronómetro
+
+        var tasks = new List<Task>();
+        var semaphore = new SemaphoreSlim(50); // máximo 10 en paralelo
+
+        for (int i = 0; i < 100000; i++)
+        {
+            int requestNumber = i + 1;
+            await semaphore.WaitAsync(); // esperar turno
+
+            tasks.Add(Task.Run(async () =>
+            {
+                try
+                {
+                    await SendRequestAsync(url, requestNumber);
+                }
+                finally
+                {
+                    semaphore.Release(); // liberar slot
+                }
+            }));
+        }
+
+        Console.WriteLine($"✅ Todas las peticiones han finalizado en {stopwatch.Elapsed.TotalSeconds:F2} segundos.");
+
+        // Ejecutar todas en paralelo y esperar a que terminen
+        await Task.WhenAll(tasks);
+
+        stopwatch.Stop(); // detener cronómetro
+        Console.WriteLine($"✅ Todas las peticiones han finalizado en {stopwatch.Elapsed.TotalSeconds:F2} segundos.");
+
+    }
+
+    static async Task SendRequestAsync(string url, int requestNumber)
+    {
+        try
+        {
+            HttpResponseMessage response = await Client.GetAsync(url);
+
+            response.EnsureSuccessStatusCode();
+            await response.Content.ReadAsStringAsync();
+
+            // Mostrar en consola cuando cada tarea se complete
+            Console.WriteLine($"[{requestNumber}] Completada con éxito");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{requestNumber}] Error: {ex.Message}");
+        }
+    }
+
+
+    static IHostBuilder CreateHostBuilder()
+    {
+        return Host.CreateDefaultBuilder()
+            .ConfigureAppConfiguration(configurationBuilder =>
+            {
+                configurationBuilder.AddJsonFile("appsettings.json");
+            }).ConfigureServices((builder, services) =>
+            {
+                services.Configure<RepositoryOptions>(builder.Configuration.GetSection(RepositoryOptions.SectionKey));
+
+                services.AddKeyedScoped<ISQLServerProvider>("Infomex",
+                    (provider, _) =>
+                    {
+                        RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+
+                        SqlOptions options = new SqlOptions
+                        {
+                            ConnectionString = repositoryOptions.ConnectionStringInfomex
+                        };
+
+                        return new SQLServerProvider(Options.Create(options));
+                    });
+
+                services.AddScoped<ISQLServerProvider>(provider =>
+                {
+                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+
+                    SqlOptions options = new SqlOptions
+                    {
+                        ConnectionString = repositoryOptions.ConnectionStringInfomex
+                    };
+
+                    return new SQLServerProvider(Options.Create(options));
+                });
+
+                services.AddScoped<IMySqlProvider>(provider =>
+                {
+                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                    MySqlOptions options = new MySqlOptions
+                    {
+                        ConnectionString = repositoryOptions.MySql,
+                        BulkCopy =
+                        {
+                                AllowLoadLocalInfile = true
+                        }
+                    };
+                    return new MySqlProvider(Options.Create(options));
+                });
+
+                services.AddScoped<IPostgreSqlProvider>(provider =>
+                {
+                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                    PostgreOptions options = new PostgreOptions
+                    {
+                        ConnectionString = repositoryOptions.PosgreSql
+                    };
+                    return new PostgreSqlProvider(Options.Create(options));
+                });
+
+                services.AddMcpServer()
+                        .WithStdioServerTransport()
+                        .WithToolsFromAssembly();
+
+            });
+    }
 }
-catch (Exception ex) { Console.WriteLine($"Error 1: {ex.Message}"); }
 
-// Case 2: Sync List<Impuesto>
-Expression<Func<List<Impuesto>>> expr2 = () => repo.GetImpuestos(2);
-try
+
+namespace ConsoleNet8
 {
-    string key2 = ExpressionConditionExtractor.BuildRedisKey(expr2);
-    Console.WriteLine($"Key 2 (Sync List): {key2}");
-}
-catch (Exception ex) { Console.WriteLine($"Error 2: {ex.Message}"); }
+    /// <summary>
+    /// Configuration options for repository connections.
+    /// </summary>
+    public class RepositoryOptions
+    {
+        /// <summary>
+        /// The configuration section key.
+        /// </summary>
+        public const string SectionKey = nameof(RepositoryOptions);
 
-// Case 3: Simple Async Task<int>
-Expression<Func<Task<int>>> expr3 = () => repo.CountAsync();
-try
-{
-    string key3 = ExpressionConditionExtractor.BuildRedisKey(expr3);
-    Console.WriteLine($"Key 3 (Async Int): {key3}");
-}
-catch (Exception ex) { Console.WriteLine($"Error 3: {ex.Message}"); }
+        /// <summary>
+        /// Gets or sets the Infomex connection string.
+        /// </summary>
+        public string ConnectionStringInfomex { get; set; }
 
-// Case 4: Page argument
-try
-{
-    string key4 = ExpressionConditionExtractor.BuildRedisKey(expr1, 5);
-    Console.WriteLine($"Key 4 (With Page): {key4}");
-}
-catch (Exception ex) { Console.WriteLine($"Error 4: {ex.Message}"); }
+        /// <summary>
+        /// Gets or sets the MySQL connection string.
+        /// </summary>
+        public string MySql { get; set; }
 
-// Case 5: Complex type (ClienteRequest)
-ClienteRequest request = new()
-{
-    NumeroPagina = 1,
-    RegistrosPagina = 10,
-    EmpresaID = 5,
-    Search = "test"
-};
-
-Expression<Func<Task<List<Cliente>>>> expr5 = () => repo.GetClientesAsync(request);
-try
-{
-    string key5 = ExpressionConditionExtractor.BuildRedisKey(expr5);
-    Console.WriteLine($"Key 5 (Complex Type): {key5}");
-}
-catch (Exception ex) { Console.WriteLine($"Error 5: {ex.Message}"); }
-
-// Case 6: Predicate (Single condition)
-Expression<Func<CfdiAsentamiento, bool>> expr6 = a => a.Estado.Contains("Sonora");
-try
-{
-    string key6 = ExpressionConditionExtractor.BuildRedisKey(expr6);
-    Console.WriteLine($"Key 6 (Predicate): {key6}");
-}
-catch (Exception ex) { Console.WriteLine($"Error 6: {ex.Message}"); }
-
-// Case 7: Predicate (Multiple conditions)
-string state = "Sonora";
-string municipality = "Hermosillo";
-Expression<Func<CfdiAsentamiento, bool>> expr7 = a => a.Estado.Contains(state) && a.Municipio.Contains(municipality);
-try
-{
-    string key7 = ExpressionConditionExtractor.BuildRedisKey(expr7);
-    Console.WriteLine($"Key 7 (Multi Predicate): {key7}");
-}
-catch (Exception ex) { Console.WriteLine($"Error 7: {ex.Message}"); }
-
-// Case 8: Method with lambda predicate
-string estado = "Puebla";
-string municipio = "San Martin";
-Expression<Func<Task<ICollection<Localidad>>>> expr8 = () => repo.GetLocalidadesAsync(localidad => localidad.Estado.Contains(estado) && localidad.Municipio.Contains(municipio));
-try
-{
-    string key8 = ExpressionConditionExtractor.BuildRedisKey(expr8);
-    Console.WriteLine($"Key 8 (Method with Lambda): {key8}");
-}
-catch (Exception ex) { Console.WriteLine($"Error 8: {ex.Message}"); }
-
-
-class TestRepo
-{
-    public Task<List<Impuesto>> GetImpuestosAsync(int id, string code) => Task.FromResult(new List<Impuesto>());
-    public List<Impuesto> GetImpuestos(int id) => new List<Impuesto>();
-    public Task<int> CountAsync() => Task.FromResult(0);
-    public Task<List<Cliente>> GetClientesAsync(ClienteRequest request) => Task.FromResult(new List<Cliente>());
-    public Task<ICollection<Localidad>> GetLocalidadesAsync(Expression<Func<Localidad, bool>> predicate = null) => Task.FromResult((ICollection<Localidad>)new List<Localidad>());
+        /// <summary>
+        /// Gets or sets the PostgreSQL connection string.
+        /// </summary>
+        public string PosgreSql { get; set; }
+    }
 }
 
-class Impuesto { }
-
-class Cliente { }
-
-class ClienteRequest
+/// <summary>
+/// Represents a settlement or locality with postal and geographic information.
+/// </summary>
+public class Asentamientos
 {
-    public int NumeroPagina { get; set; }
-    public int RegistrosPagina { get; set; } = 10;
-    public int EmpresaID { get; set; }
-    public string Search { get; set; }
-}
+    /// <summary>
+    /// Gets or sets the colony ID.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the colony ID.
+    /// </summary>
+    public int ColoniaID { get; set; }
 
-class CfdiAsentamiento
-{
-    public string Estado { get; set; }
-    public string Municipio { get; set; }
-}
-public class Localidad
-{
-    public int LocalidadID { get; set; }
-    public string AsentamientoID { get; set; }
+    /// <summary>
+    /// Gets or sets the postal code.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the postal code.
+    /// </summary>
+    public string CodigoPostal { get; set; }
+
+    /// <summary>
+    /// Gets or sets the settlement number.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the settlement number.
+    /// </summary>
+    public string NumeroAsentamiento { get; set; }
+
+    /// <summary>
+    /// Gets or sets the settlement name.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the settlement name.
+    /// </summary>
     public string Asentamiento { get; set; }
-    public string MunicipioID { get; set; }
+
+    /// <summary>
+    /// Gets or sets the municipality number.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the municipality number.
+    /// </summary>
+    public string NumeroMunicipio { get; set; }
+
+    /// <summary>
+    /// Gets or sets the municipality name.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the municipality name.
+    /// </summary>
     public string Municipio { get; set; }
-    public string EstadoID { get; set; }
+
+    /// <summary>
+    /// Gets or sets the locality number.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the locality number.
+    /// </summary>
+    public string NumeroLocalidad { get; set; }
+
+    /// <summary>
+    /// Gets or sets the locality name.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the locality name.
+    /// </summary>
+    public string Localidad { get; set; }
+
+    /// <summary>
+    /// Gets or sets the state number.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the state number.
+    /// </summary>
+    public string NumeroEstado { get; set; }
+
+    /// <summary>
+    /// Gets or sets the state name.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the state name.
+    /// </summary>
     public string Estado { get; set; }
+
+    /// <summary>
+    /// Gets or sets the country number.
+    /// </summary>
+    /// <summary>
+    /// Gets or sets the country number.
+    /// </summary>
+    public string NumeroPais { get; set; }
+
+    /// <summary>
+    /// Gets or sets the country name.
+    /// </summary>
     public string Pais { get; set; }
+}
+
+public class Person
+{
+    public string Name { get; set; }
+    public int Age { get; set; }
+    public DateTime BirthDate { get; set; }
 }
