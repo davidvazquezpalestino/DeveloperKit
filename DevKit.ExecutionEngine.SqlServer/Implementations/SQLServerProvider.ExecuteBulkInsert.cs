@@ -110,10 +110,26 @@ public partial class SQLServerProvider
 
     private string CreateTableScriptSQL(DataTable source, string targetTableName)
     {
-        IEnumerable<string> columns = source.Columns.Cast<DataColumn>()
-            .Select(column => $"[{column.ColumnName}] {GetSqlDataType(column)}");
+        List<string> columns = new()
+        {
+            "[PrincipalID] INT IDENTITY(1,1) NOT NULL"
+        };
 
-        return $"IF OBJECT_ID('{targetTableName}') IS NULL CREATE TABLE {targetTableName} (\n{string.Join(",\n", columns)}\n)";
+        columns.AddRange(source.Columns.Cast<DataColumn>()
+            .Where(column => string.Equals(column.ColumnName, "PrincipalID", StringComparison.OrdinalIgnoreCase) == false)
+            .Select(column => $"[{column.ColumnName}] {GetSqlDataType(column)}")
+        );
+
+        return $@"
+        IF OBJECT_ID('{targetTableName}') IS NULL
+        BEGIN
+            CREATE TABLE {targetTableName} (
+                {string.Join(",\n        ", columns)},
+                CONSTRAINT PK_{targetTableName.Replace(".", "_")} 
+                    PRIMARY KEY CLUSTERED (PrincipalID)
+            )
+        END";
     }
+
 
 }
