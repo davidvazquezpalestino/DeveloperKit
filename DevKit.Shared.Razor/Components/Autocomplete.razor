@@ -11,12 +11,9 @@
            @onfocus="ShowSuggestions"
            @onblur="HideSuggestionsWithDelay" />
 
-    @if (string.IsNullOrEmpty(SearchText))
-    {
-        <span class="input-icon position-absolute top-50 end-0 translate-middle-y me-3 text-muted">
-            <i class="bi bi-search"></i>
-        </span>
-    }
+    <span class="input-icon position-absolute top-50 end-0 translate-middle-y me-3 text-muted">
+        <i class="bi bi-search"></i>
+    </span>
 
     @if (IsDropdownVisible)
     {

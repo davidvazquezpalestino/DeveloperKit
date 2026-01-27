@@ -1,3 +1,5 @@
+using System.Timers;
+
 namespace DevKit.Shared.Razor.Components;
 
 /// <summary>
@@ -146,6 +148,23 @@ public partial class Autocomplete<T>
             AutoReset = false
         };
         DebounceTimerField.Elapsed += DebounceElapsed;
+        return;
+
+        async void DebounceElapsed(object sender, ElapsedEventArgs e)
+        {
+            if (DisposedField)
+            {
+                return;
+            }
+
+            CancellationTokenSourceField?.Cancel();
+            CancellationTokenSourceField = new CancellationTokenSource();
+
+            await InvokeAsync(async () =>
+            {
+                await PerformSearch(CancellationTokenSourceField.Token);
+            });
+        }
     }
 
     /// <summary>
@@ -187,12 +206,12 @@ public partial class Autocomplete<T>
             try
             {
                 List<T> results = await SearchHandler(DisplayItem(Value), CancellationToken.None);
-                ItemsField = results?.Distinct(Comparer).ToList() ?? new List<T>();
+                ItemsField = results?.GroupBy(item => DisplayItem(item)).Select(g => g.First()).ToList() ?? new List<T>();
 
                 // Ensure the current value is in the list
-                if (Value != null && !ItemsField.Any(item => Comparer.Equals(item, Value)))
+                if (Value != null && ItemsField.All(item => DisplayItem(item) != DisplayItem(Value)))
                 {
-                    ItemsField.Add(Value);
+                    ItemsField.Insert(0, Value);
                 }
             }
             catch
@@ -225,22 +244,6 @@ public partial class Autocomplete<T>
         }
     }
 
-    private async void DebounceElapsed(object sender, System.Timers.ElapsedEventArgs e)
-    {
-        if (DisposedField)
-        {
-            return;
-        }
-
-        CancellationTokenSourceField?.Cancel();
-        CancellationTokenSourceField = new CancellationTokenSource();
-
-        await InvokeAsync(async () =>
-        {
-            await PerformSearch(CancellationTokenSourceField.Token);
-        });
-    }
-
     private async Task PerformSearch(CancellationToken token)
     {
         if (SearchHandler != null && SearchText.Length >= MinCharacters)
@@ -248,7 +251,7 @@ public partial class Autocomplete<T>
             try
             {
                 List<T> results = await SearchHandler(SearchText, token);
-                ItemsField = results?.Distinct(Comparer).ToList() ?? new List<T>();
+                ItemsField = results?.GroupBy(item => DisplayItem(item)).Select(g => g.First()).ToList() ?? new List<T>();
             }
             catch (OperationCanceledException)
             {
