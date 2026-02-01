@@ -16,170 +16,77 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     /// Genera una cadena formateada legible con las condiciones extraídas.
     /// </summary>
     /// <param name="expression">Expresión Lambda a procesar.</param>
-    /// <param name="pagina">Número de página opcional para incluir en la clave.</param>
+    /// <param name="pageNumber">Número de página opcional para incluir en la clave.</param>
     /// <returns>Una cadena formateada como clave de Redis.</returns>
-    public static string BuildRedisKey(LambdaExpression expression, int pagina = 0)
+    public static string BuildRedisKey(LambdaExpression expression, int pageNumber = 0)
     {
-        List<string> parts = expression.ReturnType == typeof(bool)
+        List<string> keyParts = expression.ReturnType == typeof(bool)
             ? GetPredicateParts(expression)
             : GetMethodCallParts(expression);
 
-        if (pagina > 0)
+        if (pageNumber > 0)
         {
-            parts.Add($"Page:{pagina}");
+            keyParts.Add($"Page:{pageNumber}");
         }
 
-        return string.Join(":", parts);
+        return string.Join(":", keyParts);
     }
 
     /// <summary>
     /// Extrae condiciones de expresiones binarias (ej. x.Prop == valor).
     /// </summary>
-    protected override Expression VisitBinary(BinaryExpression node)
+    protected override Expression VisitBinary(BinaryExpression binaryExpression)
     {
-        if (node.Left is MemberExpression member)
+        if (binaryExpression.Left is MemberExpression memberExpression)
         {
-            object value = GetValue(node.Right);
-            Conditions.Add((member.Member.Name, node.NodeType.ToString(), value));
+            object extractedValue = GetValue(binaryExpression.Right);
+            string operatorName = binaryExpression.NodeType.ToString();
+            string propertyName = memberExpression.Member.Name;
+            
+            Conditions.Add((propertyName, operatorName, extractedValue));
         }
-        return base.VisitBinary(node);
+        return base.VisitBinary(binaryExpression);
     }
 
     /// <summary>
     /// Extrae condiciones de llamadas a métodos (ej. x.Prop.Contains(valor)).
     /// </summary>
-    protected override Expression VisitMethodCall(MethodCallExpression node)
+    protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
     {
-        if (node.Object is MemberExpression member)
+        if (methodCallExpression.Object is MemberExpression memberExpression)
         {
-            if (node.Arguments.Count > 0)
+            string propertyName = memberExpression.Member.Name;
+            string methodName = methodCallExpression.Method.Name;
+            
+            if (methodCallExpression.Arguments.Count > 0)
             {
-                object argValue = GetValue(node.Arguments[0]);
-                Conditions.Add((member.Member.Name, node.Method.Name, argValue));
+                object argumentValue = GetValue(methodCallExpression.Arguments[0]);
+                Conditions.Add((propertyName, methodName, argumentValue));
             }
             else
             {
-                Conditions.Add((member.Member.Name, node.Method.Name, null));
+                Conditions.Add((propertyName, methodName, null));
             }
         }
-        return base.VisitMethodCall(node);
+        return base.VisitMethodCall(methodCallExpression);
     }
 
     #region Private Methods
-
-    /// <summary>
-    /// Evalúa un <see cref="Expression"/> y devuelve su valor.
-    /// Soporta constantes, miembros, conversiones, llamadas a métodos y parámetros.
-    /// </summary>
-    /// <param name="expr">Expresión a evaluar.</param>
-    /// <returns>El valor evaluado, o un diccionario si es un tipo complejo.</returns>
-    private static object GetValue(Expression expr)
-    {
-        // Caso 1: expresión constante (ej. x => 5)
-        if (expr is ConstantExpression constant)
-        {
-            return constant.Value;
-        }
-
-        // Caso 2: expresión de miembro (ej. x => objeto.Propiedad)
-        if (expr is MemberExpression member)
-        {
-            LambdaExpression lambda = Expression.Lambda(member);
-            Delegate compiled = lambda.Compile();
-            object result = compiled.DynamicInvoke();
-
-            if (result is LambdaExpression lambdaResult)
-            {
-                return lambdaResult;
-            }
-
-            // Si el resultado es un tipo complejo, extraer sus propiedades
-            if (result != null && IsComplexType(result.GetType()))
-            {
-                return ExtractProperties(result);
-            }
-
-            return result;
-        }
-
-        // Caso 3: expresión unaria (ej. x => (int)otroValor, x => !flag)
-        if (expr is UnaryExpression unary)
-        {
-            try
-            {
-                LambdaExpression lambda = Expression.Lambda(unary);
-                Delegate compiled = lambda.Compile();
-                return compiled.DynamicInvoke();
-            }
-            catch
-            {
-                // Si no se puede compilar, intentamos obtener el valor del operando
-                return GetValue(unary.Operand);
-            }
-        }
-
-        // Caso 4: llamada a método (ej. x => DateTime.Now, x => Guid.NewGuid())
-        if (expr is MethodCallExpression methodCall)
-        {
-            try
-            {
-                LambdaExpression lambda = Expression.Lambda(methodCall);
-                Delegate compiled = lambda.Compile();
-                return compiled.DynamicInvoke();
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        // Caso 5: expresión de parámetro (ej. x => x.Propiedad)
-        if (expr is ParameterExpression parameter)
-        {
-            // No tiene valor directo, devolvemos el nombre como referencia
-            return parameter.Name;
-        }
-
-        // Caso 6: expresión binaria (ej. x => a + b)
-        if (expr is BinaryExpression binary)
-        {
-            try
-            {
-                LambdaExpression lambda = Expression.Lambda(binary);
-                Delegate compiled = lambda.Compile();
-                return compiled.DynamicInvoke();
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        // Caso 7: cualquier otro tipo de expresión no soportada
-        return null;
-    }
 
     /// <summary>
     /// Procesa una expresión de predicado (bool) y extrae sus componentes para la clave.
     /// </summary>
     private static List<string> GetPredicateParts(LambdaExpression expression)
     {
-        ExpressionConditionExtractor extractor = new();
-        extractor.Visit(expression.Body);
+        ExpressionConditionExtractor conditionExtractor = new();
+        conditionExtractor.Visit(expression.Body);
 
-        List<string> parts = new();
-        List<string> conditions = BuildConditionParts(extractor.Conditions);
+        List<string> keyParts = new();
+        List<string> conditionParts = BuildConditionParts(conditionExtractor.Conditions);
 
-        if (conditions.Any())
-        {
-            parts.AddRange(conditions);
-        }
-        else
-        {
-            parts.Add("ALL");
-        }
-
-        return parts;
+        return conditionParts.Any() 
+            ? keyParts.Concat(conditionParts).ToList()
+            : new List<string> { "ALL" };
     }
 
     /// <summary>
@@ -187,58 +94,41 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     /// </summary>
     private static List<string> GetMethodCallParts(LambdaExpression expression)
     {
-        MethodCallExpression methodCall = expression.Body switch
+        MethodCallExpression methodCallExpression = ExtractMethodCallExpression(expression.Body);
+        
+        List<string> keyParts = new()
         {
-            MethodCallExpression mc => mc,
-            UnaryExpression { Operand: MethodCallExpression mc } => mc,
-            _ => throw new ArgumentException("La expresión debe ser una llamada a un método o un predicado.")
+            GetCleanTypeName(methodCallExpression.Method.ReturnType),
+            methodCallExpression.Method.Name
         };
 
-        List<string> parts = new()
-        {
-            GetCleanTypeName(methodCall.Method.ReturnType),
-            methodCall.Method.Name
-        };
+        List<string> argumentParts = ExtractArgumentParts(methodCallExpression.Arguments);
+        keyParts.AddRange(argumentParts);
 
-        List<string> collection = methodCall.Arguments
-                                            .Select(arg => FormatValue(GetValue(arg)))
-                                            .ToList();
-
-        parts.AddRange(collection);
-
-        return parts;
+        return keyParts;
     }
 
     /// <summary>
-    /// Obtiene un nombre limpio para el tipo, manejando Task y Genéricos de forma básica.
+    /// Extrae la expresión de llamada a método del cuerpo de la expresión.
     /// </summary>
-    private static string GetCleanTypeName(Type type)
+    private static MethodCallExpression ExtractMethodCallExpression(Expression expressionBody)
     {
-        // Desempaquetar Task<T>
-        if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>))
+        return expressionBody switch
         {
-            type = type.GetGenericArguments()[0];
-        }
-        else if (type == typeof(Task))
-        {
-            return "Void";
-        }
+            MethodCallExpression methodCall => methodCall,
+            UnaryExpression { Operand: MethodCallExpression methodCall } => methodCall,
+            _ => throw new ArgumentException("La expresión debe ser una llamada a un método o un predicado.")
+        };
+    }
 
-        // Manejar List<T>, IEnumerable<T>, etc.
-        if (type.IsGenericType)
-        {
-            Type[] genArgs = type.GetGenericArguments();
-            string name = type.Name;
-            int tickIndex = name.IndexOf('`');
-            if (tickIndex > 0)
-            {
-                name = name.Substring(0, tickIndex);
-            }
-
-            return $"{name}|{string.Join("|", genArgs.Select(GetCleanTypeName))}|";
-        }
-
-        return type.Name;
+    /// <summary>
+    /// Extrae y formatea los argumentos de una llamada a método.
+    /// </summary>
+    private static List<string> ExtractArgumentParts(IEnumerable<Expression> arguments)
+    {
+        return arguments
+            .Select(argument => FormatValue(GetValue(argument)))
+            .ToList();
     }
 
     /// <summary>
@@ -246,30 +136,29 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     /// </summary>
     private static List<string> BuildConditionParts(IEnumerable<(string Property, string Operator, object Value)> conditions)
     {
-        return conditions
-            .OrderBy(c => c.Property)
-            .ThenBy(c => c.Operator)
-            .Select(c => BuildConditionPart(c.Property, c.Operator, c.Value))
-            .ToList();
+        return conditions.OrderBy(c => c.Property)
+                        .ThenBy(c => c.Operator)
+                        .Select(c => BuildConditionPart(c.Property, c.Operator, c.Value))
+                        .ToList();
     }
 
     /// <summary>
     /// Convierte una condición en un fragmento de clave.
     /// </summary>
-    private static string BuildConditionPart(string property, string op, object value)
+    private static string BuildConditionPart(string propertyName, string operatorName, object propertyValue)
     {
-        string normalizedOperator = NormalizeOperator(op);
-        string formattedValue = FormatValue(value);
+        string normalizedOperator = NormalizeOperator(operatorName);
+        string formattedValue = FormatValue(propertyValue);
 
-        return string.IsNullOrEmpty(property)
+        return string.IsNullOrEmpty(propertyName)
             ? $"{normalizedOperator}{formattedValue}"
-            : $"{property}{normalizedOperator}{formattedValue}";
+            : $"{propertyName}{normalizedOperator}{formattedValue}";
     }
 
     /// <summary>
     /// Normaliza el operador para que sea consistente en la clave.
     /// </summary>
-    private static string NormalizeOperator(string op) => op switch
+    private static string NormalizeOperator(string operatorName) => operatorName switch
     {
         "Equal" => "=",
         "NotEqual" => "!=",
@@ -285,8 +174,70 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         "IsNull" => "IS NULL",
         "IsNotNull" => "IS NOT NULL",
         "Between" => "BETWEEN",
-        _ => op
+        _ => operatorName
     };
+
+    /// <summary>
+    /// Obtiene un nombre limpio para el tipo, manejando Task y Genéricos de forma básica.
+    /// </summary>
+    private static string GetCleanTypeName(Type type)
+    {
+        if (IsTaskType(type))
+        {
+            return ExtractTaskTypeName(type);
+        }
+
+        if (type.IsGenericType)
+        {
+            return FormatGenericTypeName(type);
+        }
+
+        return type.Name;
+    }
+
+    /// <summary>
+    /// Determina si el tipo es un Task o Task&lt;T&gt;.
+    /// </summary>
+    private static bool IsTaskType(Type type)
+    {
+        return type == typeof(Task) || 
+               (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>));
+    }
+
+    /// <summary>
+    /// Extrae el nombre del tipo Task o Task&lt;T&gt;.
+    /// </summary>
+    private static string ExtractTaskTypeName(Type type)
+    {
+        if (type == typeof(Task))
+        {
+            return "Void";
+        }
+
+        Type genericArgument = type.GetGenericArguments()[0];
+        return GetCleanTypeName(genericArgument);
+    }
+
+    /// <summary>
+    /// Formatea el nombre de un tipo genérico.
+    /// </summary>
+    private static string FormatGenericTypeName(Type type)
+    {
+        Type[] genericArguments = type.GetGenericArguments();
+        string typeName = ExtractTypeNameWithoutGenericTick(type.Name);
+        string formattedGenericArguments = string.Join("|", genericArguments.Select(GetCleanTypeName));
+        
+        return $"{typeName}|{formattedGenericArguments}|";
+    }
+
+    /// <summary>
+    /// Extrae el nombre del tipo sin el carácter genérico `.
+    /// </summary>
+    private static string ExtractTypeNameWithoutGenericTick(string typeName)
+    {
+        int tickIndex = typeName.IndexOf('`');
+        return tickIndex > 0 ? typeName.Substring(0, tickIndex) : typeName;
+    }
 
     /// <summary>
     /// Formatea el valor de la condición para que sea seguro y consistente.
@@ -298,41 +249,143 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             return "NULL";
         }
 
-        if (value is DateTime dt)
+        return value switch
         {
-            return dt.ToString("yyyy-MM-ddTHH:mm:ss");
+            DateTime dateTimeValue => FormatDateTimeValue(dateTimeValue),
+            bool booleanValue => FormatBooleanValue(booleanValue),
+            string stringValue => stringValue,
+            LambdaExpression lambdaExpression => BuildRedisKey(lambdaExpression),
+            Dictionary<string, object> dictionaryValue => FormatDictionaryValue(dictionaryValue),
+            System.Collections.IEnumerable enumerableValue => FormatEnumerableValue(enumerableValue),
+            _ => value.ToString()?.Trim()
+        };
+    }
+
+    /// <summary>
+    /// Formatea un valor DateTime en formato ISO 8601.
+    /// </summary>
+    private static string FormatDateTimeValue(DateTime dateTime)
+    {
+        return dateTime.ToString("yyyy-MM-ddTHH:mm:ss");
+    }
+
+    /// <summary>
+    /// Formatea un valor booleano como '1' o '0'.
+    /// </summary>
+    private static string FormatBooleanValue(bool booleanValue)
+    {
+        return booleanValue ? "1" : "0";
+    }
+
+    /// <summary>
+    /// Formatea un valor Dictionary como una cadena de pares clave-valor.
+    /// </summary>
+    private static string FormatDictionaryValue(Dictionary<string, object> dictionaryValue)
+    {
+        IEnumerable<string> dictionaryParts = dictionaryValue 
+            .Select(keyValuePair => $"{keyValuePair.Key}|{FormatValue(keyValuePair.Value)}");
+        return string.Join(",", dictionaryParts);
+    }
+
+    /// <summary>
+    /// Formatea un valor IEnumerable como una cadena de elementos.
+    /// </summary>
+    private static string FormatEnumerableValue(System.Collections.IEnumerable enumerableValue)
+    {
+        IEnumerable<string> collectionItems = enumerableValue
+            .Cast<object>()
+            .Select(item => item?.ToString() ?? "NULL");
+        return $"[{string.Join(",", collectionItems)}]";
+    }
+
+    /// <summary>
+    /// Evalúa un <see cref="Expression"/> y devuelve su valor.
+    /// Soporta constantes, miembros, conversiones, llamadas a métodos y parámetros.
+    /// </summary>
+    /// <param name="expression">Expresión a evaluar.</param>
+    /// <returns>El valor evaluado, o un diccionario si es un tipo complejo.</returns>
+    private static object GetValue(Expression expression)
+    {
+        return expression switch
+        {
+            ConstantExpression constantExpression => constantExpression.Value,
+            MemberExpression memberExpression => EvaluateMemberExpression(memberExpression),
+            UnaryExpression unaryExpression => EvaluateUnaryExpression(unaryExpression),
+            MethodCallExpression methodCallExpression => EvaluateMethodCallExpression(methodCallExpression),
+            ParameterExpression parameterExpression => parameterExpression.Name,
+            BinaryExpression binaryExpression => EvaluateBinaryExpression(binaryExpression),
+            _ => null
+        };
+    }
+
+    /// <summary>
+    /// Evalúa una expresión de miembro y extrae su valor.
+    /// </summary>
+    private static object EvaluateMemberExpression(MemberExpression memberExpression)
+    {
+        LambdaExpression lambdaExpression = Expression.Lambda(memberExpression);
+        Delegate compiledLambda = lambdaExpression.Compile();
+        object evaluationResult = compiledLambda.DynamicInvoke();
+
+        if (evaluationResult is LambdaExpression nestedLambdaExpression)
+        {
+            return nestedLambdaExpression;
         }
 
-        if (value is bool b)
-        {
-            return b ? "1" : "0";
-        }
+        return evaluationResult != null && IsComplexType(evaluationResult.GetType())
+            ? ExtractProperties(evaluationResult)
+            : evaluationResult;
+    }
 
-        if (value is string s)
+    /// <summary>
+    /// Evalúa una expresión unaria de forma segura.
+    /// </summary>
+    private static object EvaluateUnaryExpression(UnaryExpression unaryExpression)
+    {
+        try
         {
-            return s;
+            LambdaExpression lambdaExpression = Expression.Lambda(unaryExpression);
+            Delegate compiledLambda = lambdaExpression.Compile();
+            return compiledLambda.DynamicInvoke();
         }
-
-        if (value is LambdaExpression lambda)
+        catch
         {
-            return BuildRedisKey(lambda);
+            return GetValue(unaryExpression.Operand);
         }
+    }
 
-        if (value is Dictionary<string, object> dict)
+    /// <summary>
+    /// Evalúa una expresión de llamada a método de forma segura.
+    /// </summary>
+    private static object EvaluateMethodCallExpression(MethodCallExpression methodCallExpression)
+    {
+        try
         {
-            IEnumerable<string> parts = dict.Select(kvp => $"{kvp.Key}|{FormatValue(kvp.Value)}");
-            return string.Join(",", parts);
+            LambdaExpression lambdaExpression = Expression.Lambda(methodCallExpression);
+            Delegate compiledLambda = lambdaExpression.Compile();
+            return compiledLambda.DynamicInvoke();
         }
-
-        if (value is System.Collections.IEnumerable enumerable)
+        catch
         {
-            IEnumerable<string> items = enumerable
-                .Cast<object>()
-                .Select(item => item?.ToString() ?? "NULL");
-            return $"[{string.Join(",", items)}]";
+            return null;
         }
+    }
 
-        return value.ToString()?.Trim();
+    /// <summary>
+    /// Evalúa una expresión binaria de forma segura.
+    /// </summary>
+    private static object EvaluateBinaryExpression(BinaryExpression binaryExpression)
+    {
+        try
+        {
+            LambdaExpression lambdaExpression = Expression.Lambda(binaryExpression);
+            Delegate compiledLambda = lambdaExpression.Compile();
+            return compiledLambda.DynamicInvoke();
+        }
+        catch
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -340,45 +393,55 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     /// </summary>
     private static bool IsComplexType(Type type)
     {
-        if (type.IsPrimitive || type == typeof(string) || type == typeof(decimal) ||
-            type == typeof(DateTime) || type == typeof(DateTimeOffset) ||
-            type == typeof(TimeSpan) || type == typeof(Guid) || type.IsEnum)
-        {
-            return false;
-        }
+        return IsSimpleType(type) == false && IsCollectionType(type) == false;
+    }
 
-        if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string))
-        {
-            return false;
-        }
+    /// <summary>
+    /// Determina si un tipo es simple (primitivo, string, DateTime, etc.).
+    /// </summary>
+    private static bool IsSimpleType(Type type)
+    {
+        return type.IsPrimitive || 
+               type == typeof(string) || 
+               type == typeof(decimal) ||
+               type == typeof(DateTime) || 
+               type == typeof(DateTimeOffset) ||
+               type == typeof(TimeSpan) || 
+               type == typeof(Guid) || 
+               type.IsEnum;
+    }
 
-        return type.IsClass || type.IsValueType;
+    /// <summary>
+    /// Determina si un tipo es una colección (pero no string).
+    /// </summary>
+    private static bool IsCollectionType(Type type)
+    {
+        return typeof(System.Collections.IEnumerable).IsAssignableFrom(type) && type != typeof(string);
     }
 
     /// <summary>
     /// Extrae las propiedades públicas de un objeto y las devuelve como un diccionario.
     /// </summary>
-    private static Dictionary<string, object> ExtractProperties(object obj)
+    private static Dictionary<string, object> ExtractProperties(object sourceObject)
     {
-        Dictionary<string, object> properties = new();
-        Type type = obj.GetType();
+        Dictionary<string, object> extractedProperties = new();
+        Type objectType = sourceObject.GetType();
 
-        foreach (PropertyInfo prop in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        foreach (PropertyInfo propertyInfo in objectType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             try
             {
-                object value = prop.GetValue(obj);
-                properties[prop.Name] = value;
+                object propertyValue = propertyInfo.GetValue(sourceObject);
+                extractedProperties[propertyInfo.Name] = propertyValue;
             }
             catch
             {
-                properties[prop.Name] = null;
+                extractedProperties[propertyInfo.Name] = null;
             }
         }
 
-        return properties;
+        return extractedProperties;
     }
-
 
     #endregion
 }

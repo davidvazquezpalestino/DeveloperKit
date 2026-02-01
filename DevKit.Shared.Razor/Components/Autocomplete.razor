@@ -21,7 +21,7 @@
             style="min-width: 100%; width: auto; white-space: nowrap;">
             @for (int index = 0; index < Items.Count; index++)
             {
-                var option = Items[index];
+                T option = Items[index];
                 <li>
                     <button class="dropdown-item @(index == SelectedIndexField ? "active" : "")"
                             @onclick="() => SelectOption(option)">
