@@ -17,7 +17,7 @@ public static class HttpExtensions
     /// string url = obj.AppendQueryString("https://api.example.com/users");
     /// // Resultado: https://api.example.com/users?Name=John&Age=25
     /// </example>
-    public static string UrlFormatQuery<T>(string requestUri, T item, string defaultDateFormat = "yyyy-MM-dd") where T : class
+    public static string UrlFromQuery<T>(string requestUri, T item, string defaultDateFormat = "yyyy-MM-dd") where T : class
     {
         if (item == null)
         {
@@ -75,10 +75,10 @@ public static class HttpExtensions
 
     /// <returns>Cadena formateada con valores escapados.</returns>
     /// <example>
-    /// string url = "api/{0}/{1}".UrlFormat("users", "123");
+    /// string url = "api/{0}/{1}".UrlFromRoute("users", "123");
     /// // Resultado: "api/users/123"
     /// </example>
-    public static string UrlFormat(string requestUri, params object[] values)
+    public static string UrlFromRoute(string requestUri, params object[] values)
     {
         if (string.IsNullOrEmpty(requestUri))
             throw new ArgumentException("La URL no puede ser nula o vacía.");
