@@ -27,7 +27,7 @@ internal class Program
         var tasks = new List<Task>();
         var semaphore = new SemaphoreSlim(50); // máximo 10 en paralelo
 
-        for (int i = 0; i < 100000; i++)
+        for (int i = 0; i < 10000; i++)
         {
             int requestNumber = i + 1;
             await semaphore.WaitAsync(); // esperar turno
@@ -45,7 +45,6 @@ internal class Program
             }));
         }
 
-        Console.WriteLine($"✅ Todas las peticiones han finalizado en {stopwatch.Elapsed.TotalSeconds:F2} segundos.");
 
         // Ejecutar todas en paralelo y esperar a que terminen
         await Task.WhenAll(tasks);
@@ -82,16 +81,16 @@ internal class Program
                 configurationBuilder.AddJsonFile("appsettings.json");
             }).ConfigureServices((builder, services) =>
             {
-                services.Configure<RepositoryOptions>(builder.Configuration.GetSection(RepositoryOptions.SectionKey));
+                services.Configure<ConnectionDbOptions>(builder.Configuration.GetSection(ConnectionDbOptions.SectionKey));
 
                 services.AddKeyedScoped<ISQLServerProvider>("Infomex",
                     (provider, _) =>
                     {
-                        RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                        ConnectionDbOptions connectionDbOptions = provider.GetRequiredService<IOptions<ConnectionDbOptions>>().Value;
 
                         SqlOptions options = new SqlOptions
                         {
-                            ConnectionString = repositoryOptions.ConnectionStringInfomex
+                            ConnectionString = connectionDbOptions.ConnectionStringInfomex
                         };
 
                         return new SQLServerProvider(Options.Create(options));
@@ -99,11 +98,11 @@ internal class Program
 
                 services.AddScoped<ISQLServerProvider>(provider =>
                 {
-                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                    ConnectionDbOptions connectionDbOptions = provider.GetRequiredService<IOptions<ConnectionDbOptions>>().Value;
 
                     SqlOptions options = new SqlOptions
                     {
-                        ConnectionString = repositoryOptions.ConnectionStringInfomex
+                        ConnectionString = connectionDbOptions.ConnectionStringInfomex
                     };
 
                     return new SQLServerProvider(Options.Create(options));
@@ -111,10 +110,10 @@ internal class Program
 
                 services.AddScoped<IMySqlProvider>(provider =>
                 {
-                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                    ConnectionDbOptions connectionDbOptions = provider.GetRequiredService<IOptions<ConnectionDbOptions>>().Value;
                     MySqlOptions options = new MySqlOptions
                     {
-                        ConnectionString = repositoryOptions.MySql,
+                        ConnectionString = connectionDbOptions.MySql,
                         BulkCopy =
                         {
                                 AllowLoadLocalInfile = true
@@ -125,10 +124,10 @@ internal class Program
 
                 services.AddScoped<IPostgreSqlProvider>(provider =>
                 {
-                    RepositoryOptions repositoryOptions = provider.GetRequiredService<IOptions<RepositoryOptions>>().Value;
+                    ConnectionDbOptions connectionDbOptions = provider.GetRequiredService<IOptions<ConnectionDbOptions>>().Value;
                     PostgreOptions options = new PostgreOptions
                     {
-                        ConnectionString = repositoryOptions.PosgreSql
+                        ConnectionString = connectionDbOptions.PosgreSql
                     };
                     return new PostgreSqlProvider(Options.Create(options));
                 });
@@ -147,12 +146,12 @@ namespace ConsoleNet8
     /// <summary>
     /// Configuration options for repository connections.
     /// </summary>
-    public class RepositoryOptions
+    public class ConnectionDbOptions
     {
         /// <summary>
         /// The configuration section key.
         /// </summary>
-        public const string SectionKey = nameof(RepositoryOptions);
+        public const string SectionKey = nameof(ConnectionDbOptions);
 
         /// <summary>
         /// Gets or sets the Infomex connection string.

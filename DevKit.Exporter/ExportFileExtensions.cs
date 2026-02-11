@@ -59,7 +59,12 @@ public static class ExportFileExtensions
                            ? new HSSFWorkbook()
                            : new XSSFWorkbook())
                 {
-                    ISheet sheet = workbook.CreateSheet(Path.GetFileNameWithoutExtension(fileName));
+                    string sheetname = Path.GetFileNameWithoutExtension(fileName);
+                    if (sheetname.Length > 30)
+                    {
+                        sheetname = sheetname.Substring(30);
+                    }
+                    ISheet sheet = workbook.CreateSheet(sheetname);
 
                     // Asumiendo que la primera fila del diccionario tiene las claves para los encabezados
                     IRow header = sheet.CreateRow(0);
@@ -113,40 +118,40 @@ public static class ExportFileExtensions
 
             using (FileStream fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
             {
-                using (IWorkbook workbook = Path.GetExtension(fileName).ToLower() == ".xls"
-                           ? new HSSFWorkbook()
-                           : new XSSFWorkbook())
+                IWorkbook workbook = Path.GetExtension(fileName).ToLower() == ".xls"
+                    ? new HSSFWorkbook()
+                    : new XSSFWorkbook();
+
+                ISheet sheet = workbook.CreateSheet(typeof(T).Name);
+                IRow headerRow = sheet.CreateRow(0);
+
+                // Aquí obtienes las propiedades del tipo T
+                PropertyInfo[] properties = typeof(T).GetProperties();
+
+                // Crear encabezados
+                for (int i = 0; i < properties.Length; i++)
                 {
-                    ISheet sheet = workbook.CreateSheet(typeof(T).Name);
-                    IRow headerRow = sheet.CreateRow(0);
-                    PropertyInfo[] properties = typeof(T).GetProperties();
-                    short dateFormat = workbook.CreateDataFormat().GetFormat("yyyy-MM-dd HH:mm:ss");
-
-                    //Crea el encabezado del registro
-                    CreateHeaderWhenIList(properties, headerRow, workbook);
-                    ICellStyle genericCellStyle = CreateCellDetailsStyle(workbook);
-                    ICellStyle dateCellStyle = CreateDateCellStyle(workbook, dateFormat);
-                    //Escribe los registros
-                    int rowIndex = 1;
-                    IEnumerable<T> items = data as T[] ?? data.ToArray();
-                    foreach (T item in items)
-                    {
-                        IRow row = sheet.CreateRow(rowIndex);
-
-                        for (int columnIndex = 0; columnIndex < properties.Length; columnIndex++)
-                        {
-                            object value = properties[columnIndex].GetValue(item);
-                            SetCellValue(value, row, columnIndex, genericCellStyle, dateCellStyle);
-                        }
-
-                        rowIndex++;
-                    }
-
-                    workbook.Write(fileStream);
-                    Console.WriteLine(
-                        $"El archivo se escribió en {fileName} {Environment.NewLine} {items.Count()} registros");
+                    headerRow.CreateCell(i).SetCellValue(properties[i].Name);
                 }
+
+                // Escribir registros
+                int rowIndex = 1;
+                IEnumerable<T> items = data.ToList();
+                foreach (T item in items)
+                {
+                    IRow row = sheet.CreateRow(rowIndex);
+                    for (int columnIndex = 0; columnIndex < properties.Length; columnIndex++)
+                    {
+                        object value = properties[columnIndex].GetValue(item);
+                        row.CreateCell(columnIndex).SetCellValue(value?.ToString() ?? string.Empty);
+                    }
+                    rowIndex++;
+                }
+
+                workbook.Write(fileStream);
+                Console.WriteLine($"Archivo escrito en {fileName} con {items.Count()} registros");
             }
+
         }
     }
 
@@ -312,7 +317,7 @@ public static class ExportFileExtensions
     }
 
     /// <summary>Verifica si la extensión del archivo es válida para un archivo Excel.</summary>
-    public static void GuardAgainstInvalidExcelExtension(string fileName)
+    private static void GuardAgainstInvalidExcelExtension(string fileName)
     {
         string extension = Path.GetExtension(fileName)?.ToLower();
         if (extension != ".xls" && extension != ".xlsx")
