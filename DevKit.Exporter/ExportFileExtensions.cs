@@ -3,11 +3,32 @@ namespace DevKit.Exporter;
 /// <summary>Proporciona métodos de extensión para exportar datos a diferentes formatos.</summary>
 public static class ExportFileExtensions
 {
+    /// <summary>
+    /// Define los tipos de formato de fecha que pueden utilizarse
+    /// al mostrar o convertir valores de fecha y hora.
+    /// </summary>
+    public enum DateFormatType
+    {
+        /// <summary>
+        /// Formato corto de fecha. 
+        /// Generalmente incluye día, mes y año en una representación compacta 
+        /// (por ejemplo: "10/02/2026" o "2026-02-10").
+        /// </summary>
+        Short,
+
+        /// <summary>
+        /// Formato largo de fecha. 
+        /// Suele incluir el nombre completo del día de la semana, el mes y el año,
+        /// proporcionando una representación más descriptiva 
+        /// (por ejemplo: "martes, 10 de febrero de 2026").
+        /// </summary>
+        Long
+    }
     /// <summary>Proporciona métodos de extensión para exportar datos a diferentes formatos.</summary>
     extension(DataTable table)
     {
         /// <summary>Exporta un DataTable a un archivo Excel.</summary>
-        public void ExportToMicrosoftExcel(string fileName)
+        public void ExportToMicrosoftExcel(string fileName, DateFormatType dateFormatType = DateFormatType.Short)
         {
             GuardAgainstInvalidExcelExtension(fileName);
 
@@ -19,7 +40,8 @@ public static class ExportFileExtensions
                 {
                     ISheet sheet = workbook.CreateSheet(string.IsNullOrEmpty(table.TableName) ? "Sheet1" : table.TableName);
                     IRow headerRow = sheet.CreateRow(0);
-                    short dateFormat = workbook.CreateDataFormat().GetFormat("yyyy-MM-dd HH:mm:ss");
+
+                    short dateFormat = workbook.CreateDataFormat().GetFormat(GetDateFormatString(dateFormatType));
 
                     // Create encabezado del excel
                     CreateHeaderWhenDataTable(table, headerRow, workbook);
@@ -49,7 +71,7 @@ public static class ExportFileExtensions
     extension(IEnumerable<Dictionary<string, object>> dictionary)
     {
         /// <summary>Exporta una colección de diccionarios a un archivo Excel.</summary>
-        public void ExportToMicrosoftExcel(string fileName)
+        public void ExportToMicrosoftExcel(string fileName, DateFormatType dateFormatType = DateFormatType.Short)
         {
             GuardAgainstInvalidExcelExtension(fileName);
 
@@ -68,7 +90,7 @@ public static class ExportFileExtensions
 
                     // Asumiendo que la primera fila del diccionario tiene las claves para los encabezados
                     IRow header = sheet.CreateRow(0);
-
+                    ICellStyle headerCellStyle = CreateCellHeaderStyle(workbook);
 
                     List<Dictionary<string, object>> items = dictionary.ToList();
                     if (items.Any())
@@ -80,10 +102,11 @@ public static class ExportFileExtensions
                         {
                             ICell cell = header.CreateCell(columnIndex++);
                             cell.SetCellValue(key);
+                            cell.CellStyle = headerCellStyle;
                         }
                     }
 
-                    short dateFormat = workbook.CreateDataFormat().GetFormat("yyyy-MM-dd HH:mm:ss");
+                    short dateFormat = workbook.CreateDataFormat().GetFormat(GetDateFormatString(dateFormatType));
 
                     ICellStyle genericCellStyle = CreateCellDetailsStyle(workbook);
                     ICellStyle dateCellStyle = CreateDateCellStyle(workbook, dateFormat);
@@ -112,7 +135,7 @@ public static class ExportFileExtensions
     extension<T>(IEnumerable<T> data)
     {
         /// <summary>Exporta una colección de objetos a un archivo Excel.</summary>
-        public void ExportToMicrosoftExcel(string fileName)
+        public void ExportToMicrosoftExcel(string fileName, DateFormatType dateFormatType = DateFormatType.Short)
         {
             GuardAgainstInvalidExcelExtension(fileName);
 
@@ -159,7 +182,7 @@ public static class ExportFileExtensions
     extension(DataTable table)
     {
         /// <summary>Exporta un DataTable a un MemoryStream en formato Excel.</summary>
-        public MemoryStream ExportToMicrosoftExcel()
+        public MemoryStream ExportToMicrosoftExcel(DateFormatType dateFormatType = DateFormatType.Short)
         {
             // Si la tabla está vacía, lanzamos una excepción (opcional)
             if (table == null || table.Rows.Count == 0)
@@ -177,7 +200,7 @@ public static class ExportFileExtensions
             ISheet sheet = workbook.CreateSheet(string.IsNullOrEmpty(table.TableName) ? "Sheet1" : table.TableName);
 
             // Definimos el formato de fecha
-            short dateFormat = workbook.CreateDataFormat().GetFormat("yyyy-MM-dd HH:mm:ss");
+            short dateFormat = workbook.CreateDataFormat().GetFormat(GetDateFormatString(dateFormatType));
 
             // Creamos el encabezado
             IRow headerRow = sheet.CreateRow(0);
@@ -215,7 +238,8 @@ public static class ExportFileExtensions
     extension<T>(IEnumerable<T> data)
     {
         /// <summary>Exporta una colección de objetos a un MemoryStream en formato Excel.</summary>
-        public MemoryStream ExportToMicrosoftExcel()
+        /// <param name="dateFormatType"></param>
+        public MemoryStream ExportToMicrosoftExcel(DateFormatType dateFormatType = DateFormatType.Short)
         {
             // Crea un MemoryStream
             MemoryStream memoryStream = new MemoryStream();
@@ -226,7 +250,7 @@ public static class ExportFileExtensions
                 ISheet sheet = workbook.CreateSheet(typeof(T).Name);
                 IRow headerRow = sheet.CreateRow(0);
                 PropertyInfo[] properties = typeof(T).GetProperties();
-                short dateFormat = workbook.CreateDataFormat().GetFormat("yyyy-MM-dd HH:mm:ss");
+                short dateFormat = workbook.CreateDataFormat().GetFormat(GetDateFormatString(dateFormatType));
 
                 // Crea el encabezado del registro
                 CreateHeaderWhenIList(properties, headerRow, workbook);
@@ -262,7 +286,8 @@ public static class ExportFileExtensions
     extension(IEnumerable<Dictionary<string, object>> dictionary)
     {
         /// <summary>Exporta una colección de diccionarios a un MemoryStream en formato Excel.</summary>
-        public MemoryStream ExportToMicrosoftExcel()
+        /// <param name="dateFormatType"></param>
+        public MemoryStream ExportToMicrosoftExcel(DateFormatType dateFormatType = DateFormatType.Short)
         {
             // Crear un MemoryStream en lugar de escribir a un archivo físico
             MemoryStream memoryStream = new MemoryStream();
@@ -273,6 +298,7 @@ public static class ExportFileExtensions
 
                 // Asumir que la primera fila del diccionario tiene las claves para los encabezados
                 IRow headerRow = sheet.CreateRow(0);
+                ICellStyle headerCellStyle = CreateCellHeaderStyle(workbook);
 
                 List<Dictionary<string, object>> items = dictionary.ToList();
                 if (items.Any())
@@ -284,10 +310,11 @@ public static class ExportFileExtensions
                     {
                         ICell cell = headerRow.CreateCell(columnIndex++);
                         cell.SetCellValue(key);
+                        cell.CellStyle = headerCellStyle;
                     }
                 }
 
-                short dateFormat = workbook.CreateDataFormat().GetFormat("yyyy-MM-dd HH:mm:ss");
+                short dateFormat = workbook.CreateDataFormat().GetFormat(GetDateFormatString(dateFormatType));
 
                 ICellStyle genericCellStyle = CreateCellDetailsStyle(workbook);
                 ICellStyle dateCellStyle = CreateDateCellStyle(workbook, dateFormat);
@@ -430,5 +457,13 @@ public static class ExportFileExtensions
         dateCellStyle.SetFont(font);
 
         return dateCellStyle;
+    }
+    private static string GetDateFormatString(DateFormatType dateFormatType)
+    {
+        return dateFormatType switch
+        {
+            DateFormatType.Short => "yyyy-MM-dd",
+            _ => "yyyy-MM-dd HH:mm:ss"
+        };
     }
 }

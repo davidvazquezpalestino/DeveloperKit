@@ -6,9 +6,9 @@
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<Company>David Vázquez Palestino</Company>
 		<Product>CoreComponentExporter</Product>
-		<AssemblyVersion>2026.02.10</AssemblyVersion>
-		<FileVersion>2026.02.10</FileVersion>
-		<Version>2026.02.10</Version>
+		<AssemblyVersion>2026.02.11</AssemblyVersion>
+		<FileVersion>2026.02.11</FileVersion>
+		<Version>2026.02.11</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
