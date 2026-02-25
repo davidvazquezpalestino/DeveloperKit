@@ -42,10 +42,10 @@ dotnet add package DevKit.Injection.Extensions
 
 ## 🚀 Uso Rápido
 
-### **📋 Registro con Atributos (Recomendado)**
+### **📋 Registro Automático (Único método disponible)**
 
 ```csharp
-// 1. Marcar servicios con atributos
+// 1. Marcar servicios con atributos (opcional)
 [Singleton]
 public class CacheService : ICacheService 
 {
@@ -58,20 +58,14 @@ public class UserService : IUserService
     public Task<User> GetUserAsync(int id) => Task.FromResult(new User());
 }
 
-[Transient]
-public class EmailNotificationService 
-{
-    public void SendEmail(string to, string subject) { }
-}
-
 // 2. Registrar automáticamente
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddServicesWithAttributes(Assembly.GetExecutingAssembly());
+    services.AddFromAssembly(Assembly.GetExecutingAssembly());
 }
 ```
 
-### **⚡ Registro Automático Básico**
+### **📋 Registro Automático Básico**
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
@@ -83,9 +77,19 @@ public void ConfigureServices(IServiceCollection services)
     services.AddFromAssembly(
         assembly: Assembly.GetExecutingAssembly(),
         filter: type => type.Name.EndsWith("Service"),
-        LogTo: message => Console.WriteLine($"[DI] {message}"),
+        logTo: message => Console.WriteLine($"[DI] {message}"),
         lifetime: ServiceLifetime.Scoped
     );
+    
+    // Registro del ensamblado actual
+    services.AddCurrentAssembly(message => Console.WriteLine($"[DI] {message}"));
+    
+    // Múltiples ensamblados
+    var assemblies = new[] { 
+        Assembly.GetExecutingAssembly(),
+        typeof(ExternalService).Assembly 
+    };
+    services.AddFromAssemblies(assemblies);
 }
 ```
 
@@ -96,75 +100,52 @@ public void ConfigureServices(IServiceCollection services)
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {
-    services.ConfigureServices()
-        .RegisterFromAttributes(Assembly.GetExecutingAssembly())
-        .RegisterImplementationsOf<IRepository>(Assembly.GetExecutingAssembly())
-        .RegisterDecorator<IUserService, CachedUserService>()
-        .ValidateCircularDependencies();
+    // Registro desde múltiples ensamblados
+    var assemblies = new[] { 
+        Assembly.GetExecutingAssembly(),
+        typeof(ExternalService).Assembly 
+    };
+    services.AddFromAssemblies(assemblies);
+    
+    // Registro con filtros personalizados
+    services.AddFromAssembly(
+        Assembly.GetExecutingAssembly(),
+        filter: type => type.Name.EndsWith("Service"),
+        LogTo: message => Console.WriteLine($"[DI] {message}"),
+        lifetime: ServiceLifetime.Scoped
+    );
 }
 ```
 
-### **🎨 Registro por Interfaz**
+### **🎨 Registro Múltiples Ensamblados**
 
 ```csharp
-// Registra todas las implementaciones de IRepository
-services.AddImplementationsOf<IRepository>(
-    Assembly.GetExecutingAssembly(),
-    ServiceLifetime.Scoped
-);
-
 // Registra desde múltiples ensamblados
 var assemblies = new[] { 
     Assembly.GetExecutingAssembly(),
     typeof(ExternalService).Assembly 
 };
 services.AddFromAssemblies(assemblies);
+
+// Registro del ensamblado actual
+services.AddCurrentAssembly(message => Console.WriteLine($"[DI] {message}"));
 ```
 
-### **🏭 Factory Methods**
+### **🔍 Inspección de Ensamblados**
 
 ```csharp
-services.ConfigureServices()
-    .RegisterFactory<IComplexService>(provider => 
-    {
-        var dependency = provider.GetRequiredService<IDependency>();
-        return new ComplexService(dependency, "custom-config");
-    }, ServiceLifetime.Singleton);
-```
+// Listar tipos en un ensamblado sin registrarlos
+var types = DependencyInjectionExtensions.ListTypesInAssembly(
+    Assembly.GetExecutingAssembly(),
+    filter: type => type.Name.EndsWith("Service"),
+    logTo: message => Console.WriteLine($"[DEBUG] {message}")
+);
 
-### **🎭 Patrón Decorator**
-
-```csharp
-// Servicio base
-[Scoped]
-public class UserService : IUserService 
+// Usar la lista de tipos
+foreach (var typeName in types)
 {
-    public Task<User> GetUserAsync(int id) => /* implementación */;
+    Console.WriteLine($"Tipo encontrado: {typeName}");
 }
-
-// Decorator con cache
-public class CachedUserService : IUserService 
-{
-    private readonly IUserService _inner;
-    private readonly IMemoryCache _cache;
-    
-    public CachedUserService(IUserService inner, IMemoryCache cache)
-    {
-        _inner = inner;
-        _cache = cache;
-    }
-    
-    public Task<User> GetUserAsync(int id)
-    {
-        return _cache.GetOrCreateAsync($"user_{id}", 
-            _ => _inner.GetUserAsync(id));
-    }
-}
-
-// Configuración
-services.ConfigureServices()
-    .RegisterFromAttributes(Assembly.GetExecutingAssembly())
-    .RegisterDecorator<IUserService, CachedUserService>();
 ```
 
 ## 📋 Atributos Disponibles
@@ -182,10 +163,7 @@ services.ConfigureServices()
 |--------|-------------|
 | `AddFromAssembly` | Registro desde un ensamblado |
 | `AddFromAssemblies` | Registro desde múltiples ensamblados |
-| `AddServicesWithAttributes` | Registro basado en atributos |
-| `AddImplementationsOf<T>` | Todas las implementaciones de una interfaz |
 | `AddCurrentAssembly` | Registro automático del ensamblado actual |
-| `ConfigureServices` | Configuración fluida avanzada |
 | `ListTypesInAssembly` | Lista los nombres de las clases en un ensamblado sin registrarlas |
 
 ## 🔍 Inspección de Ensamblados
@@ -207,38 +185,9 @@ foreach (var typeName in types)
 }
 ```
 
-## 🛡️ Validaciones y Debugging
+##  Mejores Prácticas
 
-### **Detección de Dependencias Circulares**
-
-```csharp
-services.ConfigureServices()
-    .RegisterFromAttributes(Assembly.GetExecutingAssembly())
-    .ValidateCircularDependencies(); // Lanza excepción si hay ciclos
-```
-
-### **Logging Detallado**
-
-```csharp
-services.AddFromAssembly(
-    Assembly.GetExecutingAssembly(),
-    LogTo: message => _LogTo.LogInformation("[DI] {Message}", message)
-);
-
-// Ver log de registros
-var registrar = services.ConfigureServices();
-registrar.RegisterFromAttributes(Assembly.GetExecutingAssembly());
-var logs = registrar.GetRegistrationLog();
-```
-
-## 💡 Mejores Prácticas
-
-### **🎯 Uso de Atributos**
-- Usar `[Singleton]` para servicios sin estado (caches, configuraciones)
-- Usar `[Scoped]` para servicios de negocio (repositories, services)
-- Usar `[Transient]` para servicios ligeros y sin estado compartido
-
-### **🔍 Filtros Inteligentes**
+### **🎯 Uso de Filtros**
 ```csharp
 services.AddFromAssembly(
     Assembly.GetExecutingAssembly(),
@@ -275,21 +224,6 @@ services.AddFromAssembly(
 );
 ```
 
-### **Múltiples Implementaciones**
-```csharp
-// Registrar todas las implementaciones de INotificationProvider
-services.AddImplementationsOf<INotificationProvider>(Assembly.GetExecutingAssembly());
-
-// Usar en runtime
-public class NotificationService
-{
-    public NotificationService(IEnumerable<INotificationProvider> providers) 
-    {
-        // Usar todas las implementaciones
-    }
-}
-```
-
 ## 📚 Compatibilidad
 
 - ✅ **ASP.NET Core** 3.1+
@@ -303,12 +237,12 @@ public class NotificationService
 
 | Característica | DevKit.Injection | Scrutor | Autofac |
 |----------------|------------------|---------|---------|
-| Atributos Declarativos | ✅ | ❌ | ✅ |
-| Validación Circular | ✅ | ❌ | ✅ |
-| Patrón Decorator | ✅ | ✅ | ✅ |
+| Registro Automático | ✅ | ✅ | ✅ |
 | Múltiples Ensamblados | ✅ | ✅ | ✅ |
+| Filtros Personalizados | ✅ | ✅ | ✅ |
 | .NET Framework | ✅ | ❌ | ✅ |
-| Configuración Fluida | ✅ | ✅ | ✅ |
+| Inspección de Tipos | ✅ | ❌ | ❌ |
+| Logging Integrado | ✅ | ❌ | ✅ |
 
 ## 📄 Licencia
 
