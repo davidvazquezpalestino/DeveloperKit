@@ -11,6 +11,33 @@ public static class JsonExtensions
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
+    /// <summary>Convierte una colección de diccionarios en una cadena JSON.</summary>
+    public static string ToJson(this IEnumerable<Dictionary<string, object>> dictionaries, JsonSerializerOptions options = null)
+    {
+        if (dictionaries == null)
+            return null;
+
+        return JsonSerializer.Serialize(dictionaries, options ?? DefaultJsonOptions);
+    }
+
+    /// <summary>Convierte un diccionario en una cadena JSON.</summary>
+    public static string ToJson(this Dictionary<string, object> dictionary, JsonSerializerOptions options = null)
+    {
+        if (dictionary == null)
+            return null;
+
+        return JsonSerializer.Serialize(dictionary, options ?? DefaultJsonOptions);
+    }
+
+    /// <summary>Convierte un objeto genérico en una cadena JSON.</summary>
+    public static string ToJson<T>(this T obj, JsonSerializerOptions options = null)
+    {
+        if (obj == null)
+            return null;
+
+        return JsonSerializer.Serialize(obj, options ?? DefaultJsonOptions);
+    }
+
     /// <summary>
     /// 
     /// </summary>
