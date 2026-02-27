@@ -1,58 +1,28 @@
-# DotNet.Shared.RazorComponent
+# DevKit.Shared.Razor
 
-Una biblioteca de componentes Razor compartidos para aplicaciones Blazor, que proporciona componentes reutilizables y personalizables para la interfaz de usuario.
-
-## Componentes Principales
-
-1. **Autocomplete<T>**
-   - Componente de autocompletado genérico
-   - Características:
-     - Búsqueda asíncrona
-     - Debounce para optimizar búsquedas
-     - Mínimo de caracteres configurable
-     - Personalización del formato de los items
-     - Evento de selección
-     - Manejo de estados
-
-2. **ComboBox<T>**
-   - Componente de selección múltiple genérico
-   - Características:
-     - Filtro en tiempo real
-     - Selección de valor
-     - Manejo de eventos
-     - Personalización de ID y etiquetas
-     - Mantenimiento de estado
-
-## Características Comunes
-
-- Tipos genéricos para flexibilidad
-- Eventos y callbacks
-- Manejo de estados
-- Validación integrada
-- Soporte para filtros
-- Documentación completa
+Biblioteca de componentes Razor reutilizables para aplicaciones Blazor, optimizada para facilitar el desarrollo de interfaces modernas.
 
 ## Instalación
 
 El paquete se puede instalar usando NuGet:
 
 ```bash
-dotnet add package DotNet.Shared.RazorComponent
+dotnet add package DevKit.Shared.RazorComponent
 ```
 
 También está disponible en el Visual Studio Package Manager:
 
 ```bash
-Install-Package DotNet.Shared.RazorComponent
+Install-Package DevKit.Shared.RazorComponent
 ```
 
-## Uso Básico
+## Uso de Componentes
 
-### Autocomplete
+### 1. Autocomplete<T>
+
+Componente genérico para búsqueda y selección con soporte para debounce asíncrono.
 
 ```razor
-@page "/autocomplete"
-
 <Autocomplete @bind-Value="selectedItem" 
                SearchHandler="SearchHandler" 
                DisplayItem="@(item => item.Name)" 
@@ -63,7 +33,7 @@ Install-Package DotNet.Shared.RazorComponent
 @code {
     private Item selectedItem;
 
-    private async Task<IEnumerable<Item>> SearchHandler(string searchTerm, CancellationToken token)
+    private async Task<List<Item>> SearchHandler(string searchTerm, CancellationToken token)
     {
         return await _service.SearchItems(searchTerm, token);
     }
@@ -75,83 +45,45 @@ Install-Package DotNet.Shared.RazorComponent
 }
 ```
 
-### ComboBox
+#### Parámetros Principales
+- `SearchHandler`: Función asíncrona que maneja la búsqueda de elementos.
+- `DisplayItem`: Selector para definir el texto a mostrar por item.
+- `MinCharacters`: Mínimo de caracteres para iniciar la búsqueda.
+- `DebounceInterval`: Tiempo de espera (ms) antes de ejecutar la búsqueda.
+- `Clearable`: Permite mostrar el botón de limpieza.
+- `Class`: Clases CSS personalizadas para el input.
+
+### 2. ComboBox<TItem, TValue>
+
+Componente de selección simple con soporte para tipos genéricos y reflexión opcional.
 
 ```razor
-@page "/combobox"
-
 <ComboBox @bind-Value="selectedValue" 
           Items="options" 
-          Label="Seleccione una opción" 
-          Placeholder="Elegir..." 
-          OnValueChanged="OnValueChanged" />
+          Placeholder="Seleccione una opción..." 
+          TextField="Descripcion"
+          ValueField="Id" />
 
 @code {
-    private string selectedValue;
-    private List<string> options = new List<string> { "Opción 1", "Opción 2", "Opción 3" };
-
-    private async Task OnValueChanged(string value)
-    {
-        // Manejar cambio de valor
-    }
+    private int selectedValue;
+    private List<OptionItem> options = new List<OptionItem>();
 }
 ```
 
-## Parámetros de Autocomplete
-
-- `SearchHandler`: Función que maneja la búsqueda
-- `DisplayItem`: Función que formatea los items
-- `MinCharacters`: Mínimo de caracteres para mostrar sugerencias
-- `DebounceInterval`: Tiempo de espera antes de realizar la búsqueda
-- `OnSelected`: Evento cuando se selecciona un item
-- `Clearable`: Booleano que indica si se muestra el botón para limpiar la búsqueda (por defecto: true)
-- `Placeholder`: Texto de marcador de posición para el campo de búsqueda
-- `Class`: Clases CSS adicionales para personalizar el componente
+#### Parámetros Principales
+- `Items`: Lista de elementos disponibles.
+- `TextField`: Nombre de la propiedad a mostrar (por defecto "Descripcion").
+- `ValueField`: Nombre de la propiedad valor (por defecto "Id").
+- `TextSelector` / `ValueSelector`: Selectores opcionales para evitar reflexión.
+- `Placeholder`: Texto inicial del select.
 
 ## Personalización de Estilos
 
-El componente Autocomplete incluye los siguientes estilos CSS que pueden ser sobrescritos:
+El componente Autocomplete permite sobrescribir las siguientes clases para adaptarse al diseño de tu aplicación:
 
 ```css
-/* Contenedor principal */
-.autocomplete-container {
-    overflow: visible;
-}
-
-/* Menú desplegable */
-.autocomplete-container .dropdown-menu {
-    z-index: 3000 !important;
-}
-
-/* Ícono de búsqueda */
-.input-icon {
-    font-size: 1.2rem;
-    pointer-events: none;
-}
-
-/* Botón de limpiar */
-.btn-clear {
-    background: transparent;
-    border: none;
-    font-size: 1.25rem;
-    line-height: 1;
-    color: #999;
-    cursor: pointer;
-}
-
-/* Ítem activo en el menú desplegable */
-.dropdown-item.active {
-    background-color: #0d6efd;
-    color: white;
-}
+.autocomplete-container { /* Contenedor principal */ }
+.autocomplete-container .dropdown-menu { /* Menú de sugerencias */ }
+.input-icon { /* Ícono de búsqueda */ }
+.dropdown-item.active { /* Ítem seleccionado mediante teclado */ }
 ```
-
-Puedes sobrescribir cualquiera de estas clases en tu propio archivo CSS para personalizar la apariencia del componente.
-
-## Parámetros de ComboBox
-
-- `Items`: Lista de items disponibles
-- `SelectedValue`: Valor seleccionado
-- `Label`: Etiqueta del componente
-- `Placeholder`: Texto de ayuda
-- `OnValueChanged`: Evento cuando cambia el valor

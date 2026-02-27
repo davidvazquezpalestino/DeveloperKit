@@ -4,21 +4,28 @@ namespace DevKit.Extensions.Uris;
 /// <summary>Proporciona métodos de extensión para trabajar con URLs y consultas HTTP.</summary>
 public static class HttpExtensions
 {
-
     /// <summary>
-    /// Agrega los parámetros de un objeto como cadena de consulta a la URL.
+    /// Agrega los parámetros de un objeto como cadena de consulta (QueryString) a la URL especificada.
     /// </summary>
-    /// <param name="requestUri"></param>
-    /// <param name="item">El objeto cuyos parámetros agregar.</param>
-    /// <param name="defaultDateFormat">Formato de fecha (por defecto "yyyy-MM-dd").</param>
-    /// <returns>La URL con los parámetros de consulta agregados.</returns>
+    /// <typeparam name="T">El tipo del objeto cuyos parámetros se van a agregar.</typeparam>
+    /// <param name="requestUri">La URL base a la que se le agregarán los parámetros.</param>
+    /// <param name="item">El objeto cuyas propiedades públicas se convertirán en parámetros de consulta.</param>
+    /// <param name="defaultDateFormat">Formato de fecha opcional (por defecto "yyyy-MM-dd").</param>
+    /// <returns>La URL original con los parámetros de consulta agregados de forma segura (escapados).</returns>
     /// <example>
+    /// <code>
     /// var obj = new { Name = "John", Age = 25 };
-    /// string url = obj.AppendQueryString("https://api.example.com/users");
-    /// // Resultado: https://api.example.com/users?Name=John&Age=25
+    /// string url = "https://api.example.com/users".UrlFromQuery(obj);
+    /// // Resultado: https://api.example.com/users?Name=John
+    /// </code>
     /// </example>
-    public static string UrlFromQuery<T>(string requestUri, T item, string defaultDateFormat = "yyyy-MM-dd") where T : class
+    public static string UrlFromQuery<T>(this string requestUri, T item, string defaultDateFormat = "yyyy-MM-dd") where T : class
     {
+        if (string.IsNullOrEmpty(requestUri))
+        {
+            throw new ArgumentException("La URL no puede ser nula o vacía.", nameof(requestUri));
+        }
+
         if (item == null)
         {
             return requestUri;
@@ -68,31 +75,42 @@ public static class HttpExtensions
     }
 
     /// <summary>
-    /// Reemplaza placeholders {0}, {1}, etc. en la plantilla con valores escapados para URL.
+    /// Reemplaza placeholders {0}, {1}, etc. en una plantilla de URL con los valores proporcionados, escapándolos para su uso seguro en la ruta.
     /// </summary>
-    /// <param name="requestUri"></param>
-    /// <param name="values">Valores a insertar.</param>
-
-    /// <returns>Cadena formateada con valores escapados.</returns>
+    /// <param name="requestUri">La URL con marcadores de posición (plantilla).</param>
+    /// <param name="values">Los valores que se insertarán en los marcadores de posición.</param>
+    /// <returns>La URL formateada con los valores escapados insertados.</returns>
+    /// <exception cref="ArgumentException">Se lanza si la URL es nula o si no se proporcionan valores.</exception>
+    /// <exception cref="FormatException">Se lanza si la URL no contiene marcadores de posición válidos.</exception>
     /// <example>
+    /// <code>
     /// string url = "api/{0}/{1}".UrlFromRoute("users", "123");
     /// // Resultado: "api/users/123"
+    /// </code>
     /// </example>
-    public static string UrlFromRoute(string requestUri, params object[] values)
+    public static string UrlFromRoute(this string requestUri, params object[] values)
     {
         if (string.IsNullOrEmpty(requestUri))
-            throw new ArgumentException("La URL no puede ser nula o vacía.");
+        {
+            throw new ArgumentException("La URL no puede ser nula o vacía.", nameof(requestUri));
+        }
 
         MatchCollection matches = Regex.Matches(requestUri, @"\{(\d+)\}");
         if (matches.Count == 0)
+        {
             throw new FormatException("La URL no contiene ningún marcador {0}, {1}, etc.");
+        }
 
         if (values == null || values.Length == 0)
-            throw new ArgumentException("No se proporcionaron parámetros para reemplazar los marcadores.");
+        {
+            throw new ArgumentException("No se proporcionaron parámetros para reemplazar los marcadores.", nameof(values));
+        }
 
         int maxIndex = matches.Cast<Match>().Max(m => int.Parse(m.Groups[1].Value));
         if (maxIndex >= values.Length)
+        {
             throw new ArgumentException($"La URL requiere al menos {maxIndex + 1} parámetros, pero solo se recibieron {values.Length}.");
+        }
 
 
         object[] encodedValues = new object[values.Length];

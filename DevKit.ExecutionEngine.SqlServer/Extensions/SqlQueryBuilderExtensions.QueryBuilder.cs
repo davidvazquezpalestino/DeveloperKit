@@ -1,10 +1,17 @@
+
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
 /// <summary>
-/// Métodos de construcción de consultas para SqlQueryBuilderExtensions
+/// Métodos de construcción de consultas para SqlQueryBuilderExtensions.
 /// </summary>
 public static partial class SqlQueryBuilderExtensions
 {
+    /// <summary>
+    /// Construye una instancia de QueryResult a partir de un estado de consulta.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <returns>Un objeto <see cref="QueryResult"/> con la SQL y los parámetros generados.</returns>
     internal static QueryResult BuildQuery<T>(QueryState<T> query) where T : class, new()
     {
         QueryResult result = new();
@@ -289,8 +296,12 @@ public static partial class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Overloaded BuildQuery method for projected queries
+    /// Construye una instancia de QueryResult a partir de un estado de consulta proyectada.
     /// </summary>
+    /// <typeparam name="T">El tipo de entidad original.</typeparam>
+    /// <typeparam name="TResult">El tipo del resultado proyectado.</typeparam>
+    /// <param name="query">El estado de la consulta proyectada.</param>
+    /// <returns>Un objeto <see cref="QueryResult"/> con la SQL y los parámetros generados.</returns>
     internal static QueryResult BuildQuery<T, TResult>(ProjectedQueryState<T, TResult> query) where T : class, new()
     {
         QueryResult result = new();

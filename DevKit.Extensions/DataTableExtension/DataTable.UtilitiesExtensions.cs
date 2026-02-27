@@ -3,31 +3,35 @@ namespace DevKit.Extensions.DataTableExtension;
 public static partial class DataTableExtensions
 {
     /// <summary>Determina si un tipo es considerado simple.</summary>
-    extension(Type type)
+    /// <param name="type">El tipo a verificar.</param>
+    /// <returns>Verdadero si el tipo es simple; de lo contrario, falso.</returns>
+    public static bool IsSimpleType(this Type type)
     {
-        /// <summary>Determina si un tipo es considerado simple.</summary>
-        public bool IsSimpleType()
+        if (type == null)
         {
-            Type underlyingType = Nullable.GetUnderlyingType(type) ?? type;
-            if (underlyingType.IsEnum)
-            {
-                return true;
-            }
-
-            return underlyingType.IsPrimitive ||
-                   underlyingType == typeof(string) ||
-                   underlyingType == typeof(DateTime) ||
-                   underlyingType == typeof(DateTimeOffset) ||
-                   underlyingType == typeof(TimeSpan) ||
-                   underlyingType == typeof(double) ||
-                   underlyingType == typeof(decimal) ||
-                   underlyingType == typeof(float) ||
-                   underlyingType == typeof(bool) ||
-                   underlyingType == typeof(Guid);
+            return false;
         }
+
+        Type underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        if (underlyingType.IsEnum)
+        {
+            return true;
+        }
+
+        return underlyingType.IsPrimitive ||
+               underlyingType == typeof(string) ||
+               underlyingType == typeof(DateTime) ||
+               underlyingType == typeof(DateTimeOffset) ||
+               underlyingType == typeof(TimeSpan) ||
+               underlyingType == typeof(double) ||
+               underlyingType == typeof(decimal) ||
+               underlyingType == typeof(float) ||
+               underlyingType == typeof(bool) ||
+               underlyingType == typeof(Guid);
     }
 
     /// <summary>Valida que el tipo genérico no sea primitivo.</summary>
+    /// <typeparam name="T">El tipo a validar.</typeparam>
     public static void GuardNotPrimitiveType<T>()
     {
         Type underlyingType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
@@ -37,45 +41,47 @@ public static partial class DataTableExtensions
         }
     }
 
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="rows"></param>
-    extension(IEnumerable<DataRow> rows)
+    /// <summary>Convierte una secuencia de DataRow en DataTable, devolviendo una tabla vacía si no hay filas.</summary>
+    /// <param name="rows">La secuencia de filas.</param>
+    /// <param name="schema">Esquema opcional para la tabla resultante.</param>
+    /// <returns>Un <see cref="DataTable"/> con las filas especificadas.</returns>
+    public static DataTable ToDataTable(this IEnumerable<DataRow> rows, DataTable schema)
     {
-        /// <summary>Convierte una secuencia de DataRow en DataTable, devolviendo una tabla vacía si no hay filas.</summary>
-        public DataTable ToDataTable(DataTable schema)
+        if (rows == null)
         {
-            if (rows == null)
-            {
-                return schema?.Clone() ?? new DataTable();
-            }
-
-            IEnumerable<DataRow> dataRows = rows.ToList();
-            using (IEnumerator<DataRow> enumerator = dataRows.GetEnumerator())
-            {
-                if (!enumerator.MoveNext())
-                {
-                    return schema?.Clone() ?? new DataTable();
-                }
-            }
-            return dataRows.CopyToDataTable();
+            return schema?.Clone() ?? new DataTable();
         }
 
-        /// <summary>Alias de ToDataTable para escenarios que esperan una tabla vacía cuando no hay filas.</summary>
-        public DataTable ToDataTableOrEmpty(DataTable schema)
+        List<DataRow> dataRows = rows.ToList();
+        if (!dataRows.Any())
         {
-            return ToDataTable(rows, schema);
+            return schema?.Clone() ?? new DataTable();
         }
+
+        return dataRows.CopyToDataTable();
+    }
+
+    /// <summary>Alias de ToDataTable para escenarios que esperan una tabla vacía cuando no hay filas.</summary>
+    /// <param name="rows">La secuencia de filas.</param>
+    /// <param name="schema">Esquema opcional.</param>
+    /// <returns>Un <see cref="DataTable"/> con las filas o una tabla vacía.</returns>
+    public static DataTable ToDataTableOrEmpty(this IEnumerable<DataRow> rows, DataTable schema)
+    {
+        return rows.ToDataTable(schema);
     }
 
     /// <summary>Normaliza DBNull a null.</summary>
+    /// <param name="value">El objeto a normalizar.</param>
+    /// <returns>El valor original o null si era DBNull.</returns>
     public static object DbNullToNull(object value)
     {
         return value == DBNull.Value ? null : value;
     }
 
     /// <summary>Compara objetos manejando DBNull y null como equivalentes.</summary>
+    /// <param name="first">Primer objeto.</param>
+    /// <param name="second">Segundo objeto.</param>
+    /// <returns>Verdadero si son equivalentes; de lo contrario, falso.</returns>
     public static bool ObjectsEqual(object first, object second)
     {
         object left = DbNullToNull(first);

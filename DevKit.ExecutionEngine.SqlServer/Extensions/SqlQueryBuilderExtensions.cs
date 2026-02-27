@@ -6,19 +6,25 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 /// </summary>
 public static partial class SqlQueryBuilderExtensions
 {
-    /// <param name="repository">La instancia del proveedor de base de datos</param>
-    /// <typeparam name="T">El tipo de entidad a consultar</typeparam>
-    /// <param name="schema">El nombre del esquema de la base de datos (ej. "dbo")</param>
-    /// <param name="tableName">El nombre de la tabla (opcional, usa el nombre de la clase si no se proporciona)</param>
-    /// <returns>Una nueva instancia del constructor de consultas</returns>
+    /// <summary>
+    /// Inicia la construcción de una consulta SQL para un tipo de entidad específico.
+    /// </summary>
+    /// <param name="repository">La instancia del proveedor de base de datos.</param>
+    /// <typeparam name="T">El tipo de entidad a consultar.</typeparam>
+    /// <param name="schema">El nombre del esquema de la base de datos (ej. "dbo").</param>
+    /// <param name="tableName">El nombre de la tabla (opcional, usa el nombre de la clase si no se proporciona).</param>
+    /// <returns>Una nueva instancia del constructor de consultas <see cref="QueryState{T}"/>.</returns>
     public static QueryState<T> From<T>(this ISQLServerProvider repository, string schema = "dbo", string tableName = null) where T : class, new()
     {
         return new QueryState<T>(repository, schema, tableName);
     }
 
-    /// <param name="query">El estado de la consulta</param>
-    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
-    /// <returns>Una lista de entidades que coinciden con la consulta</returns>
+    /// <summary>
+    /// Ejecuta la consulta y devuelve los resultados como una lista de entidades.
+    /// </summary>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <returns>Una lista de entidades que coinciden con la consulta.</returns>
     public static List<T> ToList<T>(this QueryState<T> query) where T : class, new()
     {
         QueryResult queryResult = BuildQuery(query);
@@ -35,9 +41,11 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Especifica qué propiedades incluir en los resultados de la consulta.
     /// </summary>
-    /// <typeparam name="TResult">El tipo del resultado</typeparam>
-    /// <param name="expression">Una expresión lambda que especifica qué propiedades incluir</param>
-    /// <returns>El estado de la consulta con la expresión de selección aplicada</returns>
+    /// <typeparam name="T">El tipo de entidad original.</typeparam>
+    /// <typeparam name="TResult">El tipo del resultado proyectado.</typeparam>
+    /// <param name="query">El estado de la consulta original.</param>
+    /// <param name="expression">Una expresión lambda que especifica qué propiedades incluir.</param>
+    /// <returns>El estado de la consulta con la expresión de selección aplicada.</returns>
     public static ProjectedQueryState<T, TResult> Select<T, TResult>(this QueryState<T> query, Expression<Func<T, TResult>> expression) where T : class, new()
     {
         if (expression == null)
@@ -61,7 +69,9 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Ejecuta la consulta y devuelve el primer resultado, o null si no se encuentran resultados.
     /// </summary>
-    /// <returns>La primera entidad que coincide con la consulta, o null</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <returns>La primera entidad que coincide con la consulta, o null.</returns>
     public static T FirstOrDefault<T>(this QueryState<T> query) where T : class, new()
     {
         query.TakeField = 1;
@@ -81,8 +91,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve el primer elemento de la secuencia que satisface una condición o lanza una excepción si no se encuentra ningún elemento.
     /// </summary>
-    /// <returns>El primer elemento que coincide con la consulta</returns>
-    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos</exception>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <returns>El primer elemento que coincide con la consulta.</returns>
+    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos.</exception>
     public static T First<T>(this QueryState<T> query) where T : class, new()
     {
         query.TakeField = 1;
@@ -100,9 +112,11 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve el primer elemento de la secuencia que satisface una condición o lanza una excepción si no se encuentra ningún elemento.
     /// </summary>
-    /// <param name="predicate">Función para probar cada elemento para una condición</param>
-    /// <returns>El primer elemento que coincide con la condición</returns>
-    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos que cumplan la condición</exception>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición.</param>
+    /// <returns>El primer elemento que coincide con la condición.</returns>
+    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos que cumplan la condición.</exception>
     public static T First<T>(this QueryState<T> query, Expression<Func<T, bool>> predicate) where T : class, new()
     {
         return query.Where(predicate).First();
@@ -111,7 +125,9 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve el número total de elementos en la secuencia.
     /// </summary>
-    /// <returns>El número total de elementos en la secuencia</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <returns>El número total de elementos en la secuencia.</returns>
     public static int Count<T>(this QueryState<T> query) where T : class, new()
     {
         int? originalTake = query.TakeField;
@@ -143,8 +159,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve el número de elementos de la secuencia que satisfacen una condición.
     /// </summary>
-    /// <param name="predicate">Función para probar cada elemento para una condición</param>
-    /// <returns>El número de elementos de la secuencia que satisfacen la condición</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición.</param>
+    /// <returns>El número de elementos de la secuencia que satisfacen la condición.</returns>
     public static int Count<T>(this QueryState<T> query, Expression<Func<T, bool>> predicate) where T : class, new()
     {
         return query.Where(predicate).Count();
@@ -153,7 +171,9 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Determina si una secuencia contiene elementos.
     /// </summary>
-    /// <returns>true si la secuencia contiene elementos; de lo contrario, false</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <returns>true si la secuencia contiene elementos; de lo contrario, false.</returns>
     public static bool Any<T>(this QueryState<T> query) where T : class, new()
     {
         int? originalTake = query.TakeField;
@@ -177,8 +197,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Determina si algún elemento de una secuencia satisface una condición.
     /// </summary>
-    /// <param name="predicate">Función para probar cada elemento para una condición</param>
-    /// <returns>true si algún elemento de la secuencia supera la prueba en el predicado especificado; de lo contrario, false</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición.</param>
+    /// <returns>true si algún elemento de la secuencia supera la prueba en el predicado especificado; de lo contrario, false.</returns>
     public static bool Any<T>(this QueryState<T> query, Expression<Func<T, bool>> predicate) where T : class, new()
     {
         return query.Where(predicate).Any();
@@ -187,7 +209,9 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Ejecuta la consulta y devuelve los resultados como un arreglo.
     /// </summary>
-    /// <returns>Un arreglo de entidades que coinciden con la consulta</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <returns>Un arreglo de entidades que coinciden con la consulta.</returns>
     public static T[] ToArray<T>(this QueryState<T> query) where T : class, new()
     {
         return query.ToList().ToArray();
@@ -196,8 +220,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Filtra los resultados de la consulta según un predicado.
     /// </summary>
-    /// <param name="predicate">Una función para probar cada elemento para una condición</param>
-    /// <returns>El estado de la consulta con el filtro aplicado</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="predicate">Una función para probar cada elemento para una condición.</param>
+    /// <returns>El estado de la consulta con el filtro aplicado.</returns>
     public static QueryState<T> Where<T>(this QueryState<T> query, Expression<Func<T, bool>> predicate) where T : class, new()
     {
         query.Where.Add(predicate);
@@ -207,9 +233,11 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Ordena los elementos de la consulta en orden ascendente según una clave.
     /// </summary>
-    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector</typeparam>
-    /// <param name="expression">Una función para extraer una clave de un elemento</param>
-    /// <returns>El estado de la consulta con el ordenamiento aplicado</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="expression">Una función para extraer una clave de un elemento.</param>
+    /// <returns>El estado de la consulta con el ordenamiento aplicado.</returns>
     public static QueryState<T> OrderBy<T, TKey>(this QueryState<T> query, Expression<Func<T, TKey>> expression) where T : class, new()
     {
         query.OrderBy.Add((GetMemberName(expression.Body), true));
@@ -219,9 +247,11 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Ordena los elementos de la consulta en orden descendente según una clave.
     /// </summary>
-    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector</typeparam>
-    /// <param name="keySelector">Una función para extraer una clave de un elemento</param>
-    /// <returns>El estado de la consulta con el ordenamiento aplicado</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="keySelector">Una función para extraer una clave de un elemento.</param>
+    /// <returns>El estado de la consulta con el ordenamiento aplicado.</returns>
     public static QueryState<T> OrderByDescending<T, TKey>(this QueryState<T> query, Expression<Func<T, TKey>> keySelector) where T : class, new()
     {
         query.OrderBy.Add((GetMemberName(keySelector.Body), false));
@@ -231,9 +261,11 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Realiza una ordenación posterior de los elementos en una secuencia en orden descendente.
     /// </summary>
-    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector</typeparam>
-    /// <param name="keySelector">Una función para extraer una clave de un elemento</param>
-    /// <returns>El estado de la consulta con la ordenación posterior aplicada</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <typeparam name="TKey">El tipo de la clave devuelta por la función representada por keySelector.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="keySelector">Una función para extraer una clave de un elemento.</param>
+    /// <returns>El estado de la consulta con la ordenación posterior aplicada.</returns>
     public static QueryState<T> ThenByDescending<T, TKey>(this QueryState<T> query, Expression<Func<T, TKey>> keySelector) where T : class, new()
     {
         if (query.OrderBy.Count == 0)
@@ -248,8 +280,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Omite un número especificado de elementos en los resultados de la consulta y luego devuelve los elementos restantes.
     /// </summary>
-    /// <param name="count">El número de elementos a omitir</param>
-    /// <returns>El estado de la consulta con la omisión aplicada</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="count">El número de elementos a omitir.</param>
+    /// <returns>El estado de la consulta con la omisión aplicada.</returns>
     public static QueryState<T> Skip<T>(this QueryState<T> query, int count) where T : class, new()
     {
         query.SkipField = count;
@@ -259,8 +293,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve un número específico de elementos contiguos desde el inicio de los resultados de la consulta.
     /// </summary>
-    /// <param name="count">El número de elementos a devolver</param>
-    /// <returns>El estado de la consulta con la limitación aplicada</returns>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <param name="count">El número de elementos a devolver.</param>
+    /// <returns>El estado de la consulta con la limitación aplicada.</returns>
     public static QueryState<T> Take<T>(this QueryState<T> query, int count) where T : class, new()
     {
         query.TakeField = count;

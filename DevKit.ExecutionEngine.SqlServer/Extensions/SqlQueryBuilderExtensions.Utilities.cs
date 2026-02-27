@@ -1,10 +1,17 @@
+
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
 /// <summary>
-/// Métodos de utilidad y privados para SqlQueryBuilderExtensions
+/// Métodos de utilidad y privados para SqlQueryBuilderExtensions.
 /// </summary>
 public static partial class SqlQueryBuilderExtensions
 {
+    /// <summary>
+    /// Obtiene el nombre completo de la tabla (incluyendo esquema) para un estado de consulta.
+    /// </summary>
+    /// <typeparam name="T">El tipo de entidad.</typeparam>
+    /// <param name="query">El estado de la consulta.</param>
+    /// <returns>El nombre de la tabla formateado como [Esquema].[Tabla].</returns>
     private static string GetTableName<T>(QueryState<T> query) where T : class, new()
     {
         // Use explicitly provided table name, then check TableAttribute, then use type name
@@ -30,8 +37,12 @@ public static partial class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Gets the table name for a projected query state
+    /// Obtiene el nombre completo de la tabla para un estado de consulta proyectada.
     /// </summary>
+    /// <typeparam name="T">El tipo de entidad original.</typeparam>
+    /// <typeparam name="TResult">El tipo del resultado proyectado.</typeparam>
+    /// <param name="query">El estado de la consulta proyectada.</param>
+    /// <returns>El nombre de la tabla formateado con esquema si está disponible.</returns>
     private static string GetTableName<T, TResult>(ProjectedQueryState<T, TResult> query) where T : class, new()
     {
         return string.IsNullOrEmpty(query.Schema)
@@ -39,6 +50,12 @@ public static partial class SqlQueryBuilderExtensions
             : $"[{query.Schema}].[{query.TableName}]";
     }
 
+    /// <summary>
+    /// Procesa una expresión de filtrado para generar la cadena SQL correspondiente.
+    /// </summary>
+    /// <param name="visitor">El visitador de expresiones.</param>
+    /// <param name="expression">La expresión a procesar.</param>
+    /// <returns>La representación SQL de la expresión.</returns>
     private static string ProcessExpression(WhereExpressionVisitor visitor, Expression expression)
     {
         expression = visitor.Visit(expression);
@@ -188,6 +205,11 @@ public static partial class SqlQueryBuilderExtensions
         }
     }
 
+    /// <summary>
+    /// Obtiene el nombre del miembro a partir de una expresión.
+    /// </summary>
+    /// <param name="expression">La expresión a analizar.</param>
+    /// <returns>El nombre del miembro.</returns>
     private static string GetMemberName(Expression expression)
     {
         if (expression is MemberExpression memberExpression)
@@ -204,8 +226,12 @@ public static partial class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Maps a data reader to a projected type using the select expression
+    /// Maps a data reader to a projected type using the select expression.
     /// </summary>
+    /// <typeparam name="TResult">El tipo del resultado.</typeparam>
+    /// <param name="reader">El lector de datos.</param>
+    /// <param name="expression">La expresión de selección.</param>
+    /// <returns>Una instancia de TResult con los datos mapeados.</returns>
     private static TResult MapToProjectedType<TResult>(IDataReader reader, Expression expression)
     {
         if (typeof(TResult).IsAnonymousType())
@@ -265,18 +291,14 @@ public static partial class SqlQueryBuilderExtensions
     }
 
     /// <summary>
-    /// Extension method to check if a type is an anonymous type
+    /// Determina si un tipo es un tipo anónimo.
     /// </summary>
-    extension(Type type)
+    /// <param name="type">El tipo a verificar.</param>
+    /// <returns>True si es un tipo anónimo; de lo contrario, false.</returns>
+    private static bool IsAnonymousType(this Type type)
     {
-        /// <summary>
-        /// Extension method to check if a type is an anonymous type
-        /// </summary>
-        private bool IsAnonymousType()
-        {
-            return type.Name.Contains("AnonymousType") &&
-                   type.IsGenericType &&
-                   type.Attributes.HasFlag(TypeAttributes.NotPublic);
-        }
+        return type.Name.Contains("AnonymousType") &&
+               type.IsGenericType &&
+               type.Attributes.HasFlag(TypeAttributes.NotPublic);
     }
 }

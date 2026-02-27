@@ -2,57 +2,64 @@ namespace DevKit.Extensions.DataTableExtension;
 
 public static partial class DataTableExtensions
 {
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="table"></param>
-    extension(DataTable table)
+    /// <summary>Genera una representación en cadena del esquema del DataTable.</summary>
+    /// <param name="table">El <see cref="DataTable"/> a procesar.</param>
+    /// <returns>Una cadena con el nombre de la tabla y la lista de sus columnas y tipos.</returns>
+    public static string PrintSchema(this DataTable table)
     {
-        /// <summary>Genera una representación en cadena del esquema del DataTable.</summary>
-        public string PrintSchema()
+        if (table == null)
         {
-            StringBuilder stringBuilder = new StringBuilder();
-            stringBuilder.AppendLine($"Table: {table.TableName}");
-            stringBuilder.AppendLine("Columns:");
-            foreach (DataColumn column in table.Columns)
-            {
-                stringBuilder.AppendLine($"- {column.ColumnName} ({column.DataType.Name})");
-            }
-            return stringBuilder.ToString();
+            return string.Empty;
         }
 
-        /// <summary>Calcula estadísticas (mínimo, máximo, promedio, suma y conteo) para columnas numéricas.</summary>
-        public Dictionary<string, Dictionary<string, double>> GetColumnStatistics()
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.AppendLine($"Table: {table.TableName}");
+        stringBuilder.AppendLine("Columns:");
+        foreach (DataColumn column in table.Columns)
         {
-            Dictionary<string, Dictionary<string, double>> stats = new Dictionary<string, Dictionary<string, double>>();
+            stringBuilder.AppendLine($"- {column.ColumnName} ({column.DataType.Name})");
+        }
+        return stringBuilder.ToString();
+    }
 
-            foreach (DataColumn col in table.Columns)
+    /// <summary>Calcula estadísticas (mínimo, máximo, promedio, suma y conteo) para columnas numéricas.</summary>
+    /// <param name="table">El <see cref="DataTable"/> a procesar.</param>
+    /// <returns>Un diccionario con las estadísticas por columna numérica.</returns>
+    public static Dictionary<string, Dictionary<string, double>> GetColumnStatistics(this DataTable table)
+    {
+        if (table == null)
+        {
+            return new Dictionary<string, Dictionary<string, double>>();
+        }
+
+        Dictionary<string, Dictionary<string, double>> stats = new Dictionary<string, Dictionary<string, double>>();
+
+        foreach (DataColumn col in table.Columns)
+        {
+            if (col.DataType == typeof(int) ||
+                col.DataType == typeof(double) ||
+                col.DataType == typeof(decimal) ||
+                col.DataType == typeof(float))
             {
-                if (col.DataType == typeof(int) ||
-                    col.DataType == typeof(double) ||
-                    col.DataType == typeof(decimal) ||
-                    col.DataType == typeof(float))
-                {
-                    List<double> values = table.AsEnumerable()
-                        .Select(row => Convert.ToDouble(row[col]))
-                        .Where(val => !double.IsNaN(val))
-                        .ToList();
+                List<double> values = table.AsEnumerable()
+                    .Select(row => Convert.ToDouble(row[col]))
+                    .Where(val => !double.IsNaN(val))
+                    .ToList();
 
-                    if (values.Any())
+                if (values.Any())
+                {
+                    stats[col.ColumnName] = new Dictionary<string, double>
                     {
-                        stats[col.ColumnName] = new Dictionary<string, double>
-                        {
-                            { "Min", values.Min() },
-                            { "Max", values.Max() },
-                            { "Average", values.Average() },
-                            { "Sum", values.Sum() },
-                            { "Count", values.Count }
-                        };
-                    }
+                        { "Min", values.Min() },
+                        { "Max", values.Max() },
+                        { "Average", values.Average() },
+                        { "Sum", values.Sum() },
+                        { "Count", values.Count }
+                    };
                 }
             }
-
-            return stats;
         }
+
+        return stats;
     }
 }

@@ -5,24 +5,24 @@ namespace DevKit.ExecutionEngine.Redis;
 /// </summary>
 public static class DependencyContainer
 {
-
-    extension(IServiceCollection services)
+    /// <summary>
+    /// Registra el servicio de RedisCache en el contenedor de dependencias.
+    /// </summary>
+    /// <param name="services">La colección de servicios donde se registrará el caché.</param>
+    /// <param name="lifetime">El tiempo de vida del servicio (por defecto <see cref="ServiceLifetime.Scoped"/>).</param>
+    /// <returns>La misma colección de servicios para encadenar llamadas.</returns>
+    public static IServiceCollection AddRedisCache(this IServiceCollection services, ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
-        /// <summary>
-        /// registra el servicio de RedisCache en el contenedor de dependencias.
-        /// </summary>
-        /// <param name="lifetime"></param>
-        public IServiceCollection AddRedisCache(ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        if (services == null)
         {
-            if (services == null)
-                throw new ArgumentNullException(nameof(services));
-
-            services.TryAdd(new ServiceDescriptor(
-                typeof(ICacheService),
-                typeof(CacheService),
-                lifetime));
-
-            return services;
+            throw new ArgumentNullException(nameof(services));
         }
+
+        services.TryAdd(new ServiceDescriptor(
+            typeof(ICacheService),
+            typeof(CacheService),
+            lifetime));
+
+        return services;
     }
 }

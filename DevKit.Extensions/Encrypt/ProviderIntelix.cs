@@ -58,7 +58,10 @@ public static class ProviderIntelix
     public static string DecifrarCaracter(string caracterADecifrar, int length, int index)
     {
         int pos = CypherPattern.IndexOf(caracterADecifrar, StringComparison.Ordinal);
-        if (pos == -1) return caracterADecifrar;
+        if (pos == -1)
+        {
+            return caracterADecifrar;
+        }
 
         int originalPos = pos - length - index;
         originalPos = (originalPos % FindPattern.Length + FindPattern.Length) % FindPattern.Length;

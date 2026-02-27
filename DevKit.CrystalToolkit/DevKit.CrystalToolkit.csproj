@@ -14,9 +14,9 @@
 		<Product>CoreReportes</Product>
 		<Description>CoreCrystalReports es una biblioteca de utilidades y extensiones para Crystal Reports que proporciona herramientas optimizadas para la generación, visualización y exportación de reportes Crystal en aplicaciones .NET Framework 4.8. Incluye métodos de extensión para la manipulación de reportes, gestión de parámetros y exportación a múltiples formatos. Compatible con Crystal Reports Runtime 13.0.2000.0.</Description>
 		<Copyright>Copyright 2025 David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2025.11.11</AssemblyVersion>
-		<FileVersion>2025.11.11</FileVersion>
-		<Version>2025.11.11</Version>
+		<AssemblyVersion>2026.02.27</AssemblyVersion>
+		<FileVersion>2026.02.27</FileVersion>
+		<Version>2026.02.27</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

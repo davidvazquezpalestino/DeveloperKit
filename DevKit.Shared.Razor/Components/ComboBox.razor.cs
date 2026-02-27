@@ -1,3 +1,4 @@
+
 namespace DevKit.Shared.Razor.Components;
 
 /// <summary>
@@ -8,6 +9,7 @@ namespace DevKit.Shared.Razor.Components;
 /// <typeparam name="TValue">Tipo del valor seleccionado.</typeparam>
 public partial class ComboBox<TItem, TValue>
 {
+    /// <summary>Clave que representa el valor seleccionado en el elemento select del DOM.</summary>
     private string SelectedKey;
 
     /// <summary>
@@ -61,8 +63,7 @@ public partial class ComboBox<TItem, TValue>
     [Parameter] public Func<TItem, TValue> ValueSelector { get; set; }
 
     /// <summary>
-    /// Sincroniza la clave seleccionada del <select> a partir del valor tipado
-    /// para asegurar que la opción correcta aparezca marcada en el render.</select>
+    /// Sincroniza la clave seleccionada del select a partir del valor tipado.
     /// </summary>
     protected override void OnParametersSet()
     {
@@ -85,7 +86,6 @@ public partial class ComboBox<TItem, TValue>
 
     /// <summary>
     /// Obtiene el texto a mostrar para un elemento.
-    /// Usa <see cref="TextSelector"/> si está definido; de lo contrario, reflexión con <see cref="TextField"/>.
     /// </summary>
     /// <param name="item">Elemento origen.</param>
     /// <returns>Texto representativo del elemento.</returns>
@@ -104,10 +104,9 @@ public partial class ComboBox<TItem, TValue>
 
         return string.Empty;
     }
+
     /// <summary>
     /// Obtiene el valor tipado de un elemento.
-    /// Usa <see cref="ValueSelector"/> si está definido; de lo contrario, reflexión con <see cref="ValueField"/>.
-    /// Incluye intentos de conversión a <typeparamref name="TValue"/> cuando es posible.
     /// </summary>
     /// <param name="item">Elemento origen.</param>
     /// <returns>Valor del elemento en el tipo <typeparamref name="TValue"/>.</returns>
@@ -173,10 +172,10 @@ public partial class ComboBox<TItem, TValue>
     private string ConvertToKey(TValue value) => value?.ToString() ?? string.Empty;
 
     /// <summary>
-    /// Maneja el evento de cambio del <select/>.
-    /// Resuelve la clave seleccionada a un elemento y obtiene su <typeparamref name="TValue"/> para propagar el cambio.
+    /// Maneja el evento de cambio del select.
     /// </summary>
     /// <param name="e">Argumentos del evento de cambio.</param>
+    /// <returns>Una tarea que representa la operación asíncrona.</returns>
     private async Task HandleChange(ChangeEventArgs e)
     {
         SelectedKey = e.Value?.ToString();

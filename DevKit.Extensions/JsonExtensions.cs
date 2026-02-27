@@ -11,121 +11,97 @@ public static class JsonExtensions
         DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
     };
 
-    /// <summary>Convierte una colección de diccionarios en una cadena JSON.</summary>
-    public static string ToJson(this IEnumerable<Dictionary<string, object>> dictionaries, JsonSerializerOptions options = null)
+    /// <summary>Convierte una cadena JSON en un diccionario de string/object.</summary>
+    /// <param name="json">La cadena JSON a convertir.</param>
+    /// <returns>Un diccionario con los datos del JSON.</returns>
+    public static Dictionary<string, object> ToDictionary(this string json)
     {
-        if (dictionaries == null)
-            return null;
-
-        return JsonSerializer.Serialize(dictionaries, options ?? DefaultJsonOptions);
-    }
-
-    /// <summary>Convierte un diccionario en una cadena JSON.</summary>
-    public static string ToJson(this Dictionary<string, object> dictionary, JsonSerializerOptions options = null)
-    {
-        if (dictionary == null)
-            return null;
-
-        return JsonSerializer.Serialize(dictionary, options ?? DefaultJsonOptions);
-    }
-
-    /// <summary>Convierte un objeto genérico en una cadena JSON.</summary>
-    public static string ToJson<T>(this T obj, JsonSerializerOptions options = null)
-    {
-        if (obj == null)
-            return null;
-
-        return JsonSerializer.Serialize(obj, options ?? DefaultJsonOptions);
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="json"></param>
-    extension(string json)
-    {
-        /// <summary>Convierte una cadena JSON en un diccionario de string/object.</summary>
-        public Dictionary<string, object> ToDictionary()
+        if (string.IsNullOrWhiteSpace(json))
         {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return new Dictionary<string, object>();
-            }
-
-            JsonObject jsonNode = null;
-            try
-            {
-                jsonNode = JsonNode.Parse(json)?.AsObject();
-            }
-            catch
-            {
-                return new Dictionary<string, object>();
-            }
-            if (jsonNode == null)
-            {
-                return new Dictionary<string, object>();
-            }
-
-            Dictionary<string, object> dictionary = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            foreach (KeyValuePair<string, JsonNode> item in jsonNode)
-            {
-                dictionary[item.Key] = NormalizeNodeValue(item.Value);
-            }
-            return dictionary;
+            return new Dictionary<string, object>();
         }
 
-        /// <summary>Convierte una cadena JSON en un objeto del tipo especificado.</summary>
-        public T ToObject<T>(JsonSerializerOptions options = null)
+        JsonObject jsonNode = null;
+        try
         {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return default(T);
-            }
-            try
-            {
-                return JsonSerializer.Deserialize<T>(json, options ?? DefaultJsonOptions);
-            }
-            catch
-            {
-                return default(T);
-            }
+            jsonNode = JsonNode.Parse(json)?.AsObject();
+        }
+        catch
+        {
+            return new Dictionary<string, object>();
+        }
+        if (jsonNode == null)
+        {
+            return new Dictionary<string, object>();
         }
 
-        /// <summary>Convierte una cadena JSON que contiene un array de objetos en una lista de diccionarios.</summary>
-        public IEnumerable<Dictionary<string, object>> ToDictionaryList()
+        Dictionary<string, object> dictionary = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+        foreach (KeyValuePair<string, JsonNode> item in jsonNode)
         {
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                yield break;
-            }
+            dictionary[item.Key] = NormalizeNodeValue(item.Value);
+        }
+        return dictionary;
+    }
 
-            JsonArray jsonArray = null;
-            try
-            {
-                jsonArray = JsonNode.Parse(json)?.AsArray();
-            }
-            catch
-            {
-                yield break;
-            }
-            if (jsonArray == null)
-            {
-                yield break;
-            }
+    /// <summary>Convierte una cadena JSON en un objeto del tipo especificado.</summary>
+    /// <typeparam name="T">El tipo del objeto de destino.</typeparam>
+    /// <param name="json">La cadena JSON a convertir.</param>
+    /// <param name="options">Opciones de serialización opcionales.</param>
+    /// <returns>El objeto convertido o default(T) si hay error.</returns>
+    public static T ToObject<T>(this string json, JsonSerializerOptions options = null)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return default(T);
+        }
+        try
+        {
+            return JsonSerializer.Deserialize<T>(json, options ?? DefaultJsonOptions);
+        }
+        catch
+        {
+            return default(T);
+        }
+    }
 
-            foreach (JsonNode item in jsonArray)
+    /// <summary>Convierte una cadena JSON que contiene un array de objetos en una lista de diccionarios.</summary>
+    /// <param name="json">La cadena JSON a convertir.</param>
+    /// <returns>Una colección de diccionarios.</returns>
+    public static IEnumerable<Dictionary<string, object>> ToDictionaryList(this string json)
+    {
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return Enumerable.Empty<Dictionary<string, object>>();
+        }
+
+        JsonArray jsonArray = null;
+        try
+        {
+            jsonArray = JsonNode.Parse(json)?.AsArray();
+        }
+        catch
+        {
+            return Enumerable.Empty<Dictionary<string, object>>();
+        }
+        if (jsonArray == null)
+        {
+            return Enumerable.Empty<Dictionary<string, object>>();
+        }
+
+        List<Dictionary<string, object>> list = new List<Dictionary<string, object>>();
+        foreach (JsonNode item in jsonArray)
+        {
+            if (item is JsonObject jsonObject)
             {
-                if (item is JsonObject jsonObject)
+                Dictionary<string, object> dictionary = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+                foreach (KeyValuePair<string, JsonNode> prop in jsonObject)
                 {
-                    Dictionary<string, object> dictionary = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-                    foreach (KeyValuePair<string, JsonNode> prop in jsonObject)
-                    {
-                        dictionary[prop.Key] = NormalizeNodeValue(prop.Value);
-                    }
-                    yield return dictionary;
+                    dictionary[prop.Key] = NormalizeNodeValue(prop.Value);
                 }
+                list.Add(dictionary);
             }
         }
+        return list;
     }
 
     /// <summary>Normaliza un JsonNode a un tipo .NET primario cuando sea posible.</summary>

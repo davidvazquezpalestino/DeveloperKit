@@ -6,7 +6,10 @@ namespace DevKit.ExecutionEngine.Redis;
 /// </summary>
 internal class CacheService : ICacheService
 {
+    /// <summary>Opciones de configuración para Redis.</summary>
     private readonly IOptions<RedisOptions> RedisOptions;
+    
+    /// <summary>Instancia de la base de datos de Redis para realizar operaciones.</summary>
     private readonly IDatabase DataBase;
 
     /// <summary>
@@ -60,7 +63,7 @@ internal class CacheService : ICacheService
     /// <inheritdoc/>
     public async Task InvalidateCacheAsync(params Expression[] expressions)
     {
-        foreach (var expression in expressions)
+        foreach (Expression expression in expressions)
         {
             if (expression is LambdaExpression lambda)
             {
@@ -78,6 +81,7 @@ internal class CacheService : ICacheService
     /// <param name="value">El valor a almacenar.</param>
     /// <param name="ttl">El tiempo de vida del valor en caché.</param>
     /// <param name="tags">Etiquetas opcionales para agrupar claves.</param>
+    /// <returns>Una tarea que representa la operación asíncrona.</returns>
     private async Task SetInternalAsync<T>(string fullKey, T value, TimeSpan ttl, params string[] tags)
     {
         await DataBase.StringSetAsync(fullKey, System.Text.Json.JsonSerializer.Serialize(value), ttl);
@@ -91,12 +95,19 @@ internal class CacheService : ICacheService
             }
         }
     }
+
     /// <summary>
     /// Evalúa si un objeto es null o vacío (colecciones, strings).
     /// </summary>
+    /// <typeparam name="T">El tipo del valor a evaluar.</typeparam>
+    /// <param name="value">El valor a evaluar.</param>
+    /// <returns>Verdadero si el valor es nulo o vacío; de lo contrario, falso.</returns>
     private static bool IsNullOrEmpty<T>(T value)
     {
-        if (value == null) return true;
+        if (value == null)
+        {
+            return true;
+        }
 
         switch (value)
         {
@@ -105,7 +116,7 @@ internal class CacheService : ICacheService
 
             case System.Collections.IEnumerable enumerable:
                 // Verificar si la colección tiene elementos
-                foreach (var _ in enumerable)
+                foreach (object _ in enumerable)
                 {
                     return false; // tiene al menos uno
                 }
@@ -115,6 +126,7 @@ internal class CacheService : ICacheService
                 return false;
         }
     }
+
     /// <summary>
     /// Construye la clave completa incluyendo el nombre del entorno.
     /// </summary>

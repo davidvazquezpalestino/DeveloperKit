@@ -12,9 +12,9 @@
 		<Title>CoreInterfaces - Biblioteca de Interfaces Genéricas para Aplicaciones .NET</Title>
 		<Description>CoreInterfaces es una biblioteca que proporciona interfaces genéricas y estándares para la implementación de patrones de diseño en aplicaciones .NET. Incluye interfaces para repositorios (IRepository), servicios (IService), validación (IValidator), manejo de eventos (IEventHandler) y patrones de comportamiento común. Compatible con .NET 8.0 y 9.0, y diseñada para facilitar la implementación de arquitecturas limpias y mantenibles.</Description>
 		<Copyright>Copyright  David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2026.01.19</AssemblyVersion>
-		<FileVersion>2026.01.19</FileVersion>
-		<Version>2026.01.19</Version>
+		<AssemblyVersion>2026.02.27</AssemblyVersion>
+		<FileVersion>2026.02.27</FileVersion>
+		<Version>2026.02.27</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

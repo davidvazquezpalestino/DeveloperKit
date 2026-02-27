@@ -1,3 +1,4 @@
+
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
 /// <summary>
@@ -6,12 +7,12 @@ namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 public static partial class SqlQueryBuilderExtensions
 {
     /// <summary>
-    /// Ejecuta la consulta de forma asíncrona y devuelve los resultados como una lista.
+    /// Ejecuta la consulta de forma asíncrona y devuelve los resultados como una lista de entidades.
     /// </summary>
-    /// <typeparam name="T">El tipo de entidad que se está consultando</typeparam>
-    /// <param name="queryState">El estado de la consulta</param>
-    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
-    /// <returns>Una tarea que representa la operación asíncrona, conteniendo la lista de entidades</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo la lista de entidades.</returns>
     public static async Task<List<T>> ToListAsync<T>(this QueryState<T> queryState, CancellationToken cancellationToken = default) where T : class, new()
     {
         QueryResult queryResult = BuildQuery(queryState);
@@ -27,6 +28,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Ejecuta la consulta de forma asíncrona y devuelve el primer resultado, o null si no se encuentran resultados.
     /// </summary>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo la primera entidad o null.</returns>
     public static async Task<T> FirstOrDefaultAsync<T>(this QueryState<T> queryState, CancellationToken cancellationToken = default) where T : class, new()
     {
         queryState.TakeField = 1;
@@ -42,15 +47,17 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve de forma asíncrona el primer elemento de la secuencia que satisface una condición o lanza una excepción si no se encuentra ningún elemento.
     /// </summary>
-    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
-    /// <returns>Una tarea que representa la operación asíncrona, conteniendo el primer elemento</returns>
-    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos</exception>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo el primer elemento.</returns>
+    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos.</exception>
     public static async Task<T> FirstAsync<T>(this QueryState<T> queryState, CancellationToken cancellationToken = default) where T : class, new()
     {
         queryState.TakeField = 1;
         QueryResult queryResult = BuildQuery(queryState);
 
-        return await queryState.DbProvider.ExecuteQueryAsSingleAsync<T>(queryResult.SQL,
+        return await queryState.DbProvider.ExecuteQueryAsSingleAsync(queryResult.SQL,
             reader => reader.GetItem<T>(),
             collection => collection.AddSqlParameters(queryResult.Parameters),
             cancellationToken).ConfigureAwait(false);
@@ -59,10 +66,12 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve de forma asíncrona el primer elemento de la secuencia que satisface una condición o lanza una excepción si no se encuentra ningún elemento.
     /// </summary>
-    /// <param name="predicate">Función para probar cada elemento para una condición</param>
-    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
-    /// <returns>Una tarea que representa la operación asíncrona, conteniendo el primer elemento que cumple la condición</returns>
-    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos que cumplan la condición</exception>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo el primer elemento que cumple la condición.</returns>
+    /// <exception cref="InvalidOperationException">Se lanza cuando la secuencia no contiene elementos que cumplan la condición.</exception>
     public static async Task<T> FirstAsync<T>(this QueryState<T> queryState, Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) where T : class, new()
     {
         return await queryState.Where(predicate).FirstAsync(cancellationToken).ConfigureAwait(false);
@@ -71,8 +80,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve de forma asíncrona el número total de elementos en la secuencia.
     /// </summary>
-    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
-    /// <returns>Una tarea que representa la operación asíncrona, conteniendo el número total de elementos</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo el número total de elementos.</returns>
     public static async Task<int> CountAsync<T>(this QueryState<T> queryState, CancellationToken cancellationToken = default) where T : class, new()
     {
         int? originalTake = queryState.TakeField;
@@ -103,9 +114,11 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Devuelve de forma asíncrona el número de elementos de la secuencia que satisfacen una condición.
     /// </summary>
-    /// <param name="predicate">Función para probar cada elemento para una condición</param>
-    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
-    /// <returns>Una tarea que representa la operación asíncrona, conteniendo el número de elementos que satisfacen la condición</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo el número de elementos que satisfacen la condición.</returns>
     public static async Task<int> CountAsync<T>(this QueryState<T> queryState, Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) where T : class, new()
     {
         return await queryState.Where(predicate).CountAsync(cancellationToken).ConfigureAwait(false);
@@ -114,8 +127,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Determina de forma asíncrona si una secuencia contiene elementos.
     /// </summary>
-    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
-    /// <returns>Una tarea que representa la operación asíncrona, conteniendo true si la secuencia contiene elementos; de lo contrario, false</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo true si la secuencia contiene elementos; de lo contrario, false.</returns>
     public static async Task<bool> AnyAsync<T>(this QueryState<T> queryState, CancellationToken cancellationToken = default) where T : class, new()
     {
         int? originalTake = queryState.TakeField;
@@ -138,9 +153,11 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Determina de forma asíncrona si algún elemento de una secuencia satisface una condición.
     /// </summary>
-    /// <param name="predicate">Función para probar cada elemento para una condición</param>
-    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
-    /// <returns>Una tarea que representa la operación asíncrona, conteniendo true si algún elemento de la secuencia supera la prueba en el predicado especificado; de lo contrario, false</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="predicate">Función para probar cada elemento para una condición.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo true si algún elemento de la secuencia supera la prueba en el predicado especificado; de lo contrario, false.</returns>
     public static async Task<bool> AnyAsync<T>(this QueryState<T> queryState, Expression<Func<T, bool>> predicate, CancellationToken cancellationToken = default) where T : class, new()
     {
         return await queryState.Where(predicate).AnyAsync(cancellationToken).ConfigureAwait(false);
@@ -149,8 +166,10 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Ejecuta la consulta de forma asíncrona y devuelve los resultados como un arreglo.
     /// </summary>
-    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona</param>
-    /// <returns>Una tarea que representa la operación asíncrona, conteniendo un arreglo de entidades</returns>
+    /// <typeparam name="T">El tipo de entidad que se está consultando.</typeparam>
+    /// <param name="queryState">El estado de la consulta.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo un arreglo de entidades.</returns>
     public static async Task<T[]> ToArrayAsync<T>(this QueryState<T> queryState, CancellationToken cancellationToken = default) where T : class, new()
     {
         List<T> list = await queryState.ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -160,6 +179,11 @@ public static partial class SqlQueryBuilderExtensions
     /// <summary>
     /// Ejecuta una consulta proyectada de forma asíncrona y devuelve los resultados como una lista.
     /// </summary>
+    /// <typeparam name="T">El tipo de entidad original.</typeparam>
+    /// <typeparam name="TResult">El tipo del resultado proyectado.</typeparam>
+    /// <param name="queryState">El estado de la consulta proyectada.</param>
+    /// <param name="cancellationToken">Un token para cancelar la operación asíncrona.</param>
+    /// <returns>Una tarea que representa la operación asíncrona, conteniendo la lista de resultados proyectados.</returns>
     public static async Task<List<TResult>> ToListAsync<T, TResult>(this ProjectedQueryState<T, TResult> queryState, CancellationToken cancellationToken = default) where T : class, new()
     {
         QueryResult queryResult = BuildQuery(queryState);

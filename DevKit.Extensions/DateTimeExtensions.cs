@@ -4,7 +4,11 @@ namespace DevKit.Extensions;
 public static class DateTimeExtensions
 {
     /// <summary>Calcula la diferencia entre dos fechas en la unidad especificada.</summary>
-    public static int DateDiff(DateInterval interval, DateTime startDate, DateTime endDate)
+    /// <param name="startDate">La fecha de inicio.</param>
+    /// <param name="interval">La unidad de tiempo (año, mes, día, etc.).</param>
+    /// <param name="endDate">La fecha de fin.</param>
+    /// <returns>La diferencia en la unidad especificada.</returns>
+    public static int DateDiff(this DateTime startDate, DateInterval interval, DateTime endDate)
     {
         switch (interval)
         {
@@ -30,16 +34,29 @@ public static class DateTimeExtensions
                 return 0;
         }
     }
+
     /// <summary>Obtiene el último día del mes para la fecha especificada.</summary>
-    public static DateTime EndOfMonth(DateTime date) =>
+    /// <param name="date">La fecha de referencia.</param>
+    /// <returns>Una nueva instancia de <see cref="DateTime"/> que representa el último día del mes.</returns>
+    public static DateTime EndOfMonth(this DateTime date) =>
         new DateTime(date.Year, date.Month, DateTime.DaysInMonth(date.Year, date.Month));
 
     /// <summary>Determina si una cadena representa una fecha válida.</summary>
-    public static bool IsValidDate(string input) => DateTime.TryParse(input, out _);
+    /// <param name="input">La cadena a verificar.</param>
+    /// <returns>Verdadero si es una fecha válida; de lo contrario, falso.</returns>
+    public static bool IsValidDate(this string input) => DateTime.TryParse(input, out _);
 
     /// <summary>Intenta convertir la representación de cadena de una fecha a su equivalente DateTime.</summary>
-    public static DateTime? ParseDate(string input, string[] formats = null)
+    /// <param name="input">La cadena a convertir.</param>
+    /// <param name="formats">Formatos opcionales a intentar.</param>
+    /// <returns>El <see cref="DateTime"/> resultante o null si no se pudo convertir.</returns>
+    public static DateTime? ParseDate(this string input, string[] formats = null)
     {
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            return null;
+        }
+
         if (formats == null)
         {
             formats = ["yyyy-MM-dd", "dd/MM/yyyy", "MM/dd/yyyy", "yyyyMMdd"];
@@ -53,22 +70,36 @@ public static class DateTimeExtensions
             }
         }
 
-        return null; // o lanzar excepción si prefieres control estricto
+        return null;
     }
+
     /// <summary>Obtiene el número de semana ISO 8601 para la fecha especificada.</summary>
-    public static int GetIsoWeek(DateTime date) =>
+    /// <param name="date">La fecha de referencia.</param>
+    /// <returns>El número de semana ISO.</returns>
+    public static int GetIsoWeek(this DateTime date) =>
         CultureInfo.InvariantCulture.Calendar.GetWeekOfYear(date, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday);
 
     /// <summary>Convierte una fecha a un DateTime con el desplazamiento UTC especificado.</summary>
-    public static DateTime ToDateOffset(DateTime date, int offsetMinutes) =>
+    /// <param name="date">La fecha de referencia.</param>
+    /// <param name="offsetMinutes">El desplazamiento en minutos.</param>
+    /// <returns>La fecha convertida a UTC con el desplazamiento aplicado.</returns>
+    public static DateTime ToDateOffset(this DateTime date, int offsetMinutes) =>
         new DateTimeOffset(date, TimeSpan.FromMinutes(offsetMinutes)).UtcDateTime;
 
     /// <summary>Crea una nueva instancia de DateTime a partir de los componentes de fecha especificados.</summary>
+    /// <param name="year">Año.</param>
+    /// <param name="month">Mes.</param>
+    /// <param name="day">Día.</param>
+    /// <returns>Una nueva instancia de <see cref="DateTime"/>.</returns>
     public static DateTime DateFromParts(int year, int month, int day) => new DateTime(year, month, day);
 
     /// <summary>Obtiene el nombre del día de la semana para la fecha especificada.</summary>
-    public static string GetDayName(DateTime date) => date.ToString("dddd", CultureInfo.CurrentCulture);
+    /// <param name="date">La fecha de referencia.</param>
+    /// <returns>El nombre del día de la semana.</returns>
+    public static string GetDayName(this DateTime date) => date.ToString("dddd", CultureInfo.CurrentCulture);
 
     /// <summary>Obtiene el nombre del mes para la fecha especificada.</summary>
-    public static string GetMonthName(DateTime date) => date.ToString("MMMM", CultureInfo.CurrentCulture);
+    /// <param name="date">La fecha de referencia.</param>
+    /// <returns>El nombre del mes.</returns>
+    public static string GetMonthName(this DateTime date) => date.ToString("MMMM", CultureInfo.CurrentCulture);
 }

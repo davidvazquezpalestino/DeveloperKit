@@ -1,18 +1,10 @@
 # DevKit.ExecutionEngine.Redis
 
-Este proyecto proporciona una implementación de servicio de caché utilizando Redis como backend. Está diseñado para integrar fácilmente el almacenamiento en caché en aplicaciones .NET, permitiendo mejorar el rendimiento al reducir las consultas repetitivas a bases de datos u otros servicios.
-
-## Características Principales
-
-- **Caché Asíncrono**: Soporte completo para operaciones asíncronas.
-- **Invalidación Inteligente**: Permite invalidar entradas de caché basadas en expresiones lambda.
-- **Configuración Flexible**: Opciones configurables para conexión, TTL y entorno.
-- **Integración con LINQ**: Utiliza expresiones lambda para generar claves de caché de manera automática.
+Servicio de caché distribuida utilizando Redis como backend, con soporte para generación automática de claves mediante expresiones lambda.
 
 ## Instalación
 
-1. Agrega el paquete NuGet correspondiente al proyecto.
-2. Configura las opciones de Redis en tu archivo `appsettings.json`:
+1. Configura la sección `RedisOptions` en tu `appsettings.json`:
 
 ```json
 {
@@ -24,15 +16,15 @@ Este proyecto proporciona una implementación de servicio de caché utilizando R
 }
 ```
 
-3. Registra el servicio en el contenedor de dependencias:
+2. Registra el servicio en el contenedor de dependencias:
 
 ```csharp
-services.AddSingleton<ICacheService, CacheService>();
+services.AddRedisCache(ServiceLifetime.Scoped);
 ```
 
-## Uso Básico
+## Uso
 
-### Inyección de Dependencias
+### Inyección y Consumo
 
 ```csharp
 public class MiServicio
@@ -46,42 +38,22 @@ public class MiServicio
 
     public async Task<List<Producto>> ObtenerProductosAsync()
     {
-        return await _cacheService.GetOrSetAsync(() => _repositorio.ObtenerProductosAsync());
+        // Obtiene del caché o ejecuta la función si no existe
+        return await _cacheService.GetOrSetAsync(() => _repositorio.ObtenerProductosConsutlaAsync());
     }
 }
 ```
 
 ### Invalidación de Caché
 
+Invalida entradas específicas basadas en la misma expresión utilizada para el registro:
+
 ```csharp
-await _cacheService.InvalidateCacheAsync(() => _repositorio.ObtenerProductosAsync());
+await _cacheService.InvalidateCacheAsync(() => _repositorio.ObtenerProductosConsutlaAsync());
 ```
 
-## Clases Principales
+## Configuración (RedisOptions)
 
-- **ICacheService**: Interfaz que define los métodos del servicio de caché.
-- **CacheService**: Implementación concreta del servicio de caché.
-- **RedisOptions**: Clase de configuración para Redis.
-- **ExpressionConditionExtractor**: Utilidad para extraer condiciones de expresiones lambda y construir claves de Redis.
-
-## Configuración
-
-La configuración se realiza a través de la clase `RedisOptions`:
-
-- `ConnectionRedis`: Cadena de conexión a Redis (ej. "localhost:6379").
-- `Environment`: Nombre del entorno, usado como prefijo en las claves.
-- `DiasCache`: Número de días que dura el caché por defecto.
-
-## Dependencias
-
-- StackExchange.Redis
-- Microsoft.Extensions.Options
-- System.Text.Json
-
-## Notas
-
-- Asegúrate de que Redis esté ejecutándose y accesible.
-- Las claves de caché incluyen el nombre del entorno para evitar conflictos entre entornos.
-- El TTL se calcula en días, pero puede ser ajustado según necesidades.
-
-Para más detalles, consulta la documentación completa en `Documentation.md`.
+- `ConnectionRedis`: Cadena de conexión (ej. "localhost:6379").
+- `Environment`: Prefijo para las claves (evita conflictos entre entornos).
+- `DiasCache`: TTL por defecto para las nuevas entradas.

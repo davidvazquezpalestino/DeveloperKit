@@ -22,10 +22,10 @@ internal class Program
     static async Task Main(string[] args)
     {
         string url = "https://api-cat-cfdi.infosoft.mx/api/cfdi/services";
-        var stopwatch = Stopwatch.StartNew(); // iniciar cronómetro
+        Stopwatch stopwatch = Stopwatch.StartNew(); // iniciar cronómetro
 
-        var tasks = new List<Task>();
-        var semaphore = new SemaphoreSlim(50); // máximo 10 en paralelo
+        List<Task> tasks = new List<Task>();
+        SemaphoreSlim semaphore = new SemaphoreSlim(50); // máximo 10 en paralelo
 
         for (int i = 0; i < 10000; i++)
         {

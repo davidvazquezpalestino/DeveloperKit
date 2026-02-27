@@ -10,9 +10,9 @@
 		<Product>ExecutionEngineMySQL</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2025.11.11</AssemblyVersion>
-		<FileVersion>2025.11.11</FileVersion>
-		<Version>2025.11.11</Version>
+		<AssemblyVersion>2026.02.27</AssemblyVersion>
+		<FileVersion>2026.02.27</FileVersion>
+		<Version>2026.02.27</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

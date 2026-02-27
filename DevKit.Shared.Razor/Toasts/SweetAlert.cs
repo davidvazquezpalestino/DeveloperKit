@@ -36,7 +36,7 @@ public class SweetAlert(IJSRuntime jsRuntime) : ISweetAlert
         SweetAlertIcon icon = SweetAlertIcon.Question)
     {
         await EnsureInitializedAsync();
-        var result = await jsRuntime.InvokeAsync<JsonElement>(
+        JsonElement result = await jsRuntime.InvokeAsync<JsonElement>(
             $"{SweetAlert2}.fire",
             new
             {
@@ -51,7 +51,7 @@ public class SweetAlert(IJSRuntime jsRuntime) : ISweetAlert
             });
 
         // Check the result using JsonElement
-        return result.TryGetProperty("isConfirmed", out var isConfirmed) &&
+        return result.TryGetProperty("isConfirmed", out JsonElement isConfirmed) &&
                isConfirmed.GetBoolean();
     }
 

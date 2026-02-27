@@ -5,93 +5,114 @@ namespace DevKit.JWT.Extensions;
 /// </summary>
 public static class JwtServiceCollectionExtensions
 {
-    extension(IServiceCollection services)
+    /// <summary>
+    /// Agrega los servicios JWT al contenedor de dependencias.
+    /// </summary>
+    /// <param name="services">La colección de servicios de <see cref="IServiceCollection"/>.</param>
+    /// <param name="configuration">La configuración de la aplicación.</param>
+    /// <returns>La misma colección de servicios.</returns>
+    public static IServiceCollection AddJwtServices(this IServiceCollection services, IConfiguration configuration)
     {
-        /// <summary>
-        /// Agrega los servicios JWT al contenedor de dependencias.
-        /// </summary>
-        public IServiceCollection AddJwtServices(IConfiguration configuration)
+        if (services == null)
         {
-            // Configurar opciones JWT
-            services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionKey));
-
-            // Registrar servicios
-            services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
-            services.AddScoped<IAccessToken, AccessToken>();
-
-            return services;
+            throw new ArgumentNullException(nameof(services));
         }
 
-        /// <summary>
-        /// Agrega los servicios JWT con configuración personalizada.
-        /// </summary>
-        public IServiceCollection AddJwtServices(Action<JwtOptions> configureOptions)
+        // Configurar opciones JWT
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionKey));
+
+        // Registrar servicios
+        services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IAccessToken, AccessToken>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Agrega los servicios JWT con configuración personalizada.
+    /// </summary>
+    /// <param name="services">La colección de servicios de <see cref="IServiceCollection"/>.</param>
+    /// <param name="configureOptions">Acción para configurar las opciones.</param>
+    /// <returns>La misma colección de servicios.</returns>
+    public static IServiceCollection AddJwtServices(this IServiceCollection services, Action<JwtOptions> configureOptions)
+    {
+        if (services == null)
         {
-            services.Configure(configureOptions);
-
-            // Registrar servicios
-            services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
-            services.AddScoped<IAccessToken, AccessToken>();
-
-            return services;
+            throw new ArgumentNullException(nameof(services));
         }
 
-        /// <summary>
-        /// Agrega autenticación JWT al pipeline.
-        /// </summary>
-        public IServiceCollection AddJwtAuthentication(IConfiguration configuration)
-        {
-            JwtOptions jwtOptions = configuration.GetSection(JwtOptions.SectionKey).Get<JwtOptions>();
+        services.Configure(configureOptions);
 
-            if (jwtOptions == null)
+        // Registrar servicios
+        services.AddSingleton<IRefreshTokenService, RefreshTokenService>();
+        services.AddScoped<IAccessToken, AccessToken>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Agrega autenticación JWT al pipeline.
+    /// </summary>
+    /// <param name="services">La colección de servicios de <see cref="IServiceCollection"/>.</param>
+    /// <param name="configuration">La configuración de la aplicación.</param>
+    /// <returns>La misma colección de servicios.</returns>
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+    {
+        if (services == null)
+        {
+            throw new ArgumentNullException(nameof(services));
+        }
+
+        JwtOptions jwtOptions = configuration.GetSection(JwtOptions.SectionKey).Get<JwtOptions>();
+
+        if (jwtOptions == null)
+        {
+            throw new InvalidOperationException("JwtOptions no está configurado correctamente");
+        }
+
+        byte[] key = Encoding.UTF8.GetBytes(jwtOptions.SecurityKey);
+
+        services.AddAuthentication(options =>
             {
-                throw new InvalidOperationException("JwtOptions no está configurado correctamente");
-            }
-
-            byte[] key = Encoding.UTF8.GetBytes(jwtOptions.SecurityKey);
-
-            services.AddAuthentication(options =>
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = jwtOptions.RequireHttpsMetadata;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddJwtBearer(options =>
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = jwtOptions.ValidIssuer,
+                    ValidateAudience = true,
+                    ValidAudience = jwtOptions.ValidAudience,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromMinutes(jwtOptions.ClockSkewMinutes),
+                    RequireExpirationTime = true
+                };
+
+                // Eventos para logging y manejo personalizado
+                options.Events = new JwtBearerEvents
                 {
-                    options.RequireHttpsMetadata = jwtOptions.RequireHttpsMetadata;
-                    options.SaveToken = true;
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    OnAuthenticationFailed = context =>
                     {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(key),
-                        ValidateIssuer = true,
-                        ValidIssuer = jwtOptions.ValidIssuer,
-                        ValidateAudience = true,
-                        ValidAudience = jwtOptions.ValidAudience,
-                        ValidateLifetime = true,
-                        ClockSkew = TimeSpan.FromMinutes(jwtOptions.ClockSkewMinutes),
-                        RequireExpirationTime = true
-                    };
-
-                    // Eventos para logging y manejo personalizado
-                    options.Events = new JwtBearerEvents
+                        ILogger<JwtBearerEvents> logger = context.HttpContext.RequestServices.GetService<ILogger<JwtBearerEvents>>();
+                        logger?.LogWarning("Autenticación JWT falló: {Error}", context.Exception.Message);
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
                     {
-                        OnAuthenticationFailed = context =>
-                        {
-                            ILogger<JwtBearerEvents> logger = context.HttpContext.RequestServices.GetService<ILogger<JwtBearerEvents>>();
-                            logger?.LogWarning("Autenticación JWT falló: {Error}", context.Exception.Message);
-                            return Task.CompletedTask;
-                        },
-                        OnTokenValidated = context =>
-                        {
-                            ILogger<JwtBearerEvents> logger = context.HttpContext.RequestServices.GetService<ILogger<JwtBearerEvents>>();
-                            string userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                            logger?.LogInformation("Token JWT validado para usuario {UserId}", userId);
-                            return Task.CompletedTask;
-                        }
-                    };
-                });
+                        ILogger<JwtBearerEvents> logger = context.HttpContext.RequestServices.GetService<ILogger<JwtBearerEvents>>();
+                        string userId = context.Principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                        logger?.LogInformation("Token JWT validado para usuario {UserId}", userId);
+                        return Task.CompletedTask;
+                    }
+                };
+            });
 
-            return services;
-        }
+        return services;
     }
 }
