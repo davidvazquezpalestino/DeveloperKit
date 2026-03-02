@@ -49,7 +49,7 @@ public class MiServicio
 Invalida entradas específicas basadas en la misma expresión utilizada para el registro:
 
 ```csharp
-await _cacheService.InvalidateCacheAsync(() => _repositorio.ObtenerProductosConsutlaAsync());
+await _cacheService.InvalidateAsync(() => _repositorio.ObtenerProductosConsutlaAsync());
 ```
 
 ## Configuración (RedisOptions)

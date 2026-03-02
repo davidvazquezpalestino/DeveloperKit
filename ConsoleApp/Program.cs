@@ -21,13 +21,13 @@ internal class Program
     private static readonly HttpClient Client = new HttpClient { Timeout = TimeSpan.FromMinutes(5) };
     static async Task Main(string[] args)
     {
-        string url = "https://api-cat-cfdi.infosoft.mx/api/cfdi/services";
+        string url = "https://api-cat-cfdi.infosoft.mx/api/cfdi/services?search=admin";
         Stopwatch stopwatch = Stopwatch.StartNew(); // iniciar cronómetro
 
         List<Task> tasks = new List<Task>();
-        SemaphoreSlim semaphore = new SemaphoreSlim(50); // máximo 10 en paralelo
+        SemaphoreSlim semaphore = new SemaphoreSlim(50); // máximo 50 en paralelo
 
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < 1000; i++)
         {
             int requestNumber = i + 1;
             await semaphore.WaitAsync(); // esperar turno
@@ -61,7 +61,8 @@ internal class Program
             HttpResponseMessage response = await Client.GetAsync(url);
 
             response.EnsureSuccessStatusCode();
-            await response.Content.ReadAsStringAsync();
+            string readAsString = await response.Content.ReadAsStringAsync();
+
 
             // Mostrar en consola cuando cada tarea se complete
             Console.WriteLine($"[{requestNumber}] Completada con éxito");
@@ -131,10 +132,6 @@ internal class Program
                     };
                     return new PostgreSqlProvider(Options.Create(options));
                 });
-
-                services.AddMcpServer()
-                        .WithStdioServerTransport()
-                        .WithToolsFromAssembly();
 
             });
     }

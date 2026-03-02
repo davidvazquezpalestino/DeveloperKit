@@ -1,4 +1,4 @@
-namespace DevKit.ExecutionEngine.Redis;
+namespace DevKit.ExecutionEngine.Redis.Interfaces;
 
 /// <summary>
 /// Interfaz que define los métodos para interactuar con el servicio de caché Redis.
@@ -19,5 +19,5 @@ public interface ICacheService
     /// </summary>
     /// <param name="expressions">Expresiones que representan las claves de caché a invalidar.</param>
     /// <returns>Una tarea que representa la operación asíncrona.</returns>
-    Task InvalidateCacheAsync(params Expression[] expressions);
+    Task InvalidateAsync(params Expression[] expressions);
 }
