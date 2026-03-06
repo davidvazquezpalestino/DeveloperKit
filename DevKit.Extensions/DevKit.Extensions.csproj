@@ -5,9 +5,9 @@
 		<OutputType>Library</OutputType>
 		<Company>David Vázquez Palestino</Company>
 		<Product>CoreUtilerias</Product>
-		<AssemblyVersion>2026.02.27</AssemblyVersion>
-		<FileVersion>2026.02.27</FileVersion>
-		<Version>2026.02.27</Version>
+		<AssemblyVersion>2026.03.06</AssemblyVersion>
+		<FileVersion>2026.03.06</FileVersion>
+		<Version>2026.03.06</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -25,7 +25,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
-		<PackageReference Include="System.Text.Json" Version="10.0.2" />
+		<PackageReference Include="System.Text.Json" Version="10.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -58,7 +58,7 @@ internal class CacheService : ICacheService
             return cachedValue;
         }
 
-        return await FetchAndStoreValueAsync(fullKey, expression);
+        return await GetAndCacheValueAsync(fullKey, expression);
     }
 
     /// <summary>
@@ -76,13 +76,13 @@ internal class CacheService : ICacheService
     }
 
     /// <summary>
-    /// Ejecuta la expresión de fábrica y almacena el resultado en el caché.
+    /// Obtiene el valor ejecutando la expresión y lo almacena en caché.
     /// </summary>
     /// <typeparam name="T">El tipo del valor.</typeparam>
     /// <param name="key">La clave de caché.</param>
     /// <param name="expression">La expresión a ejecutar.</param>
     /// <returns>El valor producido.</returns>
-    private async Task<T> FetchAndStoreValueAsync<T>(string key, Expression<Func<Task<T>>> expression)
+    private async Task<T> GetAndCacheValueAsync<T>(string key, Expression<Func<Task<T>>> expression)
     {
         Func<Task<T>> compileFunc = expression.Compile();
         T value = await compileFunc();

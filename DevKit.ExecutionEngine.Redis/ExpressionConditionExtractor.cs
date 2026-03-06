@@ -42,7 +42,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
             object extractedValue = GetValue(binaryExpression.Right);
             string operatorName = binaryExpression.NodeType.ToString();
             string propertyName = memberExpression.Member.Name;
-            
+
             Conditions.Add((propertyName, operatorName, extractedValue));
         }
         return base.VisitBinary(binaryExpression);
@@ -57,7 +57,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         {
             string propertyName = memberExpression.Member.Name;
             string methodName = methodCallExpression.Method.Name;
-            
+
             if (methodCallExpression.Arguments.Count > 0)
             {
                 object argumentValue = GetValue(methodCallExpression.Arguments[0]);
@@ -84,7 +84,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         List<string> keyParts = new();
         List<string> conditionParts = BuildConditionParts(conditionExtractor.Conditions);
 
-        return conditionParts.Any() 
+        return conditionParts.Any()
             ? keyParts.Concat(conditionParts).ToList()
             : new List<string> { "ALL" };
     }
@@ -95,11 +95,12 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     private static List<string> GetMethodCallParts(LambdaExpression expression)
     {
         MethodCallExpression methodCallExpression = ExtractMethodCallExpression(expression.Body);
-        
+
         List<string> keyParts = new()
         {
-            GetCleanTypeName(methodCallExpression.Method.ReturnType),
-            methodCallExpression.Method.Name
+            GetDeclaringTypeName(methodCallExpression.Method),
+            methodCallExpression.Method.Name,
+            GetCleanTypeName(methodCallExpression.Method.ReturnType)
         };
 
         List<string> argumentParts = ExtractArgumentParts(methodCallExpression.Arguments);
@@ -178,6 +179,20 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     };
 
     /// <summary>
+    /// Obtiene el nombre limpio del tipo que declara el método.
+    /// </summary>
+    private static string GetDeclaringTypeName(MethodInfo method)
+    {
+        Type declaringType = method.DeclaringType;
+        if (declaringType == null)
+        {
+            return "Unknown";
+        }
+
+        return GetCleanTypeName(declaringType);
+    }
+
+    /// <summary>
     /// Obtiene un nombre limpio para el tipo, manejando Task y Genéricos de forma básica.
     /// </summary>
     private static string GetCleanTypeName(Type type)
@@ -200,7 +215,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     /// </summary>
     private static bool IsTaskType(Type type)
     {
-        return type == typeof(Task) || 
+        return type == typeof(Task) ||
                (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>));
     }
 
@@ -226,7 +241,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
         Type[] genericArguments = type.GetGenericArguments();
         string typeName = ExtractTypeNameWithoutGenericTick(type.Name);
         string formattedGenericArguments = string.Join("|", genericArguments.Select(GetCleanTypeName));
-        
+
         return $"{typeName}|{formattedGenericArguments}|";
     }
 
@@ -282,7 +297,7 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     /// </summary>
     private static string FormatDictionaryValue(Dictionary<string, object> dictionaryValue)
     {
-        IEnumerable<string> dictionaryParts = dictionaryValue 
+        IEnumerable<string> dictionaryParts = dictionaryValue
             .Select(keyValuePair => $"{keyValuePair.Key}|{FormatValue(keyValuePair.Value)}");
         return string.Join(",", dictionaryParts);
     }
@@ -401,13 +416,13 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     /// </summary>
     private static bool IsSimpleType(Type type)
     {
-        return type.IsPrimitive || 
-               type == typeof(string) || 
+        return type.IsPrimitive ||
+               type == typeof(string) ||
                type == typeof(decimal) ||
-               type == typeof(DateTime) || 
+               type == typeof(DateTime) ||
                type == typeof(DateTimeOffset) ||
-               type == typeof(TimeSpan) || 
-               type == typeof(Guid) || 
+               type == typeof(TimeSpan) ||
+               type == typeof(Guid) ||
                type.IsEnum;
     }
 

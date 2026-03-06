@@ -6,9 +6,9 @@
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<Company>David Vázquez Palestino</Company>
 		<Product>CoreComponentExporter</Product>
-		<AssemblyVersion>2026.02.27</AssemblyVersion>
-		<FileVersion>2026.02.27</FileVersion>
-		<Version>2026.02.27</Version>
+		<AssemblyVersion>2026.03.06</AssemblyVersion>
+		<FileVersion>2026.03.06</FileVersion>
+		<Version>2026.03.06</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -25,7 +25,7 @@
 
 
 	<ItemGroup>
-		<PackageReference Include="NPOI" Version="2.7.5" />
+		<PackageReference Include="NPOI" Version="2.7.6" />
 	</ItemGroup>
 
 	<ItemGroup>

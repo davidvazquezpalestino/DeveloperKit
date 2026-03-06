@@ -10,9 +10,9 @@
 		<Product>DotNet.Injection.Extensions</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2026.02.27</AssemblyVersion>
-		<FileVersion>2026.02.27</FileVersion>
-		<Version>2026.02.27</Version>
+		<AssemblyVersion>2026.03.06</AssemblyVersion>
+		<FileVersion>2026.03.06</FileVersion>
+		<Version>2026.03.06</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -29,8 +29,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.2" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.3" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>
