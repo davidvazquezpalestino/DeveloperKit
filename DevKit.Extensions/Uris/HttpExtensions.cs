@@ -19,7 +19,7 @@ public static class HttpExtensions
     /// // Resultado: https://api.example.com/users?Name=John
     /// </code>
     /// </example>
-    public static string UrlFromQuery<T>(this string requestUri, T item, string defaultDateFormat = "yyyy-MM-dd") where T : class
+    public static string UrlFromQuery<T>(string requestUri, T item, string defaultDateFormat = "yyyy-MM-dd") where T : class
     {
         if (string.IsNullOrEmpty(requestUri))
         {
@@ -88,7 +88,7 @@ public static class HttpExtensions
     /// // Resultado: "api/users/123"
     /// </code>
     /// </example>
-    public static string UrlFromRoute(this string requestUri, params object[] values)
+    public static string UrlFromRoute(string requestUri, params object[] values)
     {
         if (string.IsNullOrEmpty(requestUri))
         {
