@@ -31,32 +31,6 @@ public partial class SQLServerProvider
         return default;
     }
 
-    /// <summary>Ejecuta una consulta y mapea el primer registro a una entidad de forma asíncrona.</summary>
-    public async Task<T> ExecuteProcedureAsSingleAsync<T>(string storedProcedure, CancellationToken cancellationToken = default) where T : new()
-    {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
-        {
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandType = CommandType.StoredProcedure;
-                command.CommandText = storedProcedure;
-                command.CommandTimeout = SqlOptions.CommandTimeout;
-
-                await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-                using (IDataReader reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow, cancellationToken).ConfigureAwait(false))
-                {
-                    if (reader.Read())
-                    {
-                        return reader.GetItem<T>();
-                    }
-                }
-            }
-        }
-
-        return new T();
-    }
-
     /// <summary>Ejecuta un procedimiento almacenado y mapea el primer registro a la entidad indicada de forma asíncrona.</summary>
     public async Task<T> ExecuteProcedureAsSingleAsync<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)
     {
@@ -107,19 +81,7 @@ public partial class SQLServerProvider
                         throw new InvalidOperationException("La secuencia no contiene elementos");
                     }
 
-                    T item = new();
-                    PropertyInfo[] properties = typeof(T).GetProperties();
-
-                    for (int i = 0; i < reader.FieldCount; i++)
-                    {
-                        PropertyInfo property = properties.FirstOrDefault(p => string.Equals(p.Name, reader.GetName(i), StringComparison.OrdinalIgnoreCase));
-                        if (property != null && !await reader.IsDBNullAsync(i, cancellationToken).ConfigureAwait(false))
-                        {
-                            property.SetValue(item, Convert.ChangeType(reader[i], property.PropertyType));
-                        }
-                    }
-
-                    return item;
+                    return await reader.GetEntityAsync<T>(cancellationToken).ConfigureAwait(false);
                 }
             }
         }
@@ -136,7 +98,7 @@ public partial class SQLServerProvider
         {
             command.CommandType = CommandType.StoredProcedure;
             command.CommandText = storedProcedure;
-            command.Transaction = Transaccion;
+            command.Transaction = Transaction;
             command.CommandTimeout = SqlOptions.CommandTimeout;
             dbParameters?.Invoke(command.Parameters);
 
@@ -197,7 +159,7 @@ public partial class SQLServerProvider
         using (SqlCommand sqlCommand = Connection.CreateCommand())
         {
             sqlCommand.CommandTimeout = SqlOptions.CommandTimeout;
-            sqlCommand.Transaction = Transaccion;
+            sqlCommand.Transaction = Transaction;
             sqlCommand.CommandText = command;
             dbParameters?.Invoke(sqlCommand.Parameters);
 

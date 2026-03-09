@@ -244,7 +244,7 @@ For support, please open an issue in our [issue tracker](https://github.com/davi
 <div align="center">
   Made with ❤️ by the DeveloperKit Team
 </div>
-    p => { var prm = (MySqlConnector.MySqlParameterCollection)p; prm.AddWithValue("@p0", true); }
+    p => { var prm = (MySqlConnector.MySqlParameterCollection)p; prm.AddMySqlParameter("p0", true); }
 );
 ```
 

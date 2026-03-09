@@ -1,19 +1,34 @@
 namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 
 /// <summary>Implementación de <see cref="ISQLServerProvider"/> para SQL Server.</summary>
-public partial class SQLServerProvider : ISQLServerProvider
+public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
 {
-    private readonly SqlConnection Connection;
-    private SqlTransaction Transaccion;
+    private readonly ISqlConnectionFactory _connectionFactory;
+    public SqlConnection Connection { get; set; }
+    public SqlTransaction Transaction { get; set; }
     private readonly SqlOptions SqlOptions;
+    public SemaphoreSlim TransactionSemaphore { get; private set; }
+    private bool _disposed = false;
 
     /// <summary>Estado actual de la conexión.</summary>
-    public ConnectionState ConnectionState => Connection.State;
+    public ConnectionState ConnectionState => Connection?.State ?? ConnectionState.Closed;
     /// <summary>Cadena de conexión utilizada por el repositorio.</summary>
     public string ConnectionString { get; }
 
     /// <summary>Devuelve la cadena de conexión actual.</summary>
-    public override string ToString() => Connection.ConnectionString;
+    public override string ToString() => ConnectionString;
+
+    /// <summary>
+    /// Obtiene la conexión actual, creándola si es necesario.
+    /// </summary>
+    private SqlConnection GetConnection()
+    {
+        if (Connection == null)
+        {
+            Connection = _connectionFactory.CreateConnection(ConnectionString);
+        }
+        return Connection;
+    }
 
     /// <summary>Ejecuta una consulta y mapea el primer registro a la entidad indicada.</summary>
     public T ExecuteQueryAsSingle<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null) =>
@@ -112,7 +127,7 @@ public partial class SQLServerProvider : ISQLServerProvider
 
             object result = command.ExecuteScalar();
 
-            if (Connection.State == ConnectionState.Open && Transaccion == null)
+            if (Connection.State == ConnectionState.Open && Transaction == null)
             {
                 Connection.Close();
             }
@@ -127,9 +142,10 @@ public partial class SQLServerProvider : ISQLServerProvider
     }
 
     /// <summary>Inicializa una nueva instancia de <see cref="SQLServerProvider"/> usando el patrón SqlOptions.</summary>
-    public SQLServerProvider(IOptions<SqlOptions> options)
+    public SQLServerProvider(IOptions<SqlOptions> options, ISqlConnectionFactory connectionFactory = null)
     {
         SqlOptions = options.Value;
+        _connectionFactory = connectionFactory ?? new DefaultSqlConnectionFactory();
 
         if (SqlOptions == null)
         {
@@ -174,29 +190,67 @@ public partial class SQLServerProvider : ISQLServerProvider
 
         // Usar la cadena de conexión construida
         ConnectionString = builder.ConnectionString;
-        Connection = new SqlConnection(ConnectionString);
+
+        // Inicializar semáforo para control de concurrencia en transacciones
+        // Permitir hasta 3 transacciones concurrentes por defecto
+        TransactionSemaphore = new SemaphoreSlim(3, 3);
     }
 
-    #region Destructores
+    #region Dispose Pattern
     /// <summary>Libera los recursos administrados utilizados por la instancia.</summary>
     public void Dispose()
     {
         Dispose(true);
         GC.SuppressFinalize(this);
     }
+
+    /// <summary>Libera los recursos de forma asíncrona.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore().ConfigureAwait(false);
+        Dispose(false);
+        GC.SuppressFinalize(this);
+    }
+
     /// <summary>Libera los recursos.</summary>
     /// <param name="disposing">Indica si se deben liberar recursos administrados.</param>
-    private void Dispose(bool disposing)
+    protected virtual void Dispose(bool disposing)
     {
+        if (_disposed)
+            return;
+
         if (disposing)
         {
             // Liberar recursos administrados
-            Transaccion?.Dispose();
+            Transaction?.Dispose();
+            TransactionSemaphore?.Dispose();
             Connection?.Dispose();
         }
+
+        _disposed = true;
     }
-    /// <summary>Finalizador que asegura liberar los recursos si el usuario olvidó llamar a Dispose.</summary>
-    ~SQLServerProvider() => Dispose(false);
+
+    /// <summary>Libera los recursos de forma asíncrona.</summary>
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (_disposed)
+            return;
+
+        // Liberar recursos administrados de forma asíncrona
+        if (Transaction != null)
+        {
+            Transaction.Dispose();
+            Transaction = null;
+        }
+
+        TransactionSemaphore?.Dispose();
+        
+        if (Connection != null)
+        {
+            Connection.Dispose();
+            Connection = null;
+        }
+    }
 
     #endregion
 }

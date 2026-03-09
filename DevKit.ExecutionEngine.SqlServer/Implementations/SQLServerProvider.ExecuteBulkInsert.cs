@@ -20,7 +20,7 @@ public partial class SQLServerProvider
             throw new ArgumentException("Nombre de tabla inválido", nameof(target));
         }
 
-        using SqlBulkCopy bulkCopy = new(Connection, SqlBulkCopyOptions.Default, Transaccion);
+        using SqlBulkCopy bulkCopy = new(Connection, SqlBulkCopyOptions.Default, Transaction);
         bulkCopy.DestinationTableName = target;
         bulkCopy.BatchSize = GetBatchSize(source.Rows.Count);
         bulkCopy.BulkCopyTimeout = SqlOptions.BulkCopy.BulkCopyTimeout;

@@ -13,7 +13,7 @@ public partial class SQLServerProvider
         using (DbCommand sqlCommand = Connection.CreateCommand())
         {
             sqlCommand.CommandTimeout = SqlOptions.CommandTimeout;
-            sqlCommand.Transaction = Transaccion;
+            sqlCommand.Transaction = Transaction;
             sqlCommand.CommandText = command;
             sqlCommand.CommandType = CommandType.Text;
             dbParameters?.Invoke(sqlCommand.Parameters);
@@ -30,7 +30,7 @@ public partial class SQLServerProvider
         {
             command.Connection = Connection;
             command.CommandTimeout = SqlOptions.CommandTimeout;
-            command.Transaction = Transaccion;
+            command.Transaction = Transaction;
             command.CommandType = CommandType.StoredProcedure;
             command.CommandText = storedProcedure;
             dbParameters?.Invoke(command.Parameters);

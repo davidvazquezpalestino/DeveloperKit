@@ -74,9 +74,9 @@ public partial class SQLServerProvider
                 command.CommandType = CommandType.Text;
                 command.CommandTimeout = SqlOptions.CommandTimeout; // Valor por defecto de 30 segundos
 
-                if (Transaccion != null)
+                if (Transaction != null)
                 {
-                    command.Transaction = Transaccion;
+                    command.Transaction = Transaction;
                 }
 
                 dbParameters?.Invoke(command.Parameters);

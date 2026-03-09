@@ -32,16 +32,9 @@ public partial interface ISQLServerProvider
     Task<T> FirstOrDefaultAsync<T>(string query, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default) where T : class, new();
 
     /// <summary>
-    /// Ejecuta un procedimiento almacenado de forma asíncrona y retorna la entidad mapeada.
-    /// </summary>
-    Task<T> ExecuteProcedureAsSingleAsync<T>(string storedProcedure, CancellationToken cancellationToken = default) where T : new();
-
-    /// <summary>
     /// Ejecuta un procedimiento almacenado de forma asíncrona y mapea el resultado con la expresión indicada.
     /// </summary>
     Task<T> ExecuteProcedureAsSingleAsync<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);
-
-
 
     /// <summary>
     /// Ejecuta un procedimiento almacenado de forma asíncrona sin esperar resultados.

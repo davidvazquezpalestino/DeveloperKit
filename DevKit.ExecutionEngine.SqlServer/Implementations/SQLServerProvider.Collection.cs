@@ -154,34 +154,6 @@ public partial class SQLServerProvider
         }
     }
 
-    /// <summary>Ejecuta una consulta y devuelve una lista de entidades de forma asíncrona.</summary>
-    public async Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string storedProcedure, CancellationToken cancellationToken = default) where T : new()
-    {
-        using (DbConnection connection = new SqlConnection(ConnectionString))
-        {
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-            using (DbCommand command = connection.CreateCommand())
-            {
-                command.CommandType = CommandType.StoredProcedure;
-                command.CommandText = storedProcedure;
-                command.CommandTimeout = SqlOptions.CommandTimeout;
-
-                List<T> items = new();
-
-                using (IDataReader reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false))
-                {
-                    while (reader.Read())
-                    {
-                        items.Add(reader.GetItem<T>());
-                    }
-                }
-
-                return items;
-            }
-        }
-    }
-
     /// <inheritdoc />>
     public async Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string storedProcedure,
         Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default)

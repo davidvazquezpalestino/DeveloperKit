@@ -38,11 +38,6 @@ public partial interface ISQLServerProvider
     Task<ICollection<T>> ExecuteQueryAsListAsync<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Ejecuta un procedimiento almacenado y devuelve una lista de entidades.
-    /// </summary>
-    Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string storedProcedure, CancellationToken cancellationToken = default) where T : new();
-
-    /// <summary>
     /// Ejecuta un procedimiento almacenado y mapea cada registro a la entidad indicada.
     /// </summary>
     Task<ICollection<T>> ExecuteProcedureAsListAsync<T>(string storedProcedure, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null, CancellationToken cancellationToken = default);

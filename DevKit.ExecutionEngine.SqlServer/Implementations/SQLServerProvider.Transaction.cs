@@ -6,23 +6,23 @@ public partial class SQLServerProvider
     public void BeginTransaction()
     {
         Connection.Open();
-        Transaccion = Connection.BeginTransaction();
+        Transaction = Connection.BeginTransaction();
     }
     /// <summary>Confirma la transacción y cierra la conexión.</summary>
     /// <exception cref="InvalidOperationException">Se lanza cuando no hay una transacción activa.</exception>
     public void CommitTransaction()
     {
-        if (Transaccion == null)
+        if (Transaction == null)
         {
             throw new InvalidOperationException("No hay una transacción activa para confirmar.");
         }
 
-        using (Transaccion)
+        using (Transaction)
         {
-            Transaccion.Commit();
+            Transaction.Commit();
         }
 
-        Transaccion = null;
+        Transaction = null;
 
         if (Connection.State != ConnectionState.Closed)
         {
@@ -33,19 +33,19 @@ public partial class SQLServerProvider
     /// <exception cref="InvalidOperationException">Se lanza cuando no hay una transacción activa.</exception>
     public void RollbackTransaction()
     {
-        if (Transaccion == null)
+        if (Transaction == null)
         {
             throw new InvalidOperationException("No hay una transacción activa para revertir.");
         }
 
         try
         {
-            Transaccion.Rollback();
+            Transaction.Rollback();
         }
         finally
         {
-            Transaccion?.Dispose();
-            Transaccion = null;
+            Transaction?.Dispose();
+            Transaction = null;
             if (Connection.State == ConnectionState.Open)
             {
                 Connection.Close();
