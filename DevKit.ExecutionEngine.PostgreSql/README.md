@@ -154,7 +154,7 @@ public async Task<DataTable> GetActiveCustomersAsync()
     
     return await _provider.ExecuteQueryAsTableAsync(query, parameters =>
     {
-        parameters.AddWithValue("@active", true);
+        parameters.AddPosgreParameter("active", true);
     });
 }
 
@@ -187,7 +187,7 @@ public async Task<Customer> GetCustomerByIdAsync(int customerId)
         Name = reader.GetString("Name")
     }, parameters =>
     {
-        parameters.AddWithValue("@CustomerId", customerId);
+        parameters.AddPosgreParameter("CustomerId", customerId);
     });
 }
 ```
@@ -214,8 +214,8 @@ public async Task<bool> UpdateCustomerAsync(Customer customer)
     
     int rowsAffected = await _provider.ExecuteNonQueryAsync(query, parameters =>
     {
-        parameters.AddWithValue("@CustomerId", customer.CustomerId);
-        parameters.AddWithValue("@Name", customer.Name);
+        parameters.AddPosgreParameter("CustomerId", customer.CustomerId);
+        parameters.AddPosgreParameter("Name", customer.Name);
     });
     
     return rowsAffected > 0;

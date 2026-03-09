@@ -4,7 +4,7 @@ namespace DevKit.ExecutionEngine.PostgreSQL;
 /// </summary>
 public partial class PostgreSqlProvider : IPostgreSqlProvider
 {
-    private readonly NpgsqlConnection Connection;
+    private NpgsqlConnection Connection;
     private NpgsqlTransaction Transaction;
     private readonly PostgreOptions Options;
 
@@ -316,6 +316,18 @@ public partial class PostgreSqlProvider : IPostgreSqlProvider
 
                 writer.Complete();
             }
+        }
+    }
+
+    /// <summary>
+    /// Releases the resources used by the provider asynchronously.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (Connection != null)
+        {
+            await Connection.DisposeAsync();
+            Connection = null;
         }
     }
 

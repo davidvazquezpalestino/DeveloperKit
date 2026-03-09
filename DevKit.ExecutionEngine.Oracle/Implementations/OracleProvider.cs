@@ -1,9 +1,9 @@
 namespace DevKit.ExecutionEngine.Oracle.Implementations;
 
 /// <summary>Implementación de OracleRepository para operaciones con Oracle Database.</summary>
-public partial class OracleProvider : IOracleProvider
+public partial class OracleProvider : IOracleProvider, IAsyncDisposable
 {
-    private readonly OracleConnection Connection;
+    private OracleConnection Connection;
     private readonly OracleOptions OracleOptions;
     private OracleTransaction Transaccion;
 
@@ -367,6 +367,16 @@ public partial class OracleProvider : IOracleProvider
     }
 
     #region Destructores
+    /// <summary>Libera los recursos administrados utilizados por la instancia de forma asíncrona.</summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (Connection != null)
+        {
+            await Connection.DisposeAsync();
+            Connection = null;
+        }
+    }
+
     /// <summary>Libera los recursos administrados utilizados por la instancia.</summary>
     public void Dispose()
     {

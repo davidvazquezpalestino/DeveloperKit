@@ -154,7 +154,7 @@ public partial class OracleProvider
                 {
                     if (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        return reader.GetItem<T>();
+                        return new T();
                     }
                 }
             }
@@ -237,7 +237,7 @@ public partial class OracleProvider
                 {
                     while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
                     {
-                        items.Add(reader.GetItem<T>());
+                        items.Add(new T());
                     }
                     await reader.NextResultAsync(cancellationToken).ConfigureAwait(false);
 

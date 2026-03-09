@@ -58,7 +58,7 @@ public partial class OracleProvider
                     foreach (DataRow row in table2.Rows)
                     {
                         columnas.Add(
-                            $"[{row.GetValue<string>("ColumnName")}] {GetSqlDataType(row.GetValue<string>("ColumnName"), Type.GetType(row.GetValue<string>("DataType")), row.GetValue<int>("ColumnSize"))}{Environment.NewLine}");
+                            $"[{row["ColumnName"]}] {GetSqlDataType(row["ColumnName"].ToString(), Type.GetType(row["DataType"].ToString()), Convert.ToInt32(row["ColumnSize"]))}{Environment.NewLine}");
                     }
                 }
 

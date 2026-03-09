@@ -1,7 +1,7 @@
 namespace DevKit.ExecutionEngine.Excel.Abstractions;
 
 /// <summary>Interfaz para operaciones con archivos Excel.</summary>
-public partial interface IExcelProvider : IDisposable
+public partial interface IExcelProvider : IAsyncDisposable
 {
     /// <summary>Obtiene la cadena de conexión al archivo Excel.</summary>
     string ConnectionString { get; }

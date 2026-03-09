@@ -4,7 +4,7 @@ namespace DevKit.ExecutionEngine.MySQL.Implementations;
 public partial class MySqlProvider : IMySqlProvider
 {
     private readonly MySqlOptions Options;
-    private readonly MySqlConnection Connection;
+    private MySqlConnection Connection;
     private MySqlTransaction Transaction;
 
     /// <summary>
@@ -390,6 +390,15 @@ public partial class MySqlProvider : IMySqlProvider
     }
 
     /// <summary>
+    /// Releases the resources used by the provider asynchronously.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        await DisposeAsyncCore();
+        GC.SuppressFinalize(this);
+    }
+
+    /// <summary>
     /// Releases the resources used by the provider.
     /// </summary>
     public void Dispose()
@@ -399,7 +408,7 @@ public partial class MySqlProvider : IMySqlProvider
     }
 
     /// <summary>
-    /// Releases the unmanaged resources used by the provider and optionally releases the managed resources.
+    /// Releases the unmanaged resources used by the provider and optionally releases the managed resources asynchronously.
     /// </summary>
     /// <param name="disposing">True to release both managed and unmanaged resources; false to release only unmanaged resources.</param>
     protected virtual void Dispose(bool disposing)
@@ -408,6 +417,24 @@ public partial class MySqlProvider : IMySqlProvider
         {
             Transaction?.Dispose();
             Connection?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Core async dispose implementation.
+    /// </summary>
+    protected virtual async ValueTask DisposeAsyncCore()
+    {
+        if (Transaction != null)
+        {
+            await Transaction.DisposeAsync();
+            Transaction = null;
+        }
+        
+        if (Connection != null)
+        {
+            await Connection.DisposeAsync();
+            Connection = null;
         }
     }
 }

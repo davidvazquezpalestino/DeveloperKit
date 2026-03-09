@@ -4,7 +4,7 @@ namespace DevKit.ExecutionEngine.Oracle.Abstractions;
 /// Interfaz principal para el repositorio de Oracle que define operaciones básicas de base de datos.
 /// Proporciona métodos para ejecutar consultas, procedimientos almacenados y operaciones de transacción.
 /// </summary>
-public partial interface IOracleProvider : IDisposable
+public partial interface IOracleProvider : IAsyncDisposable
 {
     /// <summary>
     /// Estado actual de la conexión.

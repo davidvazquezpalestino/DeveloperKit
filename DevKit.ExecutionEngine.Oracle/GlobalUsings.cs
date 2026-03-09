@@ -1,9 +1,15 @@
 global using DevKit.ExecutionEngine.Oracle.Abstractions;
+global using DevKit.ExecutionEngine.Oracle.Extensions;
 global using DevKit.ExecutionEngine.Oracle.Settings;
-global using DevKit.Extensions;
 global using Microsoft.Extensions.Options;
 global using Oracle.ManagedDataAccess.Client;
 global using System;
+global using System.Collections.Generic;
 global using System.Data;
 global using System.Data.Common;
+global using System.Linq;
+global using System.Linq.Expressions;
 global using System.Reflection;
+global using System.Text;
+global using System.Threading;
+global using System.Threading.Tasks;
