@@ -14,6 +14,11 @@
     pointer-events: none;
 }
 
+/* Padding para el input cuando el ícono está a la izquierda */
+.autocomplete-container input {
+    padding-left: 2.5rem !important;
+}
+
 /* Botón de limpiar */
 .btn-clear {
     background: transparent;
