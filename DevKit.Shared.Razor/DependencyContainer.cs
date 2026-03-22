@@ -8,7 +8,7 @@ public static class DependencyContainer
     /// <summary>
     /// Registra los servicios de componentes de UI personalizados en el contenedor de dependencias.
     /// </summary>
-    public static IServiceCollection AddSweetAlert(
+    public static IServiceCollection AddAppNotifications(
         this IServiceCollection services,
         ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
@@ -18,8 +18,8 @@ public static class DependencyContainer
         }
 
         services.TryAdd(new ServiceDescriptor(
-            typeof(ISweetAlert),
-            typeof(SweetAlert),
+            typeof(IAppNotification),
+            typeof(AppNotificationService),
             lifetime));
 
         return services;

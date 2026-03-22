@@ -1,6 +1,6 @@
 // Global using directives
 
-global using DevKit.Shared.Razor.Toasts;
+global using DevKit.Shared.Razor.Components.Notifications;
 global using Microsoft.AspNetCore.Components;
 global using Microsoft.AspNetCore.Components.Web;
 global using Microsoft.JSInterop;

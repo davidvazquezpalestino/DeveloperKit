@@ -1,0 +1,53 @@
+
+@inject IAppNotification AppNotification
+@implements IDisposable
+
+@if (CurrentDialog != null)
+{
+    <!-- Overlay semitransparente oscuro -->
+    <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5); z-index: 2000;" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content shadow-lg border border-secondary-subtle rounded-4">
+                <div class="modal-header border-0 pb-0 px-4 pt-4">
+                    <h5 class="modal-title fw-bold text-dark w-100 text-center">@CurrentDialog.Title</h5>
+                </div>
+                <div class="modal-body text-center px-4 pb-4 pt-3">
+                    @if (CurrentDialog.Icon != AppNotificationIcon.None)
+                    {
+                        <div class="mb-3 d-flex justify-content-center">
+                            @GetIconHtml(CurrentDialog.Icon)
+                        </div>
+                    }
+                    
+                    <p class="text-secondary mb-4" style="font-size: 1.1rem;">@CurrentDialog.Message</p>
+                    
+                    <div class="d-flex justify-content-center gap-3 mt-2">
+                        @if (CurrentDialog.ShowCancelButton)
+                        {
+                            <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-medium" @onclick="CancelDialog">
+                                @CurrentDialog.CancelButtonText
+                            </button>
+                        }
+                        <button type="button" class="btn @GetButtonClass(CurrentDialog.Icon) px-4 py-2 rounded-pill fw-medium" style="min-width: 120px;" @onclick="ConfirmDialog">
+                            @CurrentDialog.ConfirmButtonText
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 2050;">
+    @foreach (ToastItem toast in ActiveToasts.ToList())
+    {
+        <div class="toast show align-items-center text-bg-@GetToastColor(toast.Icon) border-0 mb-2 shadow-sm" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body fw-medium" style="font-size: 1rem;">
+                    @GetToastIconHtml(toast.Icon) @toast.Message
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" @onclick="() => CloseToast(toast)"></button>
+            </div>
+        </div>
+    }
+</div>
