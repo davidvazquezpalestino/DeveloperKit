@@ -1,20 +1,48 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <OutputType>Exe</OutputType>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-    <PackageId>DevKit.Rfc</PackageId>
-    <PackageVersion>1.0.0</PackageVersion>
-    <Authors>DeveloperKit</Authors>
-    <Description>Biblioteca para cálculo de CURP y RFC mexicanos siguiendo las especificaciones del SAT. Implementada con principios SOLID.</Description>
-    <PackageTags>rfc;curp;mexico;sat;fiscal;tax</PackageTags>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoDefaultExcludes>true</NoDefaultExcludes>
-    <PackageIcon></PackageIcon>
-    <PackageReadmeFile></PackageReadmeFile>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<OutputType>Library</OutputType>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageId>DevKit.Rfc</PackageId>
+		<PackageVersion>1.0.0</PackageVersion>
+		<Company>David Vázquez Palestino</Company>
+		<Product>DevKit.Rfc</Product>
+		<AssemblyVersion>2026.03.21</AssemblyVersion>
+		<FileVersion>2026.03.21</FileVersion>
+		<Version>1.0.0</Version>
+		<Authors>David Vázquez Palestino</Authors>
+		<Description>Biblioteca para cálculo de CURP y RFC mexicanos siguiendo las especificaciones del SAT. Implementada con principios SOLID y Value Objects para mayor robustez.</Description>
+		<Copyright>Copyright David Vázquez Palestino 2026</Copyright>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+		<Title>DevKit.Rfc - Biblioteca de Cálculo de CURP y RFC Mexicanos</Title>
+		<PackageOutputPath>C:\Github\Packages\DevKit.Rfc</PackageOutputPath>
+		<PackageIcon>Imagenes\102042_tools_icon.png</PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>rfc;curp;mexico;sat;fiscal;tax;curp-calculation;rfc-calculation;value-objects</PackageTags>
+		<NoDefaultExcludes>true</NoDefaultExcludes>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Update="Imagenes\102042_tools_icon.png">
+			<PackagePath>\</PackagePath>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+			<Pack>True</Pack>
+		</None>
+		<None Update="README.md">
+			<Pack>True</Pack>
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>

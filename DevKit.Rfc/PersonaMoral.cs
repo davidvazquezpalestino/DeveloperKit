@@ -1,314 +1,345 @@
-using System;
-
 namespace DevKit.Rfc
 {
-    /*******
-     * CLASE PARA EL CÁLCULO DEL RFC DE PERSONA MORAL
-     * AUTOR: AIMEE RIOS
-     * **********/
-    public class PersonaMoral
+    /// <summary>
+    /// Calculador de RFC para personas morales.
+    /// Implementa el algoritmo oficial del SAT.
+    /// </summary>
+    /// <remarks>
+    /// Inicializa una nueva instancia del calculador de RFC para personas morales.
+    /// </remarks>
+    /// <param name="generarHomoclave">Indica si se debe generar homoclave.</param>
+    public class PersonaMoralCalculator(bool generarHomoclave)
     {
-        private bool _generarHomoclave;
-        public PersonaMoral(bool pGenerarHomoclave)
+
+        /// <summary>
+        /// Calcula el RFC para una persona moral.
+        /// </summary>
+        /// <param name="razonSocial">Razón social.</param>
+        /// <param name="fechaConstitucion">Fecha de constitución.</param>
+        /// <returns>RFC calculado.</returns>
+        public ValueObjects.Rfc CalcularRfcPersonaMoral(string razonSocial, DateTime fechaConstitucion)
         {
-            _generarHomoclave = pGenerarHomoclave;
+            ValidarParametros(razonSocial, fechaConstitucion);
+
+            string razonSocialNormalizada = NormalizarRazonSocial(razonSocial);
+            string rfcBase = ConstruirRfcBase(razonSocialNormalizada);
+            string rfcCompleto = CompletarRfc(rfcBase, razonSocialNormalizada, fechaConstitucion);
+
+            return ValueObjects.Rfc.Crear(rfcCompleto);
         }
 
-        public string CalcularRFCPersonaMoral(string pRazonSocial, DateTime fecha)
+        private void ValidarParametros(string razonSocial, DateTime fechaConstitucion)
         {
-            string rfc = "";
-            string razonSocial = pRazonSocial.ToUpper();
-            if (string.IsNullOrEmpty(razonSocial))
-            {
-                return "";
-            }
-            string FechaNacimiento = GetFechaNacimiento(fecha);
-            //FILTRA ACENTOS
-            string RazonSocialF = RfcFiltraAcentos(razonSocial);
-            //GUARDA NOMBRE ORIGINAL PARA GENERAR HOMOCLAVE
-            string RazonSocialOrig = RazonSocialF;
-            //ELIMINA PALABRAS SOBRANTES DE APELLIDOS Y NOMBRE
-            RazonSocialF = RfcFiltraNombres(RazonSocialF);
+            if (string.IsNullOrWhiteSpace(razonSocial))
+                throw new ArgumentException("La razón social es requerida.", nameof(razonSocial));
 
-            rfc = ArmarRfcMoral(RazonSocialF);
+            if (fechaConstitucion == default)
+                throw new ArgumentException("La fecha de constitución es requerida.", nameof(fechaConstitucion));
+        }
 
-            rfc = RfcQuitaProhibidas(rfc);
-            rfc = rfc + FechaNacimiento;
-            if (_generarHomoclave)//evalua si calcula la homoclave
+        private string NormalizarRazonSocial(string razonSocial)
+        {
+            string razonSocialUpper = EliminarAcentos(razonSocial.ToUpper());
+            string razonSocialFiltrada = FiltrarPalabrasComunes(razonSocialUpper);
+            string razonSocialCompuesta = FiltrarNombresCompuestos(razonSocialFiltrada);
+            return razonSocialCompuesta;
+        }
+
+        private string ConstruirRfcBase(string razonSocial)
+        {
+            // Tomar las primeras 3 letras de la razón social
+            string rfcBase = razonSocial.Length >= 3 ? razonSocial.Substring(0, 3) : razonSocial.PadRight(3, 'X');
+            return QuitarPalabrasProhibidas(rfcBase);
+        }
+
+        private string CompletarRfc(string rfcBase, string razonSocial, DateTime fechaConstitucion)
+        {
+            StringBuilder rfc = new System.Text.StringBuilder(rfcBase);
+
+            // Agregar fecha de constitución
+            rfc.Append(ObtenerFechaRfc(fechaConstitucion));
+
+            if (generarHomoclave)
             {
-                rfc += GetHomonimia(RazonSocialOrig);
-                rfc = rfc + RfcDigitoVerificador(rfc);
+                // Agregar homoclave
+                string homoclave = ObtenerHomonimia(razonSocial);
+                rfc.Append(homoclave);
+
+                // Agregar dígito verificador
+                string rfcConDigito = rfc.ToString();
+                string digitoVerificador = ObtenerDigitoVerificadorRfc(rfcConDigito);
+                rfc.Append(digitoVerificador);
             }
             else
-                rfc += "000";
-            return rfc;
+            {
+                rfc.Append("000");
+            }
+
+            return rfc.ToString();
         }
 
-        private string RfcDigitoVerificador(string pRFC)
+        private string ObtenerHomonimia(string razonSocial)
         {
-            System.Collections.Generic.List<string> rfcsuma = new System.Collections.Generic.List<string>();
+            string numero = "0";
+            int numeroSuma = 0;
+
+            // Asignar valores numéricos a cada carácter
+            for (int i = 0; i < razonSocial.Length; i++)
+            {
+                string letra = razonSocial.Substring(i, 1).ToUpper();
+                numero += ObtenerValorCaracterHomonimia(letra);
+            }
+
+            // Calcular sumatoria
+            for (int i = 0; i < numero.Length - 1; i++)
+            {
+                string numero1 = i == numero.Length - 1 ? "0" : numero.Substring(i, 2);
+                string numero2 = i == numero.Length - 2 ? "0" : numero.Substring(i + 1, 1);
+                numeroSuma += int.Parse(numero1) * int.Parse(numero2);
+            }
+
+            // Calcular homonimia
+            int resultado = numeroSuma % 1000;
+            int cociente = resultado / 34;
+            int residuo = resultado % 34;
+
+            return ConvertirDigitoHomonimia(cociente) + ConvertirDigitoHomonimia(residuo);
+        }
+
+        private string ObtenerValorCaracterHomonimia(string caracter)
+        {
+            return caracter switch
+            {
+                " " => "00",
+                "&" => "10",
+                "0" => "00",
+                "1" => "01",
+                "2" => "02",
+                "3" => "03",
+                "4" => "04",
+                "5" => "05",
+                "6" => "06",
+                "7" => "07",
+                "8" => "08",
+                "9" => "09",
+                "A" => "11",
+                "B" => "12",
+                "C" => "13",
+                "D" => "14",
+                "E" => "15",
+                "F" => "16",
+                "G" => "17",
+                "H" => "18",
+                "I" => "19",
+                "J" => "21",
+                "K" => "22",
+                "L" => "23",
+                "M" => "24",
+                "N" => "25",
+                "Ñ" => "40",
+                "O" => "26",
+                "P" => "27",
+                "Q" => "28",
+                "R" => "29",
+                "S" => "32",
+                "T" => "33",
+                "U" => "34",
+                "V" => "35",
+                "W" => "36",
+                "X" => "37",
+                "Y" => "38",
+                "Z" => "39",
+                _ => "00"
+            };
+        }
+
+        private string ConvertirDigitoHomonimia(int digito)
+        {
+            return digito switch
+            {
+                0 => "1",
+                1 => "2",
+                2 => "3",
+                3 => "4",
+                4 => "5",
+                5 => "6",
+                6 => "7",
+                7 => "8",
+                8 => "9",
+                9 => "A",
+                10 => "B",
+                11 => "C",
+                12 => "D",
+                13 => "E",
+                14 => "F",
+                15 => "G",
+                16 => "H",
+                17 => "I",
+                18 => "J",
+                19 => "K",
+                20 => "L",
+                21 => "M",
+                22 => "N",
+                23 => "P",
+                24 => "Q",
+                25 => "R",
+                26 => "S",
+                27 => "T",
+                28 => "U",
+                29 => "V",
+                30 => "W",
+                31 => "X",
+                32 => "Y",
+                33 => "Z",
+                _ => "1"
+            };
+        }
+
+        private string ObtenerDigitoVerificadorRfc(string rfc)
+        {
+            List<string> rfcsuma = new System.Collections.Generic.List<string>();
             int nv = 0;
             int y = 0;
-            for (int i = 0; i < pRFC.Length; i++)
+
+            for (int i = 0; i < rfc.Length; i++)
             {
-                var letra = pRFC.Substring(i, 1);
-                //valores para la generación del código verificador del RFC
+                string letra = rfc.Substring(i, 1);
+
                 switch (letra)
                 {
-                    case "0":
-                        rfcsuma.Add("00");
-                        break;
-                    case "1":
-                        rfcsuma.Add("01");
-                        break;
-                    case "2":
-                        rfcsuma.Add("02");
-                        break;
-                    case "3":
-                        rfcsuma.Add("03");
-                        break;
-                    case "4":
-                        rfcsuma.Add("04");
-                        break;
-                    case "5":
-                        rfcsuma.Add("05");
-                        break;
-                    case "6":
-                        rfcsuma.Add("06");
-                        break;
-                    case "7":
-                        rfcsuma.Add("07");
-                        break;
-                    case "8":
-                        rfcsuma.Add("08");
-                        break;
-                    case "9":
-                        rfcsuma.Add("09");
-                        break;
-                    case "A":
-                        rfcsuma.Add("10");
-                        break;
-                    case "B":
-                        rfcsuma.Add("11");
-                        break;
-                    case "C":
-                        rfcsuma.Add("12");
-                        break;
-                    case "D":
-                        rfcsuma.Add("13");
-                        break;
-                    case "E":
-                        rfcsuma.Add("14");
-                        break;
-                    case "F":
-                        rfcsuma.Add("15");
-                        break;
-                    case "G":
-                        rfcsuma.Add("16");
-                        break;
-                    case "H":
-                        rfcsuma.Add("17");
-                        break;
-                    case "I":
-                        rfcsuma.Add("18");
-                        break;
-                    case "J":
-                        rfcsuma.Add("19");
-                        break;
-                    case "K":
-                        rfcsuma.Add("20");
-                        break;
-                    case "L":
-                        rfcsuma.Add("21");
-                        break;
-                    case "M":
-                        rfcsuma.Add("22");
-                        break;
-                    case "N":
-                        rfcsuma.Add("23");
-                        break;
-                    case "Ñ":
-                        rfcsuma.Add("24");
-                        break;
-                    case "O":
-                        rfcsuma.Add("25");
-                        break;
-                    case "P":
-                        rfcsuma.Add("26");
-                        break;
-                    case "Q":
-                        rfcsuma.Add("27");
-                        break;
-                    case "R":
-                        rfcsuma.Add("28");
-                        break;
-                    case "S":
-                        rfcsuma.Add("29");
-                        break;
-                    case "T":
-                        rfcsuma.Add("30");
-                        break;
-                    case "U":
-                        rfcsuma.Add("31");
-                        break;
-                    case "V":
-                        rfcsuma.Add("32");
-                        break;
-                    case "W":
-                        rfcsuma.Add("33");
-                        break;
-                    case "X":
-                        rfcsuma.Add("34");
-                        break;
-                    case "Y":
-                        rfcsuma.Add("35");
-                        break;
-                    case "Z":
-                        rfcsuma.Add("36");
-                        break;
+                    case "0": rfcsuma.Add("00"); break;
+                    case "1": rfcsuma.Add("01"); break;
+                    case "2": rfcsuma.Add("02"); break;
+                    case "3": rfcsuma.Add("03"); break;
+                    case "4": rfcsuma.Add("04"); break;
+                    case "5": rfcsuma.Add("05"); break;
+                    case "6": rfcsuma.Add("06"); break;
+                    case "7": rfcsuma.Add("07"); break;
+                    case "8": rfcsuma.Add("08"); break;
+                    case "9": rfcsuma.Add("09"); break;
+                    case "A": rfcsuma.Add("10"); break;
+                    case "B": rfcsuma.Add("11"); break;
+                    case "C": rfcsuma.Add("12"); break;
+                    case "D": rfcsuma.Add("13"); break;
+                    case "E": rfcsuma.Add("14"); break;
+                    case "F": rfcsuma.Add("15"); break;
+                    case "G": rfcsuma.Add("16"); break;
+                    case "H": rfcsuma.Add("17"); break;
+                    case "I": rfcsuma.Add("18"); break;
+                    case "J": rfcsuma.Add("19"); break;
+                    case "K": rfcsuma.Add("20"); break;
+                    case "L": rfcsuma.Add("21"); break;
+                    case "M": rfcsuma.Add("22"); break;
+                    case "N": rfcsuma.Add("23"); break;
+                    case "Ñ": rfcsuma.Add("24"); break;
+                    case "O": rfcsuma.Add("25"); break;
+                    case "P": rfcsuma.Add("26"); break;
+                    case "Q": rfcsuma.Add("27"); break;
+                    case "R": rfcsuma.Add("28"); break;
+                    case "S": rfcsuma.Add("29"); break;
+                    case "T": rfcsuma.Add("30"); break;
+                    case "U": rfcsuma.Add("31"); break;
+                    case "V": rfcsuma.Add("32"); break;
+                    case "W": rfcsuma.Add("33"); break;
+                    case "X": rfcsuma.Add("34"); break;
+                    case "Y": rfcsuma.Add("35"); break;
+                    case "Z": rfcsuma.Add("36"); break;
+                    case " ": rfcsuma.Add("37"); break;
+                    default: rfcsuma.Add("00"); break;
                 }
             }
-            //genera el digito verificador
-            double suma = 0;
-            double digito = 0;
-            double cociente = 0;
-            double residuo = 0;
-            double resultado = 0;
-            double[] rfcsumaint = Array.ConvertAll(rfcsuma.ToArray(), s => double.Parse(s));
-            for (int i = 0; i < rfcsumaint.Length; i++)
+
+            for (int i = 13; i > 1; i--)
             {
-                suma += rfcsumaint[i] * (i + 1);
+                nv += (rfcsuma.Count == y) ? 0 : (int.Parse(rfcsuma[y]) * i);
+                y++;
             }
-            cociente = Math.Truncate(suma / 11);
-            residuo = suma - (cociente * 11);
-            resultado = 11 - residuo;
-            if (resultado == 11)
-            {
+
+            nv = nv % 11;
+            if (nv == 0)
                 return "0";
-            }
-            else
+            else if (nv <= 10)
             {
-                if (resultado == 10)
+                nv = 11 - nv;
+                return nv.ToString() == "10" ? "A" : nv.ToString();
+            }
+            else if (nv.ToString() == "10")
+            {
+                return "A";
+            }
+            return "0";
+        }
+
+        private string EliminarAcentos(string cadena)
+        {
+            return Regex.Replace(cadena, "Á", "A")
+                        .Replace("É", "E")
+                        .Replace("Í", "I")
+                        .Replace("Ó", "O")
+                        .Replace("Ú", "U")
+                        .Replace("Ñ", "X");
+        }
+
+        private string FiltrarPalabrasComunes(string nombre)
+        {
+            string[] palabrasComunes = new[]
+            {
+                ",", "de ", "del ", "la ", "los ", "las ", "y ", "mc ", "mac ", "von ", "van ",
+                "DE ", "DEL ", "LA ", "LOS ", "LAS ", "Y ", "MC ", "MAC ", "VON ", "VAN ",
+                "MA.", "MA. ", "ma ", "MA "
+            };
+
+            foreach (string palabra in palabrasComunes)
+            {
+                nombre = nombre.Replace(palabra, "");
+            }
+
+            return nombre.Replace(" ", "");
+        }
+
+        private string FiltrarNombresCompuestos(string nombre)
+        {
+            if (nombre.Length > 1)
+            {
+                switch (nombre.Substring(0, 2))
                 {
-                    return "A";
-                }
-                else
-                {
-                    return resultado.ToString();
-                }
-            }
-        }
-
-        private string GetHomonimia(string pRazonSocial)
-        {
-            string[] strArCaracteresEspeciales = { "/", "-", "." };
-            for (var i = 0; i < strArCaracteresEspeciales.Length; i++)
-            {
-                pRazonSocial = pRazonSocial.Replace(strArCaracteresEspeciales[i], "X");
-            }
-
-            string homonimia = "";
-            //obtenemos las primeras tres letras de la razón social
-            if (pRazonSocial.Length >= 3)
-            {
-                homonimia = pRazonSocial.Substring(0, 3);
-            }
-            else
-            {
-                homonimia = pRazonSocial.PadRight(3, 'X');
-            }
-            return homonimia;
-        }
-
-        private string ArmarRfcMoral(string pRazonSocial)
-        {
-            string rfc = "";
-            //obtenemos las primeras tres letras de la razón social
-            if (pRazonSocial.Length >= 3)
-            {
-                rfc = pRazonSocial.Substring(0, 3);
-            }
-            else
-            {
-                rfc = pRazonSocial.PadRight(3, 'X');
-            }
-            return rfc;
-        }
-
-        private string RfcQuitaProhibidas(string pRfc)
-        {
-            string res = "";
-            pRfc = pRfc.ToUpper();
-            string strPalabrasAltisonantes = GetPalabrasAltisonantes();
-            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(pRfc);
-            System.Text.RegularExpressions.Match match = regex.Match(strPalabrasAltisonantes);
-            if (match.Success)
-            {
-                string aux = pRfc.Substring(0, 1) + "X" + pRfc.Substring(2, 2);
-                return aux;
-            }
-            else
-            {
-                return pRfc;
-            }
-
-        }
-
-        private string GetPalabrasAltisonantes()
-        {
-            string strPalabras = "BACA*BAKA*BUEI*BUEY*CACA*CACO*CAGA*CAGO*CAKA*CAKO*COGE*COGI*COJA*COJE*COJI*COJO*COLA*CULO*";
-            strPalabras = strPalabras + "FALO*FETO*GETA*GUEI*GUEY*JETA*JOTO*";
-            strPalabras = strPalabras + "KOGE*KOJO*KAKA*KULO*MAME*MAMO*MEAR*";
-            strPalabras = strPalabras + "MEAS*MEON*MION*COJE*COJI*COJO*CULO*";
-            strPalabras = strPalabras + "KACA*KACO*KAGA*KAGO*KAKO*KOGI*KOJA*KOJE*KOJI*KOLA*LILO*LOCA*LOCO*LOKA*LOKO*";
-            strPalabras = strPalabras + "MIAR*MOKO*MULO*NACO*NACA*PIPI*PITO*POPO*ROBA*ROBE*ROBO*SENO*TETA*VACA*VAGA*VAGO*VAKA*VUEI*VUEY*WUEI*WUEY*";
-            strPalabras = strPalabras + "MOCO*MULA*PEDA*PEDO*PENE*PUTA*PUTO*";
-            strPalabras = strPalabras + "QULO*RATA*RUIN*";
-            return strPalabras;
-        }
-
-        private string RfcFiltraAcentos(string pCadena)
-        {
-            pCadena = System.Text.RegularExpressions.Regex.Replace(pCadena, "Á", "A");
-            pCadena = System.Text.RegularExpressions.Regex.Replace(pCadena, "É", "E");
-            pCadena = System.Text.RegularExpressions.Regex.Replace(pCadena, "Í", "I");
-            pCadena = System.Text.RegularExpressions.Regex.Replace(pCadena, "Ó", "O");
-            pCadena = System.Text.RegularExpressions.Regex.Replace(pCadena, "Ú", "U");
-            pCadena = System.Text.RegularExpressions.Regex.Replace(pCadena, "Ñ", "X");
-            return pCadena;
-        }
-
-        private string RfcFiltraNombres(string pNombre)
-        {
-            string[] strArPalabras = { ",", "de ", "del ", "la ", "los ", "las ", "y ", "mc ", "mac ", "von ", "van ", "DE ", "DEL ", "LA ", "LOS ", "LAS ", "Y ", "MC ", "MAC ", "VON ", "VAN ", "MA.", "MA. ", "ma ", "MA " };
-            for (int i = 0; i < strArPalabras.Length; i++)
-            {
-                pNombre = pNombre.Replace(strArPalabras[i], "");
-            }
-
-            if (pNombre.Length > 1)
-            {
-                switch (pNombre.Substring(0, 2))
-                {
-                    case "CH":
-                        pNombre = pNombre.Replace("CH", "C");
-                        break;
-                    case "LL":
-                        pNombre = pNombre.Replace("LL", "L");
-                        break;
-                    case "TR":
-                        pNombre = pNombre.Replace("TR", "T");
-                        break;
+                    case "CH": return nombre.Replace("CH", "C");
+                    case "LL": return nombre.Replace("LL", "L");
+                    case "TR": return nombre.Replace("TR", "T");
                 }
             }
-            return pNombre.Replace(" ", "");
+            return nombre;
         }
 
-        public string GetFechaNacimiento(DateTime pFecha)
+        private string QuitarPalabrasProhibidas(string rfc)
         {
-            string anio = pFecha.Year.ToString().Substring(2, 2);
-            string mes = (pFecha.Month.ToString().Length == 1) ? "0" + pFecha.Month.ToString() : pFecha.Month.ToString();
-            string dia = (pFecha.Day.ToString().Length == 1) ? "0" + pFecha.Day.ToString() : pFecha.Day.ToString();
+            string palabrasAltisonantes = ObtenerPalabrasAltisonantes();
+            Regex regex = new Regex(rfc);
+            Match match = regex.Match(palabrasAltisonantes);
+
+            return match.Success
+                ? rfc.Substring(0, 1) + "X" + rfc.Substring(2, 2)
+                : rfc;
+        }
+
+        private string ObtenerPalabrasAltisonantes()
+        {
+            string palabras = "BACA*BAKA*BUEI*BUEY*CACA*CACO*CAGA*CAGO*CAKA*CAKO*COGE*COGI*COJA*COJE*COJI*COJO*COLA*CULO*";
+            palabras += "FALO*FETO*GETA*GUEI*GUEY*JETA*JOTO*";
+            palabras += "KOGE*KOJO*KAKA*KULO*MAME*MAMO*MEAR*";
+            palabras += "MEAS*MEON*MION*COJE*COJI*COJO*CULO*";
+            palabras += "KACA*KACO*KAGA*KAGO*KAKO*KOGI*KOJA*KOJE*KOJI*KOLA*LILO*LOCA*LOCO*LOKA*LOKO*";
+            palabras += "MIAR*MOKO*MULO*NACO*NACA*PIPI*PITO*POPO*ROBA*ROBE*ROBO*SENO*TETA*VACA*VAGA*VAGO*VAKA*VUEI*VUEY*WUEI*WUEY*";
+            palabras += "MOCO*MULA*PEDA*PEDO*PENE*PUTA*PUTO*";
+            palabras += "QULO*RATA*RUIN*";
+            return palabras;
+        }
+
+        private string ObtenerFechaRfc(DateTime fecha)
+        {
+            string anio = fecha.Year.ToString().Substring(2, 2);
+            string mes = fecha.Month.ToString().Length == 1 ? "0" + fecha.Month : fecha.Month.ToString();
+            string dia = fecha.Day.ToString().Length == 1 ? "0" + fecha.Day : fecha.Day.ToString();
             return anio + mes + dia;
         }
     }
