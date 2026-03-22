@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OutputType>Exe</OutputType>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <PackageId>DevKit.Rfc</PackageId>
+    <PackageVersion>1.0.0</PackageVersion>
+    <Authors>DeveloperKit</Authors>
+    <Description>Biblioteca para cálculo de CURP y RFC mexicanos siguiendo las especificaciones del SAT. Implementada con principios SOLID.</Description>
+    <PackageTags>rfc;curp;mexico;sat;fiscal;tax</PackageTags>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <PackageIcon></PackageIcon>
+    <PackageReadmeFile></PackageReadmeFile>
+  </PropertyGroup>
+
+</Project>

@@ -16,6 +16,7 @@
     </Project>
     <Project Path="DevKit.Injection.Extensions/DevKit.Injection.Extensions.csproj" />
     <Project Path="DevKit.JWT/DevKit.JWT.csproj" />
+    <Project Path="DevKit.Rfc/DevKit.Rfc.csproj" Id="db3c55ab-77e3-4ef0-a024-18c36566800e" />
   </Folder>
   <Folder Name="/Microsoft DotNet/1. Enterprise Business Rules/Providers/">
     <Project Path="DevKit.ExecutionEngine.Excel/DevKit.ExecutionEngine.Excel.csproj" />
