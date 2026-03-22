@@ -6,9 +6,9 @@
 		<OutputType>Library</OutputType>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageId>DevKit.Rfc</PackageId>
-		<PackageVersion>1.0.0</PackageVersion>
 		<Company>David Vázquez Palestino</Company>
 		<Product>DevKit.Rfc</Product>
+		<PackageVersion>1.0.1</PackageVersion>
 		<AssemblyVersion>2026.03.21</AssemblyVersion>
 		<FileVersion>2026.03.21</FileVersion>
 		<Version>2026.03.21</Version>

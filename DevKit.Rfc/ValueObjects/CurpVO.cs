@@ -6,43 +6,43 @@ namespace DevKit.Rfc.ValueObjects
     /// </summary>
     public sealed class CurpVO
     {
-        private readonly string _valor;
+        private readonly string Valor;
         private const int LongitudCurp = 18;
 
         /// <summary>
         /// Obtiene el valor de la CURP.
         /// </summary>
-        public string Valor => _valor;
+        public string Value => Valor;
 
         /// <summary>
         /// Obtiene los primeros 4 caracteres (letras del nombre).
         /// </summary>
-        public string LetrasNombre => _valor.Substring(0, 4);
+        public string LetrasNombre => Valor.Substring(0, 4);
 
         /// <summary>
         /// Obtiene la fecha de nacimiento en formato yyMMdd.
         /// </summary>
-        public string FechaNacimiento => _valor.Substring(4, 6);
+        public string FechaNacimiento => Valor.Substring(4, 6);
 
         /// <summary>
-        /// Obtiene el sexo (H o M).
+        /// Obtiene el género (H o M).
         /// </summary>
-        public char Sexo => _valor[10];
+        public char Genero => Valor[10];
 
         /// <summary>
         /// Obtiene el código de entidad federativa.
         /// </summary>
-        public string EntidadFederativa => _valor.Substring(11, 2);
+        public string EntidadFederativa => Valor.Substring(11, 2);
 
         /// <summary>
         /// Obtiene las consonantes internas.
         /// </summary>
-        public string ConsonantesInternas => _valor.Substring(13, 3);
+        public string ConsonantesInternas => Valor.Substring(13, 3);
 
         /// <summary>
         /// Obtiene el dígito verificador.
         /// </summary>
-        public string DigitoVerificador => _valor.Substring(16, 2);
+        public string DigitoVerificador => Valor.Substring(16, 2);
 
         /// <summary>
         /// Constructor privado para crear una CURP validada.
@@ -51,7 +51,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <exception cref="ArgumentException">Si el formato es inválido.</exception>
         private CurpVO(string valor)
         {
-            _valor = valor ?? throw new ArgumentNullException(nameof(valor));
+            Valor = valor ?? throw new ArgumentNullException(nameof(valor));
 
             if (!EsFormatoValido(valor))
             {
@@ -79,7 +79,7 @@ namespace DevKit.Rfc.ValueObjects
         public static bool TryCrear(string valor, out CurpVO curp)
         {
             curp = null;
-            
+
             if (string.IsNullOrEmpty(valor) || !EsFormatoValido(valor))
             {
                 return false;
@@ -113,9 +113,9 @@ namespace DevKit.Rfc.ValueObjects
                     return false;
             }
 
-            // Validar sexo
-            char sexo = valor[10];
-            if (sexo != 'H' && sexo != 'M')
+            // Validar género
+            char genero = valor[10];
+            if (genero != 'H' && genero != 'M')
                 return false;
 
             // Validar que las consonantes sean letras
@@ -141,7 +141,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <returns>Value de la CURP.</returns>
         public override string ToString()
         {
-            return _valor;
+            return Valor;
         }
 
         /// <summary>
@@ -166,7 +166,7 @@ namespace DevKit.Rfc.ValueObjects
         public bool Equals(CurpVO other)
         {
             if (other is null) return false;
-            return string.Equals(_valor, other._valor, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(Valor, other.Valor, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -175,7 +175,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <returns>Código hash.</returns>
         public override int GetHashCode()
         {
-            return StringComparer.OrdinalIgnoreCase.GetHashCode(_valor);
+            return StringComparer.OrdinalIgnoreCase.GetHashCode(Valor);
         }
 
         /// <summary>

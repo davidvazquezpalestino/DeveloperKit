@@ -1,7 +1,3 @@
-using System.Text;
-using System.Text.RegularExpressions;
-using DevKit.Rfc.ValueObjects;
-
 namespace DevKit.Rfc
 {
     /// <summary>
@@ -19,7 +15,7 @@ namespace DevKit.Rfc
         /// <param name="apellidoPaterno">Apellido paterno.</param>
         /// <param name="apellidoMaterno">Apellido materno.</param>
         /// <param name="fechaNacimiento">Fecha de nacimiento.</param>
-        /// <param name="sexo">Sexo (H o M).</param>
+        /// <param name="genero">Género (H o M).</param>
         /// <param name="entidadFederativa">Código de entidad federativa (2 caracteres).</param>
         /// <returns>CURP calculada.</returns>
         public CurpVO CalcularCurp(
@@ -27,13 +23,13 @@ namespace DevKit.Rfc
             string apellidoPaterno,
             string apellidoMaterno,
             DateTime fechaNacimiento,
-            string sexo,
+            string genero,
             string entidadFederativa)
         {
-            ValidarParametros(nombre, apellidoPaterno, fechaNacimiento, sexo, entidadFederativa);
+            ValidarParametros(nombre, apellidoPaterno, fechaNacimiento, genero, entidadFederativa);
 
             DatosNormalizados datosNormalizados = NormalizarDatos(nombre, apellidoPaterno, apellidoMaterno);
-            string curpBase = ConstruirCurpBase(datosNormalizados, sexo, entidadFederativa);
+            string curpBase = ConstruirCurpBase(datosNormalizados, genero, entidadFederativa);
             string curpCompleta = AgregarConsonantesYDigito(curpBase, datosNormalizados, fechaNacimiento);
 
             return CurpVO.Crear(curpCompleta);
@@ -43,7 +39,7 @@ namespace DevKit.Rfc
             string nombre,
             string apellidoPaterno,
             DateTime fechaNacimiento,
-            string sexo,
+            string genero,
             string entidadFederativa)
         {
             if (string.IsNullOrWhiteSpace(nombre))
@@ -55,8 +51,8 @@ namespace DevKit.Rfc
             if (fechaNacimiento == default)
                 throw new ArgumentException("La fecha de nacimiento es requerida.", nameof(fechaNacimiento));
 
-            if (string.IsNullOrWhiteSpace(sexo) || (sexo != "H" && sexo != "M"))
-                throw new ArgumentException("El sexo debe ser 'H' o 'M'.", nameof(sexo));
+            if (string.IsNullOrWhiteSpace(genero) || (genero != "H" && genero != "M"))
+                throw new ArgumentException("El género debe ser 'H' o 'M'.", nameof(genero));
 
             if (string.IsNullOrWhiteSpace(entidadFederativa) || entidadFederativa.Length != 2)
                 throw new ArgumentException("La entidad federativa debe tener 2 caracteres.", nameof(entidadFederativa));
@@ -87,7 +83,7 @@ namespace DevKit.Rfc
             };
         }
 
-        private string ConstruirCurpBase(DatosNormalizados datos, string sexo, string entidadFederativa)
+        private string ConstruirCurpBase(DatosNormalizados datos, string genero, string entidadFederativa)
         {
             StringBuilder curp = new StringBuilder();
 
@@ -106,8 +102,8 @@ namespace DevKit.Rfc
             // Fecha de nacimiento (temporal, se reemplazará después)
             curp.Append("000000");
 
-            // Sexo
-            curp.Append(sexo);
+            // Género
+            curp.Append(genero);
 
             // Entidad federativa
             curp.Append(entidadFederativa);
@@ -292,9 +288,9 @@ namespace DevKit.Rfc
             numVer = Math.Abs(10 - numVer);
 
             if (numVer == 10)
-                return "0";
+                return "00";
 
-            return numVer.ToString();
+            return numVer.ToString("D2"); // Siempre 2 dígitos
         }
 
         private int ObtenerValorCaracter(string caracter)

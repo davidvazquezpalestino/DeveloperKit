@@ -6,55 +6,55 @@ namespace DevKit.Rfc.ValueObjects
     /// </summary>
     public sealed class RfcVO
     {
-        private readonly string _value;
+        private readonly string Valor;
         private const int LongitudRfcPersonaFisica = 13;
         private const int LongitudRfcPersonaMoral = 12;
 
         /// <summary>
         /// Obtiene el valor del RFC.
         /// </summary>
-        public string Value => _value;
+        public string Value => Valor;
 
         /// <summary>
         /// Obtiene los primeros 4 caracteres (letras del nombre).
         /// </summary>
-        public string LetrasNombre => _value.Substring(0, Math.Min(4, _value.Length));
+        public string LetrasNombre => Valor.Substring(0, Math.Min(4, Valor.Length));
 
         /// <summary>
         /// Obtiene la fecha de nacimiento o constitución en formato yyMMdd.
         /// </summary>
-        public string Fecha => _value.Substring(4, 6);
+        public string Fecha => Valor.Substring(4, 6);
 
         /// <summary>
         /// Obtiene la homoclave (solo para RFC con homoclave).
         /// </summary>
-        public string Homoclave => _value.Length > LongitudRfcPersonaFisica ?
-            _value.Substring(LongitudRfcPersonaFisica, 3) : string.Empty;
+        public string Homoclave => Valor.Length > LongitudRfcPersonaFisica ?
+            Valor.Substring(LongitudRfcPersonaFisica, 3) : string.Empty;
 
         /// <summary>
         /// Obtiene el dígito verificador.
         /// </summary>
-        public string DigitoVerificador => _value.Length switch
+        public string DigitoVerificador => Valor.Length switch
         {
-            LongitudRfcPersonaFisica => _value.Substring(12, 1),
-            LongitudRfcPersonaMoral => _value.Substring(11, 1),
+            LongitudRfcPersonaFisica => Valor.Substring(12, 1),
+            LongitudRfcPersonaMoral => Valor.Substring(11, 1),
             _ => string.Empty
         };
 
         /// <summary>
         /// Indica si es RFC de persona física.
         /// </summary>
-        public bool EsPersonaFisica => _value.Length == LongitudRfcPersonaFisica;
+        public bool EsPersonaFisica => Valor.Length == LongitudRfcPersonaFisica;
 
         /// <summary>
         /// Indica si es RFC de persona moral.
         /// </summary>
-        public bool EsPersonaMoral => _value.Length == LongitudRfcPersonaMoral;
+        public bool EsPersonaMoral => Valor.Length == LongitudRfcPersonaMoral;
 
         /// <summary>
         /// Indica si tiene homoclave.
         /// </summary>
-        public bool TieneHomoclave => _value.Length > LongitudRfcPersonaFisica;
+        public bool TieneHomoclave => Valor.Length > LongitudRfcPersonaFisica;
 
         /// <summary>
         /// Constructor privado para crear un RFC validado.
@@ -63,7 +63,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <exception cref="ArgumentException">Si el formato es inválido.</exception>
         private RfcVO(string valor)
         {
-            _value = valor ?? throw new ArgumentNullException(nameof(valor));
+            Valor = valor ?? throw new ArgumentNullException(nameof(valor));
 
             if (!EsFormatoValido(valor))
             {
@@ -166,7 +166,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <returns>Value del RFC.</returns>
         public override string ToString()
         {
-            return _value;
+            return Valor;
         }
 
         /// <summary>
@@ -191,7 +191,7 @@ namespace DevKit.Rfc.ValueObjects
         public bool Equals(RfcVO other)
         {
             if (other is null) return false;
-            return string.Equals(_value, other._value, StringComparison.OrdinalIgnoreCase);
+            return string.Equals(Valor, other.Valor, StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
@@ -200,7 +200,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <returns>Código hash.</returns>
         public override int GetHashCode()
         {
-            return StringComparer.OrdinalIgnoreCase.GetHashCode(_value);
+            return StringComparer.OrdinalIgnoreCase.GetHashCode(Valor);
         }
 
         /// <summary>

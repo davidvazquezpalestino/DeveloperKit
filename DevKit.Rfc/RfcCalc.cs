@@ -1,24 +1,17 @@
-using System.Text;
-using System.Text.RegularExpressions;
-using DevKit.Rfc.ValueObjects;
-
 namespace DevKit.Rfc
 {
     /// <summary>
     /// Calculador de RFC (Registro Federal de Contribuyentes).
     /// Implementa el algoritmo oficial del SAT para personas físicas y morales.
+    /// Siempre genera homoclave para RFC completos.
     /// </summary>
     public class RfcCalc
     {
-        private readonly bool _generarHomoclave;
-
         /// <summary>
         /// Inicializa una nueva instancia del calculador de RFC.
         /// </summary>
-        /// <param name="generarHomoclave">Indica si se debe generar homoclave.</param>
-        public RfcCalc(bool generarHomoclave)
+        public RfcCalc()
         {
-            _generarHomoclave = generarHomoclave;
         }
 
         /// <summary>
@@ -162,21 +155,13 @@ namespace DevKit.Rfc
             // Agregar fecha de nacimiento
             rfc.Append(ObtenerFechaRfc(fechaNacimiento));
 
-            if (_generarHomoclave)
-            {
-                // Agregar homoclave
-                string homoclave = ObtenerHomonimia(datos.PaternoOriginal, datos.MaternoOriginal, datos.NombreOriginal);
-                rfc.Append(homoclave);
+            // Siempre agregar homoclave
+            string homoclave = ObtenerHomonimia(datos.PaternoOriginal, datos.MaternoOriginal, datos.NombreOriginal);
+            rfc.Append(homoclave);
 
-                // Agregar dígito verificador
-                string rfcConDigito = rfc.ToString();
-                string digitoVerificador = ObtenerDigitoVerificadorRfc(rfcConDigito);
-                rfc.Append(digitoVerificador);
-            }
-            else
-            {
-                rfc.Append("000");
-            }
+            // Agregar dígito verificador
+            string digitoVerificador = ObtenerDigitoVerificadorRfc(rfc.ToString());
+            rfc.Append(digitoVerificador);
 
             return rfc.ToString();
         }
@@ -188,21 +173,13 @@ namespace DevKit.Rfc
             // Agregar fecha de constitución
             rfc.Append(ObtenerFechaRfc(fechaConstitucion));
 
-            if (_generarHomoclave)
-            {
-                // Agregar homoclave
-                string homoclave = ObtenerHomonimiaPersonaMoral(razonSocial);
-                rfc.Append(homoclave);
+            // Siempre agregar homoclave
+            string homoclave = ObtenerHomonimiaPersonaMoral(razonSocial);
+            rfc.Append(homoclave);
 
-                // Agregar dígito verificador
-                string rfcConDigito = rfc.ToString();
-                string digitoVerificador = ObtenerDigitoVerificadorRfc(rfcConDigito);
-                rfc.Append(digitoVerificador);
-            }
-            else
-            {
-                rfc.Append("000");
-            }
+            // Agregar dígito verificador
+            string digitoVerificador = ObtenerDigitoVerificadorRfc(rfc.ToString());
+            rfc.Append(digitoVerificador);
 
             return rfc.ToString();
         }
@@ -532,7 +509,7 @@ namespace DevKit.Rfc
         {
             // Tabla de valores oficial del SAT (incluye ñ = 24)
             string[] tabla = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "Ñ", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
-            
+
             int suma = 0;
             for (int i = 0; i < rfc.Length; i++)
             {
@@ -546,7 +523,7 @@ namespace DevKit.Rfc
 
             int residuo = suma % 11;
             string digito;
-            
+
             if (residuo == 0)
                 digito = "0";
             else if (residuo == 1)

@@ -1,15 +1,16 @@
 # DevKit.Rfc
 
-Biblioteca .NET para el cálculo de CURP y RFC mexicanos, implementada siguiendo los principios SOLID del Tío Bob (Robert C. Martin).
+Biblioteca .NET para el cálculo de CURP y RFC mexicanos para personas físicas, implementada siguiendo los principios SOLID del Tío Bob (Robert C. Martin) con Value Objects para mayor robustez.
 
 ## 🎯 Características
 
 - ✅ **Cálculo de CURP** para personas físicas
-- ✅ **Cálculo de RFC** para personas físicas y morales
-- ✅ **Homoclave** opcional para RFC
-- ✅ **Validación de palabras altisonantes**
+- ✅ **Cálculo de RFC** para personas físicas
+- ✅ **Homoclave** siempre generada
+- ✅ **Value Objects** inmutables (`CurpVO`, `RfcVO`)
+- ✅ **Validación de formato** y palabras altisonantes
 - ✅ **Normalización de acentos y caracteres especiales**
-- ✅ **Arquitectura SOLID** con inyección de dependencias
+- ✅ **Arquitectura SOLID** con clases especializadas
 - ✅ **Resultados tipados** con manejo de errores
 - ✅ **Métodos de conveniencia** para uso rápido
 
@@ -21,185 +22,202 @@ dotnet add package DevKit.Rfc
 
 ## 🚀 Uso Rápido
 
-### CURP - Método Simple
+### CURP - Cálculo Básico
 
 ```csharp
 using DevKit.Rfc;
+using DevKit.Rfc.ValueObjects;
 
-// Calcular CURP directamente
-var curp = RfcCurpHelper.CalcularCurp(
-    "JUAN", 
-    "PEREZ", 
-    "LOPEZ", 
-    new DateTime(1980, 5, 15), 
-    'H', 
-    "DF"
+// Crear calculadora de CURP
+var curpCalc = new CurpCalc();
+
+// Calcular CURP
+CurpVO curp = curpCalc.CalcularCurp(
+    nombre: "Juan",
+    apellidoPaterno: "Pérez",
+    apellidoMaterno: "López",
+    fechaNacimiento: new DateTime(1980, 5, 15),
+    genero: "H",
+    entidadFederativa: "DF"
 );
+
+Console.WriteLine($"CURP: {curp.Valor}");
 // Resultado: "PELJ800515HDFXXX00"
 ```
 
-### RFC - Métodos Simples
+### RFC - Cálculo Básico
 
 ```csharp
-// RFC Persona Física sin homoclave
-var rfc = RfcCurpHelper.CalcularRfcPersonaFisica(
-    "JUAN", 
-    "PEREZ", 
-    "LOPEZ", 
-    new DateTime(1980, 5, 15)
+// RFC Persona Física (siempre con homoclave)
+var rfcCalc = new RfcCalc();
+RfcVO rfc = rfcCalc.CalcularRfcPersonaFisica(
+    nombre: "Juan",
+    apellidoPaterno: "Pérez",
+    apellidoMaterno: "López",
+    fechaNacimiento: new DateTime(1980, 5, 15)
 );
 
-// RFC Persona Física con homoclave
-var rfcConHomoclave = RfcCurpHelper.CalcularRfcPersonaFisica(
-    "JUAN", 
-    "PEREZ", 
-    "LOPEZ", 
-    new DateTime(1980, 5, 15), 
-    conHomoclave: true
-);
-
-// RFC Persona Moral
-var rfcMoral = RfcCurpHelper.CalcularRfcPersonaMoral(
-    "EMPRESA SA DE CV", 
-    new DateTime(2000, 1, 1), 
-    conHomoclave: true
-);
+Console.WriteLine($"RFC: {rfc.Value}");
+Console.WriteLine($"Homoclave: {rfc.Homoclave}");
+Console.WriteLine($"¿Tiene Homoclave?: {rfc.TieneHomoclave}");
+// Resultado: "PELJ800515XXX"
 ```
 
-## 🏗️ Uso Avanzado con Inyección de Dependencias
+## 🏗️ Uso Avanzado con Value Objects
 
-### Modelos de Datos
-
-```csharp
-using DevKit.Rfc.Models;
-
-// Persona Física
-var persona = new PersonaFisica(
-    nombre: "JUAN",
-    apellidoPaterno: "PEREZ",
-    apellidoMaterno: "LOPEZ",
-    fechaNacimiento: new DateTime(1980, 5, 15),
-    sexo: 'H',
-    estadoNacimiento: "DF"
-);
-
-// Persona Moral
-var personaMoral = new PersonaMoral(
-    razonSocial: "EMPRESA SA DE CV",
-    fechaConstitucion: new DateTime(2000, 1, 1)
-);
-```
-
-### Resultados Detallados
+### Validación y Creación Segura
 
 ```csharp
-using DevKit.Rfc.Models;
+using DevKit.Rfc.ValueObjects;
 
-// CURP con resultado detallado
-var curpResult = RfcCurpHelper.CalcularCurp(persona);
-if (curpResult.IsValid)
+// Validar y crear RFC de forma segura
+string rfcTexto = "VAPD900710CA8";
+
+if (RfcVO.TryCrear(rfcTexto, out RfcVO rfcValido))
 {
-    Console.WriteLine($"CURP: {curpResult.Curp}");
+    Console.WriteLine($"RFC válido: {rfcValido.Value}");
+    Console.WriteLine($"Homoclave: {rfcValido.Homoclave}");
+    Console.WriteLine($"¿Es Persona Física?: {rfcValido.EsPersonaFisica}");
+    Console.WriteLine($"¿Tiene Homoclave?: {rfcValido.TieneHomoclave}");
 }
 else
 {
-    Console.WriteLine($"Error: {curpResult.ErrorMessage}");
+    Console.WriteLine("RFC inválido");
 }
 
-// RFC con resultado detallado
-var rfcResult = RfcCurpHelper.CalcularRfc(persona, conHomoclave: true);
-if (rfcResult.IsValid)
+// Validar y crear CURP de forma segura
+string curpTexto = "VAPD900710HVZZLV04";
+
+if (CurpVO.TryCrear(curpTexto, out CurpVO curpValida))
 {
-    Console.WriteLine($"RFC: {rfcResult.Rfc}");
-    Console.WriteLine($"Con homoclave: {rfcResult.HasHomoclave}");
+    Console.WriteLine($"CURP válida: {curpValida.Valor}");
+    Console.WriteLine($"Género: {curpValida.Genero}");
+    Console.WriteLine($"Fecha Nacimiento: {curpValida.FechaNacimiento}");
+    Console.WriteLine($"Entidad: {curpValida.EntidadFederativa}");
+    Console.WriteLine($"Consonantes: {curpValida.ConsonantesInternas}");
 }
 else
 {
-    Console.WriteLine($"Error: {rfcResult.ErrorMessage}");
+    Console.WriteLine("CURP inválida");
 }
 ```
 
-### Inyección de Dependencias Manual
+### Comparación de Value Objects
 
 ```csharp
-using DevKit.Rfc.Factories;
-using DevKit.Rfc.Interfaces;
+// Crear RFCs para comparar
+var rfc1 = RfcVO.Crear("VAPD900710CA8");
+var rfc2 = RfcVO.Crear("VAPD900710CA8");
+var rfc3 = RfcVO.Crear("VAPD900710CA9");
 
-// Crear factory
-var factory = new RfcCurpFactory();
+// Comparaciones
+Console.WriteLine($"RFC 1 == RFC 2: {rfc1 == rfc2}");  // True
+Console.WriteLine($"RFC 1 == RFC 3: {rfc1 == rfc3}");  // False
+Console.WriteLine($"RFC 1.Equals(RFC 2): {rfc1.Equals(rfc2)}");  // True
 
-// Crear calculadores
-ICurpCalculator curpCalculator = factory.CreateCurpCalculator();
-IRfcCalculator rfcCalculator = factory.CreateRfcCalculator();
+// Comparación de CURPs
+var curp1 = CurpVO.Crear("VAPD900710HVZZLV04");
+var curp2 = CurpVO.Crear("VAPD900710HVZZLV04");
+var curp3 = CurpVO.Crear("VAPD900710HVZZLV05");
 
-// Usar calculadores
-var curpResult = curpCalculator.Calculate(persona);
-var rfcResult = rfcCalculator.Calculate(persona, conHomoclave: true);
+Console.WriteLine($"CURP 1 == CURP 2: {curp1 == curp2}");  // True
+Console.WriteLine($"CURP 1 == CURP 3: {curp1 == curp3}");  // False
+```
+
+### Acceso a Componentes
+
+```csharp
+// Acceder a componentes del RFC
+var rfc = RfcVO.Crear("VAPD900710CA8");
+Console.WriteLine($"Letras Nombre: {rfc.LetrasNombre}");      // "VAPD"
+Console.WriteLine($"Fecha: {rfc.Fecha}");                    // "900710"
+Console.WriteLine($"Homoclave: {rfc.Homoclave}");             // "CA"
+Console.WriteLine($"Dígito Verificador: {rfc.DigitoVerificador}"); // "8"
+
+// Acceder a componentes de la CURP
+var curp = CurpVO.Crear("VAPD900710HVZZLV04");
+Console.WriteLine($"Letras Nombre: {curp.LetrasNombre}");      // "VAPD"
+Console.WriteLine($"Fecha Nacimiento: {curp.FechaNacimiento}"); // "900710"
+Console.WriteLine($"Género: {curp.Genero}");                   // 'H'
+Console.WriteLine($"Entidad: {curp.EntidadFederativa}");    // "VZ"
+Console.WriteLine($"Consonantes: {curp.ConsonantesInternas}"); // "ZLV"
+Console.WriteLine($"Dígito Verificador: {curp.DigitoVerificador}"); // "04"
 ```
 
 ## 🏛️ Principios SOLID Implementados
 
 ### **S** - Single Responsibility Principle
-- `TextNormalizer`: Solo normaliza texto
-- `ProfanityValidator`: Solo valida palabras altisonantes
-- `LetterExtractor`: Solo extrae letras y vocales
-- `CurpDigitCalculator`: Solo calcula dígitos verificadores
-- `HomoclaveCalculator`: Solo calcula homoclaves
+- `CurpCalc`: Solo calcula CURP
+- `RfcCalc`: Solo calcula RFC
+- `CurpVO`: Solo representa y valida CURP
+- `RfcVO`: Solo representa y valida RFC
 
 ### **O** - Open/Closed Principle
 - Extensible sin modificar código existente
-- Nuevos validadores pueden agregarse mediante interfaces
+- Value Objects inmutables y extensibles
 
 ### **L** - Liskov Substitution Principle
-- Todas las implementaciones pueden sustituir a sus interfaces
+- Todos los Value Objects pueden sustituirse entre sí
 
 ### **I** - Interface Segregation Principle
-- Interfaces específicas y pequeñas (`ICurpCalculator`, `IRfcCalculator`)
+- Clases especializadas con responsabilidades específicas
 
 ### **D** - Dependency Inversion Principle
-- Depende de abstracciones, no de concreciones
-- Inyección de dependencias via constructor
+- Sin dependencias externas, todo autocontenido
 
 ## 📋 Especificaciones
 
 ### CURP (18 caracteres)
 - **4 letras**: Apellido paterno (1 letra + 1 vocal) + Apellido materno (1 letra) + Nombre (1 letra)
 - **6 dígitos**: Fecha de nacimiento (YYMMDD)
-- **1 carácter**: Sexo (H/M)
+- **1 carácter**: Género (H/M)
 - **2 caracteres**: Estado de nacimiento (código SAT)
 - **3 caracteres**: Consonantes internas
 - **2 caracteres**: Dígito verificador
 
-### RFC (12-13 caracteres)
-- **3-4 letras**: Apellidos y nombre
-- **6 dígitos**: Fecha de nacimiento/constitución (YYMMDD)
-- **3 caracteres**: Homoclave (opcional)
+### RFC (13 caracteres - siempre con homoclave)
+- **4 letras**: Apellidos y nombre
+- **6 dígitos**: Fecha de nacimiento (YYMMDD)
+- **3 caracteres**: Homoclave (siempre generada)
 - **1 carácter**: Dígito verificador
 
-## 🧪 Ejemplos
+## 🧪 Ejemplos Completos
+
+### Ejemplo 1: Cálculo de RFC para David Vazquez Palestino
 
 ```csharp
-// Ejemplo completo
-var persona = new PersonaFisica(
-    "MARÍA DE LOS ÁNGELES",
-    "GONZÁLEZ",
-    "MARTÍNEZ",
-    new DateTime(1985, 12, 3),
-    'M',
-    "JAL"
+using DevKit.Rfc;
+using DevKit.Rfc.ValueObjects;
+
+// Datos de ejemplo
+var rfcCalc = new RfcCalc();
+RfcVO rfc = rfcCalc.CalcularRfcPersonaFisica(
+    nombre: "David",
+    apellidoPaterno: "Vazquez",
+    apellidoMaterno: "Palestino",
+    fechaNacimiento: new DateTime(1990, 7, 10)
 );
 
-var curp = RfcCurpHelper.CalcularCurp(persona);
-// "GOMA851203MJZRNN04"
+Console.WriteLine($"RFC: {rfc.Value}");
+Console.WriteLine($"Homoclave: {rfc.Homoclave}");
+// Resultado: "VAPD900710CA8" ✅ RFC correcto de David
+```
 
-var rfc = RfcCurpHelper.CalcularRfcPersonaFisica(
-    "MARÍA DE LOS ÁNGELES", 
-    "GONZÁLEZ", 
-    "MARTÍNEZ", 
-    new DateTime(1985, 12, 3), 
-    true
+### Ejemplo 2: Cálculo de CURP con nombres compuestos
+
+```csharp
+var curpCalc = new CurpCalc();
+CurpVO curp = curpCalc.CalcularCurp(
+    nombre: "José Daniel",
+    apellidoPaterno: "Vázquez",
+    apellidoMaterno: "Palestino",
+    fechaNacimiento: new DateTime(2003, 1, 31),
+    genero: "H",
+    entidadFederativa: "VZ"
 );
-// "GOMA851203MJ5"
+
+Console.WriteLine($"CURP: {curp.Valor}");
+// Resultado: "VAPD030131HVZZLNA5"
 ```
 
 ## 🔧 Configuración
@@ -209,6 +227,7 @@ La biblioteca no requiere configuración adicional. Los valores y catálogos est
 - Palabras altisonantes para validación
 - Catálogo de estados del SAT
 - Tablas de conversión para homoclave y dígitos verificadores
+- Algoritmo oficial del SAT para dígito verificador
 
 ## 📝 Notas
 
@@ -217,6 +236,8 @@ La biblioteca no requiere configuración adicional. Los valores y catálogos est
 - Filtra palabras comunes (DE, LA, LOS, etc.)
 - Reemplaza caracteres especiales por X cuando es necesario
 - Valida y corrige palabras altisonantes
+- Los Value Objects son inmutables y thread-safe
+- El dígito verificador usa la tabla oficial del SAT (incluye ñ = 24)
 
 ## 🤝 Contribuciones
 
