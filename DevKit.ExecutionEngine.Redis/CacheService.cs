@@ -101,13 +101,19 @@ internal class CacheService : ICacheService
     /// <inheritdoc/>
     public async Task InvalidateAsync(params Expression[] expressions)
     {
-        foreach (Expression expression in expressions)
+        if (expressions != null && expressions.Length != 0)
         {
-            if (expression is LambdaExpression lambda)
+            List<Task> tasks = new(expressions.Length);
+
+            foreach (Expression expression in expressions)
             {
-                string fullKey = BuildKey(ExpressionConditionExtractor.BuildRedisKey(lambda));
-                await DataBase.KeyDeleteAsync(fullKey);
+                if (expression is LambdaExpression lambda)
+                {
+                    string fullKey = BuildKey(ExpressionConditionExtractor.BuildRedisKey(lambda));
+                    tasks.Add(DataBase.KeyDeleteAsync(fullKey));
+                }
             }
+            await Task.WhenAll(tasks);
         }
     }
 
