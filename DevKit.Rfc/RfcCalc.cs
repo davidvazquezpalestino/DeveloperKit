@@ -1,10 +1,14 @@
+using System.Text;
+using System.Text.RegularExpressions;
+using DevKit.Rfc.ValueObjects;
+
 namespace DevKit.Rfc
 {
     /// <summary>
     /// Calculador de RFC (Registro Federal de Contribuyentes).
     /// Implementa el algoritmo oficial del SAT para personas físicas y morales.
     /// </summary>
-    public class RfcCalculator
+    public class RfcCalc
     {
         private readonly bool _generarHomoclave;
 
@@ -12,7 +16,7 @@ namespace DevKit.Rfc
         /// Inicializa una nueva instancia del calculador de RFC.
         /// </summary>
         /// <param name="generarHomoclave">Indica si se debe generar homoclave.</param>
-        public RfcCalculator(bool generarHomoclave)
+        public RfcCalc(bool generarHomoclave)
         {
             _generarHomoclave = generarHomoclave;
         }
@@ -25,7 +29,7 @@ namespace DevKit.Rfc
         /// <param name="apellidoMaterno">Apellido materno.</param>
         /// <param name="fechaNacimiento">Fecha de nacimiento.</param>
         /// <returns>RFC calculado.</returns>
-        public ValueObjects.Rfc CalcularRfcPersonaFisica(
+        public RfcVO CalcularRfcPersonaFisica(
             string nombre,
             string apellidoPaterno,
             string apellidoMaterno,
@@ -37,7 +41,7 @@ namespace DevKit.Rfc
             string rfcBase = ConstruirRfcBasePersonaFisica(datosNormalizados);
             string rfcCompleto = CompletarRfcPersonaFisica(rfcBase, datosNormalizados, fechaNacimiento);
 
-            return ValueObjects.Rfc.Crear(rfcCompleto);
+            return RfcVO.Crear(rfcCompleto);
         }
 
         /// <summary>
@@ -46,7 +50,7 @@ namespace DevKit.Rfc
         /// <param name="razonSocial">Razón social.</param>
         /// <param name="fechaConstitucion">Fecha de constitución.</param>
         /// <returns>RFC calculado.</returns>
-        public ValueObjects.Rfc CalcularRfcPersonaMoral(string razonSocial, DateTime fechaConstitucion)
+        public RfcVO CalcularRfcPersonaMoral(string razonSocial, DateTime fechaConstitucion)
         {
             ValidarParametrosPersonaMoral(razonSocial, fechaConstitucion);
 
@@ -54,7 +58,7 @@ namespace DevKit.Rfc
             string rfcBase = ConstruirRfcBasePersonaMoral(razonSocialNormalizada);
             string rfcCompleto = CompletarRfcPersonaMoral(rfcBase, razonSocialNormalizada, fechaConstitucion);
 
-            return ValueObjects.Rfc.Crear(rfcCompleto);
+            return RfcVO.Crear(rfcCompleto);
         }
 
         private void ValidarParametrosPersonaFisica(string nombre, string apellidoPaterno, DateTime fechaNacimiento)
@@ -423,7 +427,6 @@ namespace DevKit.Rfc
                 numeroSuma += int.Parse(numero1) * int.Parse(numero2);
             }
 
-            // Calcular homonimia
             int resultado = numeroSuma % 1000;
             int cociente = resultado / 34;
             int residuo = resultado % 34;
@@ -527,87 +530,31 @@ namespace DevKit.Rfc
         /// <returns>Dígito verificador.</returns>
         public string ObtenerDigitoVerificadorRfc(string rfc)
         {
-            List<string> rfcsuma = new System.Collections.Generic.List<string>();
-            int nv = 0;
-            int y = 0;
-
+            // Tabla de valores oficial del SAT (incluye ñ = 24)
+            string[] tabla = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "Ñ", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z" };
+            
+            int suma = 0;
             for (int i = 0; i < rfc.Length; i++)
             {
-                string letra = rfc.Substring(i, 1);
-
-                switch (letra)
+                char c = rfc[i];
+                int valor = Array.IndexOf(tabla, c.ToString().ToUpper());
+                if (valor >= 0)
                 {
-                    case "0": rfcsuma.Add("00"); break;
-                    case "1": rfcsuma.Add("01"); break;
-                    case "2": rfcsuma.Add("02"); break;
-                    case "3": rfcsuma.Add("03"); break;
-                    case "4": rfcsuma.Add("04"); break;
-                    case "5": rfcsuma.Add("05"); break;
-                    case "6": rfcsuma.Add("06"); break;
-                    case "7": rfcsuma.Add("07"); break;
-                    case "8": rfcsuma.Add("08"); break;
-                    case "9": rfcsuma.Add("09"); break;
-                    case "A": rfcsuma.Add("10"); break;
-                    case "B": rfcsuma.Add("11"); break;
-                    case "C": rfcsuma.Add("12"); break;
-                    case "D": rfcsuma.Add("13"); break;
-                    case "E": rfcsuma.Add("14"); break;
-                    case "F": rfcsuma.Add("15"); break;
-                    case "G": rfcsuma.Add("16"); break;
-                    case "H": rfcsuma.Add("17"); break;
-                    case "I": rfcsuma.Add("18"); break;
-                    case "J": rfcsuma.Add("19"); break;
-                    case "K": rfcsuma.Add("20"); break;
-                    case "L": rfcsuma.Add("21"); break;
-                    case "M": rfcsuma.Add("22"); break;
-                    case "N": rfcsuma.Add("23"); break;
-                    case "Ñ": rfcsuma.Add("24"); break;
-                    case "O": rfcsuma.Add("25"); break;
-                    case "P": rfcsuma.Add("26"); break;
-                    case "Q": rfcsuma.Add("27"); break;
-                    case "R": rfcsuma.Add("28"); break;
-                    case "S": rfcsuma.Add("29"); break;
-                    case "T": rfcsuma.Add("30"); break;
-                    case "U": rfcsuma.Add("31"); break;
-                    case "V": rfcsuma.Add("32"); break;
-                    case "W": rfcsuma.Add("33"); break;
-                    case "X": rfcsuma.Add("34"); break;
-                    case "Y": rfcsuma.Add("35"); break;
-                    case "Z": rfcsuma.Add("36"); break;
-                    case " ": rfcsuma.Add("37"); break;
-                    default: rfcsuma.Add("00"); break;
+                    suma += valor * (13 - i);
                 }
             }
 
-            for (int i = 13; i > 1; i--)
-            {
-                nv += (rfcsuma.Count == y) ? 0 : (int.Parse(rfcsuma[y]) * i);
-                y++;
-            }
+            int residuo = suma % 11;
+            string digito;
+            
+            if (residuo == 0)
+                digito = "0";
+            else if (residuo == 1)
+                digito = "1";
+            else
+                digito = (11 - residuo).ToString();
 
-            nv = nv % 11;
-            if (nv == 0)
-                return "0";
-            else if (nv <= 10)
-            {
-                nv = 11 - nv;
-                return nv.ToString() == "10" ? "A" : nv.ToString();
-            }
-            else if (nv.ToString() == "10")
-            {
-                return "A";
-            }
-            return "0";
-        }
-
-        private string EliminarAcentos(string cadena)
-        {
-            return Regex.Replace(cadena, "Á", "A")
-                        .Replace("É", "E")
-                        .Replace("Í", "I")
-                        .Replace("Ó", "O")
-                        .Replace("Ú", "U")
-                        .Replace("Ñ", "X");
+            return digito;
         }
 
         private string FiltrarPalabrasComunes(string nombre)
@@ -616,7 +563,7 @@ namespace DevKit.Rfc
             {
                 ",", "de ", "del ", "la ", "los ", "las ", "y ", "mc ", "mac ", "von ", "van ",
                 "DE ", "DEL ", "LA ", "LOS ", "LAS ", "Y ", "MC ", "MAC ", "VON ", "VAN ",
-                "MA.", "MA. ", "ma ", "MA "
+                "DE", "DEL", "LA", "LOS", "LAS", "Y", "MC", "MAC", "VON", "VAN"
             };
 
             foreach (string palabra in palabrasComunes)
@@ -639,20 +586,29 @@ namespace DevKit.Rfc
                 }
             }
 
-            return nombre.Replace(" ", "");
+            return nombre.Trim();
         }
 
         private string FiltrarNombresCompuestos(string nombre)
         {
-            if (nombre.Length > 1)
+            string[] nombresCompuestos = new[]
             {
-                switch (nombre.Substring(0, 2))
+                "JOSE ANTONIO", "JOSE LUIS", "JUAN CARLOS", "LUIS ALBERTO", "MANUEL ANTONIO",
+                "JOSE MANUEL", "JUAN MANUEL", "LUIS MANUEL", "MANUEL LUIS", "JOSE FRANCISCO",
+                "JUAN FRANCISCO", "LUIS FRANCISCO", "MANUEL FRANCISCO", "JOSE ANGEL",
+                "JUAN ANGEL", "LUIS ANGEL", "MANUEL ANGEL", "JOSE RAFAEL", "JUAN RAFAEL",
+                "LUIS RAFAEL", "MANUEL RAFAEL", "JOSE DAVID", "JUAN DAVID", "LUIS DAVID",
+                "MANUEL DAVID", "JOSE DANIEL", "JUAN DANIEL", "LUIS DANIEL", "MANUEL DANIEL"
+            };
+
+            foreach (string nombreCompuesto in nombresCompuestos)
+            {
+                if (nombre.StartsWith(nombreCompuesto))
                 {
-                    case "CH": return nombre.Replace("CH", "C");
-                    case "LL": return nombre.Replace("LL", "L");
-                    case "TR": return nombre.Replace("TR", "T");
+                    return nombre.Replace(nombreCompuesto, nombresCompuestos[0].Split(' ')[0]);
                 }
             }
+
             return nombre;
         }
 
@@ -670,7 +626,24 @@ namespace DevKit.Rfc
                     return cadena[i].ToString();
                 }
             }
+
             return "X";
+        }
+
+        private string EliminarAcentos(string texto)
+        {
+            string textoNormalizado = texto.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+
+            foreach (char c in textoNormalizado)
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString();
         }
 
         private string QuitarPalabrasProhibidas(string rfc)

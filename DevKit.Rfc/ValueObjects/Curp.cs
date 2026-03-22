@@ -4,7 +4,7 @@ namespace DevKit.Rfc.ValueObjects
     /// Value Object que representa una CURP (Clave Única de Registro de Población).
     /// Inmutable y con validación de formato.
     /// </summary>
-    public sealed class Curp
+    public sealed class CurpVO
     {
         private readonly string _valor;
         private const int LongitudCurp = 18;
@@ -49,7 +49,7 @@ namespace DevKit.Rfc.ValueObjects
         /// </summary>
         /// <param name="valor">Value de la CURP.</param>
         /// <exception cref="ArgumentException">Si el formato es inválido.</exception>
-        private Curp(string valor)
+        private CurpVO(string valor)
         {
             _valor = valor ?? throw new ArgumentNullException(nameof(valor));
 
@@ -65,9 +65,9 @@ namespace DevKit.Rfc.ValueObjects
         /// <param name="valor">Value de la CURP.</param>
         /// <returns>Instancia de Curp.</returns>
         /// <exception cref="ArgumentException">Si el formato es inválido.</exception>
-        public static Curp Crear(string valor)
+        public static CurpVO Crear(string valor)
         {
-            return new Curp(valor);
+            return new CurpVO(valor);
         }
 
         /// <summary>
@@ -76,16 +76,16 @@ namespace DevKit.Rfc.ValueObjects
         /// <param name="valor">Value de la CURP.</param>
         /// <param name="curp">CURP creada si el formato es válido.</param>
         /// <returns>True si el formato es válido, false en caso contrario.</returns>
-        public static bool TryCrear(string valor, out Curp curp)
+        public static bool TryCrear(string valor, out CurpVO curp)
         {
             curp = null;
-
+            
             if (string.IsNullOrEmpty(valor) || !EsFormatoValido(valor))
             {
                 return false;
             }
 
-            curp = new Curp(valor);
+            curp = new CurpVO(valor);
             return true;
         }
 
@@ -155,7 +155,7 @@ namespace DevKit.Rfc.ValueObjects
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
 
-            return Equals((Curp)obj);
+            return Equals((CurpVO)obj);
         }
 
         /// <summary>
@@ -163,7 +163,7 @@ namespace DevKit.Rfc.ValueObjects
         /// </summary>
         /// <param name="other">CURP a comparar.</param>
         /// <returns>True si son iguales.</returns>
-        public bool Equals(Curp other)
+        public bool Equals(CurpVO other)
         {
             if (other is null) return false;
             return string.Equals(_valor, other._valor, StringComparison.OrdinalIgnoreCase);
@@ -184,7 +184,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <param name="izquierda">CURP izquierda.</param>
         /// <param name="derecha">CURP derecha.</param>
         /// <returns>True si son iguales.</returns>
-        public static bool operator ==(Curp izquierda, Curp derecha)
+        public static bool operator ==(CurpVO izquierda, CurpVO derecha)
         {
             return Equals(izquierda, derecha);
         }
@@ -195,7 +195,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <param name="izquierda">CURP izquierda.</param>
         /// <param name="derecha">CURP derecha.</param>
         /// <returns>True si son diferentes.</returns>
-        public static bool operator !=(Curp izquierda, Curp derecha)
+        public static bool operator !=(CurpVO izquierda, CurpVO derecha)
         {
             return !Equals(izquierda, derecha);
         }

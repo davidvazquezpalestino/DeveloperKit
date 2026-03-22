@@ -4,7 +4,7 @@ namespace DevKit.Rfc.ValueObjects
     /// Value Object que representa un RFC (Registro Federal de Contribuyentes).
     /// Inmutable y con validación de formato.
     /// </summary>
-    public sealed class Rfc
+    public sealed class RfcVO
     {
         private readonly string _value;
         private const int LongitudRfcPersonaFisica = 13;
@@ -61,7 +61,7 @@ namespace DevKit.Rfc.ValueObjects
         /// </summary>
         /// <param name="valor">Value del RFC.</param>
         /// <exception cref="ArgumentException">Si el formato es inválido.</exception>
-        private Rfc(string valor)
+        private RfcVO(string valor)
         {
             _value = valor ?? throw new ArgumentNullException(nameof(valor));
 
@@ -77,9 +77,9 @@ namespace DevKit.Rfc.ValueObjects
         /// <param name="valor">Value del RFC.</param>
         /// <returns>Instancia de Rfc.</returns>
         /// <exception cref="ArgumentException">Si el formato es inválido.</exception>
-        public static Rfc Crear(string valor)
+        public static RfcVO Crear(string valor)
         {
-            return new Rfc(valor);
+            return new RfcVO(valor);
         }
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <param name="valor">Value del RFC.</param>
         /// <param name="rfc">RFC creado si el formato es válido.</param>
         /// <returns>True si el formato es válido, false en caso contrario.</returns>
-        public static bool TryCrear(string valor, out Rfc rfc)
+        public static bool TryCrear(string valor, out RfcVO rfc)
         {
             rfc = null;
 
@@ -97,7 +97,7 @@ namespace DevKit.Rfc.ValueObjects
                 return false;
             }
 
-            rfc = new Rfc(valor);
+            rfc = new RfcVO(valor);
             return true;
         }
 
@@ -180,7 +180,7 @@ namespace DevKit.Rfc.ValueObjects
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
 
-            return Equals((Rfc)obj);
+            return Equals((RfcVO)obj);
         }
 
         /// <summary>
@@ -188,7 +188,7 @@ namespace DevKit.Rfc.ValueObjects
         /// </summary>
         /// <param name="other">RFC a comparar.</param>
         /// <returns>True si son iguales.</returns>
-        public bool Equals(Rfc other)
+        public bool Equals(RfcVO other)
         {
             if (other is null) return false;
             return string.Equals(_value, other._value, StringComparison.OrdinalIgnoreCase);
@@ -209,7 +209,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <param name="izquierda">RFC izquierda.</param>
         /// <param name="derecha">RFC derecha.</param>
         /// <returns>True si son iguales.</returns>
-        public static bool operator ==(Rfc izquierda, Rfc derecha)
+        public static bool operator ==(RfcVO izquierda, RfcVO derecha)
         {
             return Equals(izquierda, derecha);
         }
@@ -220,7 +220,7 @@ namespace DevKit.Rfc.ValueObjects
         /// <param name="izquierda">RFC izquierda.</param>
         /// <param name="derecha">RFC derecha.</param>
         /// <returns>True si son diferentes.</returns>
-        public static bool operator !=(Rfc izquierda, Rfc derecha)
+        public static bool operator !=(RfcVO izquierda, RfcVO derecha)
         {
             return !Equals(izquierda, derecha);
         }

@@ -1,10 +1,14 @@
+using System.Text;
+using System.Text.RegularExpressions;
+using DevKit.Rfc.ValueObjects;
+
 namespace DevKit.Rfc
 {
     /// <summary>
     /// Calculador de CURP para personas físicas.
     /// Implementa el algoritmo oficial del gobierno mexicano.
     /// </summary>
-    public class CurpCalculator
+    public class CurpCalc
     {
         private static readonly string[] Vocales = { "A", "E", "I", "O", "U" };
 
@@ -18,7 +22,7 @@ namespace DevKit.Rfc
         /// <param name="sexo">Sexo (H o M).</param>
         /// <param name="entidadFederativa">Código de entidad federativa (2 caracteres).</param>
         /// <returns>CURP calculada.</returns>
-        public ValueObjects.Curp CalcularCurp(
+        public CurpVO CalcularCurp(
             string nombre,
             string apellidoPaterno,
             string apellidoMaterno,
@@ -32,7 +36,7 @@ namespace DevKit.Rfc
             string curpBase = ConstruirCurpBase(datosNormalizados, sexo, entidadFederativa);
             string curpCompleta = AgregarConsonantesYDigito(curpBase, datosNormalizados, fechaNacimiento);
 
-            return ValueObjects.Curp.Crear(curpCompleta);
+            return CurpVO.Crear(curpCompleta);
         }
 
         private void ValidarParametros(
@@ -99,11 +103,13 @@ namespace DevKit.Rfc
             // Primera letra del nombre
             curp.Append(datos.Nombre[0]);
 
-            // Fecha de nacimiento
-            curp.Append(ObtenerFechaNacimientoCurp(DateTime.Now)); // Se reemplazará en el método principal
+            // Fecha de nacimiento (temporal, se reemplazará después)
+            curp.Append("000000");
 
-            // Sexo y entidad federativa
+            // Sexo
             curp.Append(sexo);
+
+            // Entidad federativa
             curp.Append(entidadFederativa);
 
             // Quitar palabras prohibidas
@@ -113,7 +119,7 @@ namespace DevKit.Rfc
 
         private string AgregarConsonantesYDigito(string curpBase, DatosNormalizados datos, DateTime fechaNacimiento)
         {
-            StringBuilder curp = new System.Text.StringBuilder(curpBase);
+            StringBuilder curp = new StringBuilder(curpBase);
 
             // Reemplazar fecha temporal con la real
             string fechaStr = ObtenerFechaNacimientoCurp(fechaNacimiento);
@@ -132,23 +138,13 @@ namespace DevKit.Rfc
             return curp.ToString();
         }
 
-        private string EliminarAcentos(string cadena)
-        {
-            return Regex.Replace(cadena, "Á", "A")
-                        .Replace("É", "E")
-                        .Replace("Í", "I")
-                        .Replace("Ó", "O")
-                        .Replace("Ú", "U")
-                        .Replace("Ñ", "X");
-        }
-
         private string FiltrarPalabrasComunes(string nombre)
         {
             string[] palabrasComunes = new[]
             {
                 ",", "de ", "del ", "la ", "los ", "las ", "y ", "mc ", "mac ", "von ", "van ",
                 "DE ", "DEL ", "LA ", "LOS ", "LAS ", "Y ", "MC ", "MAC ", "VON ", "VAN ",
-                "MA.", "MA. ", "ma ", "MA "
+                "DE", "DEL", "LA", "LOS", "LAS", "Y", "MC", "MAC", "VON", "VAN"
             };
 
             foreach (string palabra in palabrasComunes)
@@ -171,29 +167,37 @@ namespace DevKit.Rfc
                 }
             }
 
-            return nombre.Replace(" ", "");
+            return nombre.Trim();
         }
 
         private string FiltrarNombresCompuestos(string nombre)
         {
-            if (nombre.Length > 1)
+            string[] nombresCompuestos = new[]
             {
-                switch (nombre.Substring(0, 2))
+                "JUAN CARLOS", "JUAN JOSE", "LUIS ALBERTO", "JOSE LUIS", "JOSE ANTONIO",
+                "JUAN ANTONIO", "JOSE MANUEL", "JUAN MIGUEL", "JOSE MIGUEL", "LUIS MIGUEL",
+                "ANTONIO JESUS", "JOSE JESUS", "JUAN JESUS", "MANUEL JESUS", "JOSE ALBERTO",
+                "JOSE FRANCISCO", "JUAN FRANCISCO", "LUIS FRANCISCO", "MANUEL FRANCISCO",
+                "JOSE ANGEL", "JUAN ANGEL", "LUIS ANGEL", "MANUEL ANGEL", "JOSE RAFAEL",
+                "JUAN RAFAEL", "LUIS RAFAEL", "MANUEL RAFAEL", "JOSE DAVID", "JUAN DAVID",
+                "LUIS DAVID", "MANUEL DAVID", "JOSE DANIEL", "JUAN DANIEL", "LUIS DANIEL",
+                "MANUEL DANIEL"
+            };
+
+            foreach (string nombreCompuesto in nombresCompuestos)
+            {
+                if (nombre.StartsWith(nombreCompuesto))
                 {
-                    case "CH":
-                        return nombre.Replace("CH", "C");
-                    case "LL":
-                        return nombre.Replace("LL", "L");
-                    case "TR":
-                        return nombre.Replace("TR", "T");
+                    return nombre.Replace(nombreCompuesto, nombresCompuestos[0].Split(' ')[0]);
                 }
             }
+
             return nombre;
         }
 
         private string ObtenerVocalInterna(string cadena)
         {
-            if (string.IsNullOrEmpty(cadena))
+            if (string.IsNullOrEmpty(cadena) || cadena.Length < 2)
                 return "X";
 
             for (int i = 1; i < cadena.Length; i++)
@@ -203,22 +207,40 @@ namespace DevKit.Rfc
                     return cadena[i].ToString();
                 }
             }
+
             return "X";
         }
 
         private string ObtenerConsonanteInterna(string cadena)
         {
-            if (string.IsNullOrEmpty(cadena))
+            if (string.IsNullOrEmpty(cadena) || cadena.Length < 2)
                 return "X";
 
             for (int i = 1; i < cadena.Length; i++)
             {
-                if (!Array.Exists(Vocales, vocal => vocal == cadena[i].ToString()))
+                if (!Array.Exists(Vocales, vocal => vocal == cadena[i].ToString()) && char.IsLetter(cadena[i]))
                 {
                     return cadena[i].ToString();
                 }
             }
+
             return "X";
+        }
+
+        private string EliminarAcentos(string texto)
+        {
+            string textoNormalizado = texto.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+
+            foreach (char c in textoNormalizado)
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString();
         }
 
         private string QuitarPalabrasProhibidas(string curp)
@@ -270,9 +292,9 @@ namespace DevKit.Rfc
             numVer = Math.Abs(10 - numVer);
 
             if (numVer == 10)
-                numVer = 0;
+                return "0";
 
-            return anio < 2000 ? "0" + numVer : "A" + numVer;
+            return numVer.ToString();
         }
 
         private int ObtenerValorCaracter(string caracter)

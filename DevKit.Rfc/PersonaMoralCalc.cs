@@ -1,3 +1,7 @@
+using System.Text;
+using System.Text.RegularExpressions;
+using DevKit.Rfc.ValueObjects;
+
 namespace DevKit.Rfc
 {
     /// <summary>
@@ -8,7 +12,7 @@ namespace DevKit.Rfc
     /// Inicializa una nueva instancia del calculador de RFC para personas morales.
     /// </remarks>
     /// <param name="generarHomoclave">Indica si se debe generar homoclave.</param>
-    public class PersonaMoralCalculator(bool generarHomoclave)
+    public class PersonaMoralCalc(bool generarHomoclave)
     {
 
         /// <summary>
@@ -17,7 +21,7 @@ namespace DevKit.Rfc
         /// <param name="razonSocial">Razón social.</param>
         /// <param name="fechaConstitucion">Fecha de constitución.</param>
         /// <returns>RFC calculado.</returns>
-        public ValueObjects.Rfc CalcularRfcPersonaMoral(string razonSocial, DateTime fechaConstitucion)
+        public RfcVO CalcularRfcPersonaMoral(string razonSocial, DateTime fechaConstitucion)
         {
             ValidarParametros(razonSocial, fechaConstitucion);
 
@@ -25,7 +29,7 @@ namespace DevKit.Rfc
             string rfcBase = ConstruirRfcBase(razonSocialNormalizada);
             string rfcCompleto = CompletarRfc(rfcBase, razonSocialNormalizada, fechaConstitucion);
 
-            return ValueObjects.Rfc.Crear(rfcCompleto);
+            return RfcVO.Crear(rfcCompleto);
         }
 
         private void ValidarParametros(string razonSocial, DateTime fechaConstitucion)
@@ -54,7 +58,7 @@ namespace DevKit.Rfc
 
         private string CompletarRfc(string rfcBase, string razonSocial, DateTime fechaConstitucion)
         {
-            StringBuilder rfc = new System.Text.StringBuilder(rfcBase);
+            StringBuilder rfc = new StringBuilder(rfcBase);
 
             // Agregar fecha de constitución
             rfc.Append(ObtenerFechaRfc(fechaConstitucion));
@@ -98,7 +102,6 @@ namespace DevKit.Rfc
                 numeroSuma += int.Parse(numero1) * int.Parse(numero2);
             }
 
-            // Calcular homonimia
             int resultado = numeroSuma % 1000;
             int cociente = resultado / 34;
             int residuo = resultado % 34;
@@ -249,35 +252,19 @@ namespace DevKit.Rfc
                 }
             }
 
-            for (int i = 13; i > 1; i--)
+            for (int i = 0; i < rfcsuma.Count; i++)
             {
-                nv += (rfcsuma.Count == y) ? 0 : (int.Parse(rfcsuma[y]) * i);
-                y++;
+                nv += int.Parse(rfcsuma[i]) * (14 - i);
             }
 
-            nv = nv % 11;
-            if (nv == 0)
-                return "0";
-            else if (nv <= 10)
-            {
-                nv = 11 - nv;
-                return nv.ToString() == "10" ? "A" : nv.ToString();
-            }
-            else if (nv.ToString() == "10")
-            {
+            nv = 11 - (nv % 11);
+
+            if (nv == 10)
                 return "A";
-            }
-            return "0";
-        }
+            if (nv == 11)
+                return "0";
 
-        private string EliminarAcentos(string cadena)
-        {
-            return Regex.Replace(cadena, "Á", "A")
-                        .Replace("É", "E")
-                        .Replace("Í", "I")
-                        .Replace("Ó", "O")
-                        .Replace("Ú", "U")
-                        .Replace("Ñ", "X");
+            return nv.ToString();
         }
 
         private string FiltrarPalabrasComunes(string nombre)
@@ -286,7 +273,7 @@ namespace DevKit.Rfc
             {
                 ",", "de ", "del ", "la ", "los ", "las ", "y ", "mc ", "mac ", "von ", "van ",
                 "DE ", "DEL ", "LA ", "LOS ", "LAS ", "Y ", "MC ", "MAC ", "VON ", "VAN ",
-                "MA.", "MA. ", "ma ", "MA "
+                "DE", "DEL", "LA", "LOS", "LAS", "Y", "MC", "MAC", "VON", "VAN"
             };
 
             foreach (string palabra in palabrasComunes)
@@ -294,21 +281,46 @@ namespace DevKit.Rfc
                 nombre = nombre.Replace(palabra, "");
             }
 
-            return nombre.Replace(" ", "");
+            return nombre.Trim();
         }
 
         private string FiltrarNombresCompuestos(string nombre)
         {
-            if (nombre.Length > 1)
+            string[] nombresCompuestos = new[]
             {
-                switch (nombre.Substring(0, 2))
+                "JOSE ANTONIO", "JOSE LUIS", "JUAN CARLOS", "LUIS ALBERTO", "MANUEL ANTONIO",
+                "JOSE MANUEL", "JUAN MANUEL", "LUIS MANUEL", "MANUEL LUIS", "JOSE FRANCISCO",
+                "JUAN FRANCISCO", "LUIS FRANCISCO", "MANUEL FRANCISCO", "JOSE ANGEL",
+                "JUAN ANGEL", "LUIS ANGEL", "MANUEL ANGEL", "JOSE RAFAEL", "JUAN RAFAEL",
+                "LUIS RAFAEL", "MANUEL RAFAEL", "JOSE DAVID", "JUAN DAVID", "LUIS DAVID",
+                "MANUEL DAVID", "JOSE DANIEL", "JUAN DANIEL", "LUIS DANIEL", "MANUEL DANIEL"
+            };
+
+            foreach (string nombreCompuesto in nombresCompuestos)
+            {
+                if (nombre.StartsWith(nombreCompuesto))
                 {
-                    case "CH": return nombre.Replace("CH", "C");
-                    case "LL": return nombre.Replace("LL", "L");
-                    case "TR": return nombre.Replace("TR", "T");
+                    return nombre.Replace(nombreCompuesto, nombresCompuestos[0].Split(' ')[0]);
                 }
             }
+
             return nombre;
+        }
+
+        private string EliminarAcentos(string texto)
+        {
+            string textoNormalizado = texto.Normalize(NormalizationForm.FormD);
+            StringBuilder sb = new StringBuilder();
+
+            foreach (char c in textoNormalizado)
+            {
+                if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString();
         }
 
         private string QuitarPalabrasProhibidas(string rfc)
