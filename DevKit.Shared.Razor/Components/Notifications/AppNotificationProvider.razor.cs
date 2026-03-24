@@ -118,6 +118,32 @@ public partial class AppNotificationProvider
         public AppNotificationIcon Icon => Request.Icon;
     }
 
+    private string GetHeaderClass(AppNotificationIcon icon) => icon switch
+    {
+        AppNotificationIcon.Success => "bg-success text-white",
+        AppNotificationIcon.Error => "bg-danger text-white",
+        AppNotificationIcon.Warning => "bg-warning text-dark",
+        AppNotificationIcon.Info => "bg-info text-dark",
+        AppNotificationIcon.Question => "bg-primary text-white",
+        _ => "bg-secondary text-white"
+    };
+
+    private RenderFragment GetHeaderIconHtml(AppNotificationIcon icon) => builder =>
+    {
+        string iconClass = icon switch
+        {
+            AppNotificationIcon.Success => "bi-check-circle-fill",
+            AppNotificationIcon.Error => "bi-x-circle-fill",
+            AppNotificationIcon.Warning => "bi-exclamation-triangle-fill",
+            AppNotificationIcon.Info => "bi-info-circle-fill",
+            AppNotificationIcon.Question => "bi-question-circle-fill",
+            _ => "bi-info-circle-fill"
+        };
+        builder.OpenElement(0, "i");
+        builder.AddAttribute(1, "class", $"bi {iconClass} me-2");
+        builder.CloseElement();
+    };
+
     private RenderFragment GetIconHtml(AppNotificationIcon icon) => builder =>
     {
         (string iconClass, string colorClass) = icon switch

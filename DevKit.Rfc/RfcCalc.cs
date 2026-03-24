@@ -7,12 +7,6 @@ namespace DevKit.Rfc
     /// </summary>
     public class RfcCalc
     {
-        /// <summary>
-        /// Inicializa una nueva instancia del calculador de RFC.
-        /// </summary>
-        public RfcCalc()
-        {
-        }
 
         /// <summary>
         /// Calcula el RFC para una persona física.

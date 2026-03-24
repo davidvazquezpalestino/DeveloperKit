@@ -7,18 +7,17 @@
     <!-- Overlay semitransparente oscuro -->
     <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5); z-index: 2000;" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content shadow-lg border border-secondary-subtle rounded-4">
-                <div class="modal-header border-0 pb-0 px-4 pt-4">
-                    <h5 class="modal-title fw-bold text-dark w-100 text-center">@CurrentDialog.Title</h5>
-                </div>
-                <div class="modal-body text-center px-4 pb-4 pt-3">
-                    @if (CurrentDialog.Icon != AppNotificationIcon.None)
+            <div class="modal-content shadow-lg border-0 overflow-hidden rounded-4">
+                <div class="modal-header @GetHeaderClass(CurrentDialog.Icon) border-0 py-3 px-4">
+                    <h5 class="modal-title fw-bold m-0 flex-grow-1">
+                        @GetHeaderIconHtml(CurrentDialog.Icon) @CurrentDialog.Title
+                    </h5>
+                    @if (CurrentDialog.ShowCancelButton)
                     {
-                        <div class="mb-3 d-flex justify-content-center">
-                            @GetIconHtml(CurrentDialog.Icon)
-                        </div>
+                        <button type="button" class="btn-close @(GetHeaderClass(CurrentDialog.Icon).Contains("text-white") ? "btn-close-white" : "")" @onclick="CancelDialog" aria-label="Close"></button>
                     }
-                    
+                </div>
+                <div class="modal-body text-center px-4 pb-4 pt-4">
                     <p class="text-secondary mb-4" style="font-size: 1.1rem;">@CurrentDialog.Message</p>
                     
                     <div class="d-flex justify-content-center gap-3 mt-2">

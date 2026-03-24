@@ -8,9 +8,9 @@
 		<Company>David Vázquez Palestino</Company>
 		<Product>DevKit.Shared.RazorComponent</Product>
 		<Description>DotNet.Shared.RazorComponent es una biblioteca de componentes Razor reutilizables para aplicaciones Blazor. Proporciona componentes web modernos y optimizados para facilitar el desarrollo de interfaces de usuario en aplicaciones Blazor. Compatible con .NET 9.0 y utiliza Microsoft.AspNetCore.Components.Web para la implementación de componentes web interactivos.</Description>
-		<AssemblyVersion>2026.03.24</AssemblyVersion>
-		<FileVersion>2026.03.24</FileVersion>
-		<Version>2026.03.24</Version>
+		<AssemblyVersion>2026.03.25</AssemblyVersion>
+		<FileVersion>2026.03.25</FileVersion>
+		<Version>2026.03.25</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
