@@ -6,10 +6,10 @@
 {
     <!-- Overlay semitransparente oscuro -->
     <div class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5); z-index: 2000;" tabindex="-1" role="dialog">
-        <div class="modal-dialog modal-dialog-centered" role="document">
-            <div class="modal-content shadow-lg border-0 overflow-hidden rounded-4">
-                <div class="modal-header @GetHeaderClass(CurrentDialog.Icon) border-0 py-3 px-4">
-                    <h5 class="modal-title fw-bold m-0 flex-grow-1">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content shadow-lg border-0 overflow-hidden rounded-4" style="max-width: 600px;">
+                <div class="modal-header @GetHeaderClass(CurrentDialog.Icon) border-0 py-4 px-5">
+                    <h5 class="modal-title fw-bold m-0 flex-grow-1" style="font-size: 1.25rem;">
                         @GetHeaderIconHtml(CurrentDialog.Icon) @CurrentDialog.Title
                     </h5>
                     @if (CurrentDialog.ShowCancelButton)
@@ -17,17 +17,17 @@
                         <button type="button" class="btn-close @(GetHeaderClass(CurrentDialog.Icon).Contains("text-white") ? "btn-close-white" : "")" @onclick="CancelDialog" aria-label="Close"></button>
                     }
                 </div>
-                <div class="modal-body text-center px-4 pb-4 pt-4">
-                    <p class="text-secondary mb-4" style="font-size: 1.1rem;">@CurrentDialog.Message</p>
+                <div class="modal-body text-center px-5 pb-5 pt-4">
+                    <p class="text-secondary mb-4" style="font-size: 1.2rem; line-height: 1.6;">@CurrentDialog.Message</p>
                     
-                    <div class="d-flex justify-content-center gap-3 mt-2">
+                    <div class="d-flex justify-content-center gap-3 mt-3">
                         @if (CurrentDialog.ShowCancelButton)
                         {
-                            <button type="button" class="btn btn-outline-secondary px-4 py-2 rounded-pill fw-medium" @onclick="CancelDialog">
+                            <button type="button" class="btn btn-outline-secondary px-5 py-3 rounded-pill fw-medium" style="min-width: 140px;" @onclick="CancelDialog">
                                 @CurrentDialog.CancelButtonText
                             </button>
                         }
-                        <button type="button" class="btn @GetButtonClass(CurrentDialog.Icon) px-4 py-2 rounded-pill fw-medium" style="min-width: 120px;" @onclick="ConfirmDialog">
+                        <button type="button" class="btn @GetButtonClass(CurrentDialog.Icon) px-5 py-3 rounded-pill fw-medium" style="min-width: 140px;" @onclick="ConfirmDialog">
                             @CurrentDialog.ConfirmButtonText
                         </button>
                     </div>
