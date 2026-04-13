@@ -29,7 +29,8 @@ public static class ExportExcelExtensions
     /// <param name="table">El <see cref="DataTable"/> a exportar.</param>
     /// <param name="fileName">La ruta del archivo donde se guardará el Excel.</param>
     /// <param name="dateFormatType">El formato de fecha a aplicar.</param>
-    public static void ExportToMicrosoftExcel(this DataTable table, string fileName, DateFormatType dateFormatType = DateFormatType.Short)
+    /// <param name="autoSizeColumns">Indica si se debe recalcular el ancho de las columnas automáticamente.</param>
+    public static void ExportToMicrosoftExcel(this DataTable table, string fileName, DateFormatType dateFormatType = DateFormatType.Short, bool autoSizeColumns = false)
     {
         GuardAgainstInvalidExcelExtension(fileName);
 
@@ -62,6 +63,15 @@ public static class ExportExcelExtensions
                     }
                 }
 
+                // Recalcular el ancho de las columnas si está habilitado
+                if (autoSizeColumns)
+                {
+                    for (int columnIndex = 0; columnIndex < table.Columns.Count; columnIndex++)
+                    {
+                        sheet.AutoSizeColumn(columnIndex);
+                    }
+                }
+
                 workbook.Write(fileStream);
             }
         }
@@ -71,7 +81,8 @@ public static class ExportExcelExtensions
     /// <param name="dictionary">La colección de diccionarios a exportar.</param>
     /// <param name="fileName">La ruta del archivo donde se guardará el Excel.</param>
     /// <param name="dateFormatType">El formato de fecha a aplicar.</param>
-    public static void ExportToMicrosoftExcel(this IEnumerable<Dictionary<string, object>> dictionary, string fileName, DateFormatType dateFormatType = DateFormatType.Short)
+    /// <param name="autoSizeColumns">Indica si se debe recalcular el ancho de las columnas automáticamente.</param>
+    public static void ExportToMicrosoftExcel(this IEnumerable<Dictionary<string, object>> dictionary, string fileName, DateFormatType dateFormatType = DateFormatType.Short, bool autoSizeColumns = false)
     {
         GuardAgainstInvalidExcelExtension(fileName);
 
@@ -113,6 +124,7 @@ public static class ExportExcelExtensions
 
                 // Escribir los registros
                 int rowIndex = 1; // Start after the header row
+                int columnCount = items.Any() ? items.First().Count : 0;
                 foreach (Dictionary<string, object> item in items)
                 {
                     IRow row = sheet.CreateRow(rowIndex++);
@@ -122,6 +134,15 @@ public static class ExportExcelExtensions
                     {
                         object cellValue = item[key];
                         SetCellValue(cellValue, row, columnIndex++, genericCellStyle, dateCellStyle);
+                    }
+                }
+
+                // Recalcular el ancho de las columnas si está habilitado
+                if (autoSizeColumns)
+                {
+                    for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
+                    {
+                        sheet.AutoSizeColumn(columnIndex);
                     }
                 }
 
@@ -135,7 +156,8 @@ public static class ExportExcelExtensions
     /// <param name="data">La colección de objetos a exportar.</param>
     /// <param name="fileName">La ruta del archivo donde se guardará el Excel.</param>
     /// <param name="dateFormatType">El formato de fecha a aplicar.</param>
-    public static void ExportToMicrosoftExcel<T>(this IEnumerable<T> data, string fileName, DateFormatType dateFormatType = DateFormatType.Short)
+    /// <param name="autoSizeColumns">Indica si se debe recalcular el ancho de las columnas automáticamente.</param>
+    public static void ExportToMicrosoftExcel<T>(this IEnumerable<T> data, string fileName, DateFormatType dateFormatType = DateFormatType.Short, bool autoSizeColumns = false)
     {
         GuardAgainstInvalidExcelExtension(fileName);
 
@@ -188,6 +210,15 @@ public static class ExportExcelExtensions
                     }
                 }
 
+                // Recalcular el ancho de las columnas si está habilitado
+                if (autoSizeColumns)
+                {
+                    for (int i = 0; i < properties.Length; i++)
+                    {
+                        sheet.AutoSizeColumn(i);
+                    }
+                }
+
                 workbook.Write(fileStream);
             }
         }
@@ -196,8 +227,9 @@ public static class ExportExcelExtensions
     /// <summary>Exporta un DataTable a un MemoryStream en formato Excel.</summary>
     /// <param name="table">El <see cref="DataTable"/> a exportar.</param>
     /// <param name="dateFormatType">El formato de fecha a aplicar.</param>
+    /// <param name="autoSizeColumns">Indica si se debe recalcular el ancho de las columnas automáticamente.</param>
     /// <returns>Un <see cref="MemoryStream"/> que contiene el Excel.</returns>
-    public static MemoryStream ExportToMicrosoftExcel(this DataTable table, DateFormatType dateFormatType = DateFormatType.Short)
+    public static MemoryStream ExportToMicrosoftExcel(this DataTable table, DateFormatType dateFormatType = DateFormatType.Short, bool autoSizeColumns = false)
     {
         // Si la tabla está vacía, lanzamos una excepción (opcional)
         if (table == null || table.Rows.Count == 0)
@@ -238,6 +270,15 @@ public static class ExportExcelExtensions
             }
         }
 
+        // Recalcular el ancho de las columnas si está habilitado
+        if (autoSizeColumns)
+        {
+            for (int columnIndex = 0; columnIndex < table.Columns.Count; columnIndex++)
+            {
+                sheet.AutoSizeColumn(columnIndex);
+            }
+        }
+
         // Escribimos el libro de trabajo en el MemoryStream
         workbook.Write(memoryStream, true);
 
@@ -252,8 +293,9 @@ public static class ExportExcelExtensions
     /// <typeparam name="T">El tipo de los objetos en la colección.</typeparam>
     /// <param name="data">La colección de objetos a exportar.</param>
     /// <param name="dateFormatType">El formato de fecha a aplicar.</param>
+    /// <param name="autoSizeColumns">Indica si se debe recalcular el ancho de las columnas automáticamente.</param>
     /// <returns>Un <see cref="MemoryStream"/> que contiene el Excel.</returns>
-    public static MemoryStream ExportToMicrosoftExcel<T>(this IEnumerable<T> data, DateFormatType dateFormatType = DateFormatType.Short)
+    public static MemoryStream ExportToMicrosoftExcel<T>(this IEnumerable<T> data, DateFormatType dateFormatType = DateFormatType.Short, bool autoSizeColumns = false)
     {
         // Crea un MemoryStream
         MemoryStream memoryStream = new MemoryStream();
@@ -284,6 +326,14 @@ public static class ExportExcelExtensions
                 rowIndex++;
             }
 
+            // Recalcular el ancho de las columnas si está habilitado
+            if (autoSizeColumns)
+            {
+                for (int columnIndex = 0; columnIndex < properties.Length; columnIndex++)
+                {
+                    sheet.AutoSizeColumn(columnIndex);
+                }
+            }
 
             // Escribe el archivo en el MemoryStream
             workbook.Write(memoryStream, true);
@@ -297,8 +347,9 @@ public static class ExportExcelExtensions
     /// <summary>Exporta una colección de diccionarios a un MemoryStream en formato Excel.</summary>
     /// <param name="dictionary">La colección de diccionarios a exportar.</param>
     /// <param name="dateFormatType">El formato de fecha a aplicar.</param>
+    /// <param name="autoSizeColumns">Indica si se debe recalcular el ancho de las columnas automáticamente.</param>
     /// <returns>Un <see cref="MemoryStream"/> que contiene el Excel.</returns>
-    public static MemoryStream ExportToMicrosoftExcel(this IEnumerable<Dictionary<string, object>> dictionary, DateFormatType dateFormatType = DateFormatType.Short)
+    public static MemoryStream ExportToMicrosoftExcel(this IEnumerable<Dictionary<string, object>> dictionary, DateFormatType dateFormatType = DateFormatType.Short, bool autoSizeColumns = false)
     {
         // Crear un MemoryStream en lugar de escribir a un archivo físico
         MemoryStream memoryStream = new MemoryStream();
@@ -332,6 +383,7 @@ public static class ExportExcelExtensions
 
             // Escribir los registros
             int rowIndex = 1; // Start after the header row
+            int columnCount = items.Any() ? items.First().Count : 0;
             foreach (Dictionary<string, object> item in items)
             {
                 IRow row = sheet.CreateRow(rowIndex++);
@@ -341,6 +393,15 @@ public static class ExportExcelExtensions
                 {
                     object cellValue = item[key];
                     SetCellValue(cellValue, row, columnIndex++, genericCellStyle, dateCellStyle);
+                }
+            }
+
+            // Recalcular el ancho de las columnas si está habilitado
+            if (autoSizeColumns)
+            {
+                for (int columnIndex = 0; columnIndex < columnCount; columnIndex++)
+                {
+                    sheet.AutoSizeColumn(columnIndex);
                 }
             }
 
