@@ -141,38 +141,55 @@ public static class ExportExcelExtensions
 
         using (FileStream fileStream = new FileStream(fileName, FileMode.Create, FileAccess.Write))
         {
-            IWorkbook workbook = Path.GetExtension(fileName).ToLower() == ".xls"
-                ? new HSSFWorkbook()
-                : new XSSFWorkbook();
-
-            ISheet sheet = workbook.CreateSheet(typeof(T).Name);
-            IRow headerRow = sheet.CreateRow(0);
-
-            // Aquí obtienes las propiedades del tipo T
-            PropertyInfo[] properties = typeof(T).GetProperties();
-
-            // Crear encabezados
-            for (int i = 0; i < properties.Length; i++)
+            using (IWorkbook workbook = Path.GetExtension(fileName).ToLower() == ".xls"
+                       ? new HSSFWorkbook()
+                       : new XSSFWorkbook())
             {
-                headerRow.CreateCell(i).SetCellValue(properties[i].Name);
-            }
-
-            // Escribir registros
-            int rowIndex = 1;
-            IEnumerable<T> items = data.ToList();
-            foreach (T item in items)
-            {
-                IRow row = sheet.CreateRow(rowIndex);
-                for (int columnIndex = 0; columnIndex < properties.Length; columnIndex++)
+                string sheetname = typeof(T).Name;
+                if (sheetname.Length > 30)
                 {
-                    object value = properties[columnIndex].GetValue(item);
-                    row.CreateCell(columnIndex).SetCellValue(value?.ToString() ?? string.Empty);
+                    sheetname = sheetname.Substring(30);
                 }
-                rowIndex++;
-            }
+                ISheet sheet = workbook.CreateSheet(sheetname);
 
-            workbook.Write(fileStream);
-            Console.WriteLine($"Archivo escrito en {fileName} con {items.Count()} registros");
+                // Asumiendo que la primera fila tiene las propiedades para los encabezados
+                IRow header = sheet.CreateRow(0);
+                ICellStyle headerCellStyle = CreateCellHeaderStyle(workbook);
+
+                // Obtener las propiedades del tipo T
+                PropertyInfo[] properties = typeof(T).GetProperties();
+
+                // Crear encabezado con los nombres de las propiedades
+                int columnIndex = 0;
+                foreach (PropertyInfo property in properties)
+                {
+                    ICell cell = header.CreateCell(columnIndex++);
+                    cell.SetCellValue(property.Name);
+                    cell.CellStyle = headerCellStyle;
+                }
+
+                short dateFormat = workbook.CreateDataFormat().GetFormat(GetDateFormatString(dateFormatType));
+
+                ICellStyle genericCellStyle = CreateCellDetailsStyle(workbook);
+                ICellStyle dateCellStyle = CreateDateCellStyle(workbook, dateFormat);
+
+                // Escribir los registros
+                int rowIndex = 1; // Start after the header row
+                List<T> items = data.ToList();
+                foreach (T item in items)
+                {
+                    IRow row = sheet.CreateRow(rowIndex++);
+                    columnIndex = 0;
+
+                    foreach (PropertyInfo property in properties)
+                    {
+                        object cellValue = property.GetValue(item);
+                        SetCellValue(cellValue, row, columnIndex++, genericCellStyle, dateCellStyle);
+                    }
+                }
+
+                workbook.Write(fileStream);
+            }
         }
     }
 
