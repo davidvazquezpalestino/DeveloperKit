@@ -124,9 +124,16 @@ public static class DependencyInjectionExtensions
     /// Registra servicios del ensamblado actual automáticamente.
     /// </summary>
     /// <param name="services">La colección de servicios de <see cref="IServiceCollection"/>.</param>
+    /// <param name="filter"></param>
     /// <param name="logTo">Acción de registro opcional.</param>
+    /// <param name="onlyClass"></param>
+    /// <param name="lifetime"></param>
     /// <returns>La misma colección de servicios.</returns>
-    public static IServiceCollection AddCurrentAssembly(this IServiceCollection services, Action<string> logTo = null)
+    public static IServiceCollection AddCurrentAssembly(this IServiceCollection services,
+        Func<Type, bool> filter = null,
+        Action<string> logTo = null,
+        bool onlyClass = false,
+        ServiceLifetime lifetime = ServiceLifetime.Scoped)
     {
         if (services == null)
         {
@@ -134,7 +141,7 @@ public static class DependencyInjectionExtensions
         }
 
         Assembly callingAssembly = Assembly.GetCallingAssembly();
-        return services.AddFromAssembly(callingAssembly, logTo: logTo);
+        return services.AddFromAssembly(callingAssembly, filter, logTo, onlyClass, lifetime);
     }
 
     /// <summary>
@@ -155,7 +162,7 @@ public static class DependencyInjectionExtensions
 
         bool IsCandidate(Type type)
         {
-            if (type == null || !type.IsClass || type.IsAbstract)
+            if (type == null || type.IsClass == false || type.IsAbstract)
             {
                 return false;
             }
