@@ -82,6 +82,19 @@ public partial class AppNotificationProvider
     }
 
     /// <summary>
+    /// Maneja el cierre del diálogo con la tecla Escape (WCAG 2.1.2).
+    /// </summary>
+    private void OnDialogKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key != "Escape" || CurrentDialog == null) return;
+
+        if (CurrentDialog.ShowCancelButton)
+            CancelDialog();
+        else
+            ConfirmDialog();
+    }
+
+    /// <summary>
     /// Cierra un toast específico de forma manual.
     /// </summary>
     /// <param name="toast">El elemento toast a cerrar.</param>
@@ -141,6 +154,7 @@ public partial class AppNotificationProvider
         };
         builder.OpenElement(0, "i");
         builder.AddAttribute(1, "class", $"bi {iconClass} me-2");
+        builder.AddAttribute(2, "aria-hidden", "true");
         builder.CloseElement();
     };
 
@@ -158,6 +172,7 @@ public partial class AppNotificationProvider
         builder.OpenElement(0, "i");
         builder.AddAttribute(1, "class", $"bi {iconClass} {colorClass}");
         builder.AddAttribute(2, "style", "font-size: 3.5rem; line-height: 1;");
+        builder.AddAttribute(3, "aria-hidden", "true");
         builder.CloseElement();
     };
 
@@ -180,6 +195,28 @@ public partial class AppNotificationProvider
         _ => "dark"
     };
 
+    /// <summary>
+    /// Devuelve el <c>role</c> ARIA adecuado para el toast según severidad.
+    /// Errores y advertencias usan <c>alert</c> (anuncio inmediato); el resto
+    /// usa <c>status</c> (anuncio cortés) para no interrumpir al usuario.
+    /// </summary>
+    private string GetToastRole(AppNotificationIcon icon) => icon switch
+    {
+        AppNotificationIcon.Error => "alert",
+        AppNotificationIcon.Warning => "alert",
+        _ => "status"
+    };
+
+    /// <summary>
+    /// Devuelve el valor <c>aria-live</c> acorde al <see cref="GetToastRole"/>.
+    /// </summary>
+    private string GetToastLive(AppNotificationIcon icon) => icon switch
+    {
+        AppNotificationIcon.Error => "assertive",
+        AppNotificationIcon.Warning => "assertive",
+        _ => "polite"
+    };
+
     private RenderFragment GetToastIconHtml(AppNotificationIcon icon) => builder =>
     {
         string iconClass = icon switch
@@ -192,6 +229,7 @@ public partial class AppNotificationProvider
         };
         builder.OpenElement(0, "i");
         builder.AddAttribute(1, "class", $"bi {iconClass} me-2");
+        builder.AddAttribute(2, "aria-hidden", "true");
         builder.CloseElement();
     };
 }
