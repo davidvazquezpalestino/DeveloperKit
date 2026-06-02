@@ -39,7 +39,12 @@ public static class DependencyInjectionExtensions
             {
                 return false;
             }
-            if (!type.IsClass || type.IsAbstract)
+            if (type.IsClass == false || type.IsAbstract)
+            {
+                return false;
+            }
+            // Excluir records (clases con método de instancia <Clone>$ generado por el compilador).
+            if (type.GetMethod("<Clone>$", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) is not null)
             {
                 return false;
             }
@@ -56,7 +61,8 @@ public static class DependencyInjectionExtensions
             {
                 return false;
             }
-            if (filter != null && !filter(type))
+           
+            if (filter is not null && filter(type) == false)
             {
                 return false;
             }
@@ -171,7 +177,8 @@ public static class DependencyInjectionExtensions
             if (string.IsNullOrWhiteSpace(fullName) ||
                 fullName.Contains("<>") ||
                 fullName.Contains("Microsoft") ||
-                fullName.Contains("System.Runtime"))
+                fullName.Contains("System.Runtime") ||
+                fullName.Contains("System.IEquatable"))
             {
                 return false;
             }
