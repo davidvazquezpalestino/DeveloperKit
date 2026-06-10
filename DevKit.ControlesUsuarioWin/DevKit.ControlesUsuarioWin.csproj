@@ -80,9 +80,9 @@
 		<ProjectReference Include="..\DevKit.Extensions\DevKit.Extensions.csproj" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="DevExpress.Win.Design" Version="25.2.6" />
-		<PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.7" />
-		<PackageReference Include="System.Text.Json" Version="10.0.7" />
+		<PackageReference Include="DevExpress.Win.Design" Version="25.2.7" />
+		<PackageReference Include="Microsoft.Windows.Compatibility" Version="10.0.9" />
+		<PackageReference Include="System.Text.Json" Version="10.0.9" />
 	</ItemGroup>
 	<ItemGroup>
 		<EmbeddedResource Update="Properties\Resources.resx">

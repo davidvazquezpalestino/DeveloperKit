@@ -25,13 +25,12 @@ public partial class ExcelProvider : IExcelProvider
     /// <inheritdoc/>
     public ICollection<T> GetItems<T>(string tableName) where T : new()
     {
-        return GetTable(tableName).Rows.Cast<DataRow>()
-                                       .Select(row => new T())
-                                       .ToList();
+        DataTable table = GetTable(tableName);
+        return DataTableMapper.MapRowsToItems<T>(table);
     }
 
     /// <inheritdoc/>
-    public DataTable GetTable(string tableName) => this.GetTables().FirstOrDefault(table => table.TableName == tableName);
+    public DataTable GetTable(string tableName) => GetTables().FirstOrDefault(table => table.TableName == tableName);
 
     /// <inheritdoc/>
     public List<DataTable> GetTables()
@@ -75,16 +74,16 @@ public partial class ExcelProvider : IExcelProvider
     private static List<DataTable> ReadWorksheetTables(Stream stream)
     {
         // Implementación simplificada sin dependencias externas
-        var table = new DataTable("Sheet1");
-        
+        DataTable table = new DataTable("Sheet1");
+
         // Agregar algunas columnas de ejemplo
         table.Columns.Add("Column1", typeof(string));
         table.Columns.Add("Column2", typeof(string));
         table.Columns.Add("Column3", typeof(string));
-        
+
         // Agregar una fila de ejemplo
         table.Rows.Add("Sample1", "Sample2", "Sample3");
-        
+
         return new List<DataTable> { table };
     }
 
@@ -99,7 +98,8 @@ public partial class ExcelProvider : IExcelProvider
         return new ValueTask();
     }
 
-    /// <inheritdoc/>
+
+    /// <summary>Libera los recursos administrados utilizados por la instancia.</summary>
     public void Dispose()
     {
         Dispose(true);

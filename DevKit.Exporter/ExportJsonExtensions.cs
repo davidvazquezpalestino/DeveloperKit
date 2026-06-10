@@ -75,7 +75,7 @@ public static class ExportJsonExtensions
             throw new ArgumentNullException(nameof(data));
         }
 
-        File.WriteAllText(fileName, data.ToJson());
+        File.WriteAllText(fileName, data.ExportToJson());
     }
 
     /// <summary>
@@ -85,7 +85,7 @@ public static class ExportJsonExtensions
     /// <param name="obj">El objeto a convertir.</param>
     /// <param name="options">Opciones de serialización opcionales.</param>
     /// <returns>Una cadena JSON que representa el objeto.</returns>
-    public static string ToJson<T>(this T obj, JsonSerializerOptions options = null)
+    public static string ExportToJson<T>(this T obj, JsonSerializerOptions options = null)
     {
         if (obj == null)
         {
@@ -101,7 +101,7 @@ public static class ExportJsonExtensions
     /// <param name="dictionaries">La colección de diccionarios a convertir.</param>
     /// <param name="options">Opciones de serialización opcionales.</param>
     /// <returns>Una cadena JSON que representa la colección.</returns>
-    public static string ToJson(this IEnumerable<Dictionary<string, object>> dictionaries, JsonSerializerOptions options = null)
+    public static string ExportToJson(this IEnumerable<Dictionary<string, object>> dictionaries, JsonSerializerOptions options = null)
     {
         if (dictionaries == null)
         {
@@ -117,7 +117,7 @@ public static class ExportJsonExtensions
     /// <param name="dictionary">El diccionario a convertir.</param>
     /// <param name="options">Opciones de serialización opcionales.</param>
     /// <returns>Una cadena JSON que representa el diccionario.</returns>
-    public static string ToJson(this Dictionary<string, object> dictionary, JsonSerializerOptions options = null)
+    public static string ExportToJson(this Dictionary<string, object> dictionary, JsonSerializerOptions options = null)
     {
         if (dictionary == null)
         {

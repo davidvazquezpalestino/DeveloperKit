@@ -57,12 +57,12 @@ public static class ExportCsvExtensions
         StringBuilder sb = new StringBuilder();
 
         // Encabezados
-        sb.AppendLine(string.Join(delimiter, table.Columns.Cast<DataColumn>().Select(c => c.ColumnName)));
+        sb.AppendLine(string.Join(delimiter, table.Columns.Cast<DataColumn>().Select(c => FormatCsvValue(c.ColumnName, delimiter))));
 
         // Filas
         foreach (DataRow row in table.Rows)
         {
-            sb.AppendLine(string.Join(delimiter, row.ItemArray.Select(field => FormatCsvValue(field))));
+            sb.AppendLine(string.Join(delimiter, row.ItemArray.Select(field => FormatCsvValue(field, delimiter))));
         }
 
         return sb.ToString();
@@ -124,12 +124,12 @@ public static class ExportCsvExtensions
         List<string> keys = items.First().Keys.ToList();
 
         // Encabezados
-        sb.AppendLine(string.Join(delimiter, keys));
+        sb.AppendLine(string.Join(delimiter, keys.Select(k => FormatCsvValue(k, delimiter))));
 
         // Filas
         foreach (Dictionary<string, object> item in items)
         {
-            sb.AppendLine(string.Join(delimiter, keys.Select(key => FormatCsvValue(item[key]))));
+            sb.AppendLine(string.Join(delimiter, keys.Select(key => FormatCsvValue(item[key], delimiter))));
         }
 
         return sb.ToString();
@@ -186,12 +186,12 @@ public static class ExportCsvExtensions
         StringBuilder sb = new StringBuilder();
 
         // Encabezados
-        sb.AppendLine(string.Join(delimiter, properties.Select(p => p.Name)));
+        sb.AppendLine(string.Join(delimiter, properties.Select(p => FormatCsvValue(p.Name, delimiter))));
 
         // Filas
         foreach (T item in data)
         {
-            sb.AppendLine(string.Join(delimiter, properties.Select(p => FormatCsvValue(p.GetValue(item)))));
+            sb.AppendLine(string.Join(delimiter, properties.Select(p => FormatCsvValue(p.GetValue(item), delimiter))));
         }
 
         return sb.ToString();
@@ -200,9 +200,12 @@ public static class ExportCsvExtensions
     #endregion
 
     /// <summary>
-    /// Formatea un valor para ser incluido en un archivo CSV.
+    /// Formatea un valor para ser incluido en un archivo CSV, entrecomillando cuando contenga
+    /// el delimitador configurado, comillas dobles o saltos de línea (RFC 4180).
     /// </summary>
-    private static string FormatCsvValue(object value)
+    /// <param name="value">Valor a formatear.</param>
+    /// <param name="delimiter">Delimitador de campos que se usará en la salida CSV.</param>
+    private static string FormatCsvValue(object value, string delimiter)
     {
         if (value == null || value == DBNull.Value)
         {
@@ -211,8 +214,13 @@ public static class ExportCsvExtensions
 
         string text = value.ToString();
 
-        // Escapar comillas dobles
-        if (text.Contains("\"") || text.Contains(",") || text.Contains("\n") || text.Contains("\r"))
+        bool needsQuoting =
+            text.Contains("\"") ||
+            text.Contains("\n") ||
+            text.Contains("\r") ||
+            (!string.IsNullOrEmpty(delimiter) && text.Contains(delimiter));
+
+        if (needsQuoting)
         {
             return $"\"{text.Replace("\"", "\"\"")}\"";
         }

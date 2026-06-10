@@ -11,9 +11,9 @@
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright © David Vázquez Palestino</Copyright>
 		<AssemblyName>CoreExcelPackage</AssemblyName>
-		<AssemblyVersion>2026.03.06</AssemblyVersion>
-		<FileVersion>2026.03.06</FileVersion>
-		<Version>2026.03.06</Version>
+		<AssemblyVersion>2026.06.09</AssemblyVersion>
+		<FileVersion>2026.06.09</FileVersion>
+		<Version>2026.06.09</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -29,8 +29,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.7" />
-		<PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.7" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
+		<PackageReference Include="System.Text.Encoding.CodePages" Version="10.0.9" />
 	</ItemGroup>
 
 	<ItemGroup>

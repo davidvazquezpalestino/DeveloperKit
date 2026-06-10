@@ -1,14 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFrameworks>net6.0;net8.0;net9.0;net10.0;</TargetFrameworks>
+		<TargetFrameworks>net48;net6.0;net8.0;net9.0;net10.0;</TargetFrameworks>
 		<OutputType>Library</OutputType>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<Company>David Vázquez Palestino</Company>
 		<Product>CoreComponentExporter</Product>
-		<AssemblyVersion>2026.04.13</AssemblyVersion>
-		<FileVersion>2026.04.13</FileVersion>
-		<Version>2026.04.13</Version>
+		<AssemblyVersion>2026.06.09</AssemblyVersion>
+		<FileVersion>2026.06.09</FileVersion>
+		<Version>2026.06.09</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -26,7 +26,8 @@
 
 	<ItemGroup>
 		<PackageReference Include="NPOI" Version="2.8.0" />
-		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.7" />
+		<PackageReference Include="System.Security.Cryptography.Xml" Version="10.0.9" />
+		<PackageReference Include="System.Text.Json" Version="10.0.9" />
 	</ItemGroup>
 
 	<ItemGroup>
