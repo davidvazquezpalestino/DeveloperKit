@@ -1,6 +1,6 @@
 namespace DevKit.Extensions.DataTableExtension;
 
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Devuelve las filas del primer DataTable que no existen en el segundo, comparando por una columna clave.</summary>
     /// <param name="first">El <see cref="DataTable"/> principal.</param>

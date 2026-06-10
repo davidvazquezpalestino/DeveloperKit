@@ -1,6 +1,6 @@
 namespace DevKit.Extensions.DataTableExtension;
 
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Determina si un tipo es considerado simple.</summary>
     /// <param name="type">El tipo a verificar.</param>

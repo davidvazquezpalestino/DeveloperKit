@@ -1,6 +1,6 @@
 namespace DevKit.Extensions.DataTableExtension;
 
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Convierte un DataTable en una lista de objetos del tipo especificado.</summary>
     /// <typeparam name="T">El tipo de los objetos a los que se convertirá cada fila.</typeparam>

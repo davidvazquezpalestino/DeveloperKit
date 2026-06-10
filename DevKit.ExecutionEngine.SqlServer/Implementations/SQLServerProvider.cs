@@ -3,17 +3,18 @@ namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 /// <summary>Implementación de <see cref="ISQLServerProvider"/> para SQL Server.</summary>
 public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
 {
-    private readonly ISqlConnectionFactory _connectionFactory;
+    private readonly ISqlConnectionFactory ConnectionFactory;
     public SqlConnection Connection { get; set; }
     public SqlTransaction Transaction { get; set; }
     private readonly SqlOptions SqlOptions;
     public SemaphoreSlim TransactionSemaphore { get; private set; }
-    private bool _disposed = false;
+    private bool Disposed = false;
 
     /// <summary>Estado actual de la conexión.</summary>
     public ConnectionState ConnectionState => Connection?.State ?? ConnectionState.Closed;
+
     /// <summary>Cadena de conexión utilizada por el repositorio.</summary>
-    public string ConnectionString { get; }
+    public string ConnectionString => Connection?.ConnectionString;
 
     /// <summary>Devuelve la cadena de conexión actual.</summary>
     public override string ToString() => ConnectionString;
@@ -25,7 +26,7 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
     {
         if (Connection == null)
         {
-            Connection = _connectionFactory.CreateConnection(ConnectionString);
+            Connection = ConnectionFactory.CreateConnection(ConnectionString);
         }
         return Connection;
     }
@@ -145,7 +146,7 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
     public SQLServerProvider(IOptions<SqlOptions> options, ISqlConnectionFactory connectionFactory = null)
     {
         SqlOptions = options.Value;
-        _connectionFactory = connectionFactory ?? new DefaultSqlConnectionFactory();
+        ConnectionFactory = connectionFactory ?? new DefaultSqlConnectionFactory();
 
         if (SqlOptions == null)
         {
@@ -157,7 +158,49 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
             throw new ArgumentException("ConnectionString no puede estar vacío en las opciones.");
         }
 
-        SqlConnectionStringBuilder builder = new(SqlOptions.ConnectionString);
+        // Construir y aplicar la cadena de conexión usando los ajustes de SqlOptions.
+        Connection = new SqlConnection(BuildConnectionString(SqlOptions.ConnectionString));
+
+        // Inicializar semáforo para control de concurrencia en transacciones
+        // Permitir hasta 3 transacciones concurrentes por defecto
+        TransactionSemaphore = new SemaphoreSlim(3, 3);
+    }
+
+    /// <inheritdoc/>
+    public void SetConnectionString(string connectionString)
+    {
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new ArgumentException("La cadena de conexión no puede ser nula o vacía.", nameof(connectionString));
+        }
+
+        if (Transaction != null)
+        {
+            throw new InvalidOperationException(
+                "No se puede cambiar la cadena de conexión mientras hay una transacción activa. Confirme o revierta la transacción primero.");
+        }
+
+        // Cerrar y liberar la conexión actual para que la próxima operación cree una nueva con la cadena nueva.
+        if (Connection != null)
+        {
+            if (Connection.State != ConnectionState.Closed)
+            {
+                try { Connection.Close(); } catch { /* ignorar errores al cerrar */ }
+            }
+            Connection.Dispose();
+            Connection = null;
+        }
+
+        Connection = new SqlConnection(BuildConnectionString(connectionString));
+    }
+
+    /// <summary>
+    /// Aplica las configuraciones de <see cref="SqlOptions"/> (pooling, timeouts, ApplicationName)
+    /// sobre una cadena de conexión base y devuelve la cadena resultante.
+    /// </summary>
+    private string BuildConnectionString(string baseConnectionString)
+    {
+        SqlConnectionStringBuilder builder = new(baseConnectionString);
 
         // Aplicar configuraciones de pooling
         if (SqlOptions.ConnectionPooling != null)
@@ -188,12 +231,7 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
             }
         }
 
-        // Usar la cadena de conexión construida
-        ConnectionString = builder.ConnectionString;
-
-        // Inicializar semáforo para control de concurrencia en transacciones
-        // Permitir hasta 3 transacciones concurrentes por defecto
-        TransactionSemaphore = new SemaphoreSlim(3, 3);
+        return builder.ConnectionString;
     }
 
     #region Dispose Pattern
@@ -216,7 +254,7 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
     /// <param name="disposing">Indica si se deben liberar recursos administrados.</param>
     protected virtual void Dispose(bool disposing)
     {
-        if (_disposed)
+        if (Disposed)
             return;
 
         if (disposing)
@@ -227,13 +265,13 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
             Connection?.Dispose();
         }
 
-        _disposed = true;
+        Disposed = true;
     }
 
     /// <summary>Libera los recursos de forma asíncrona.</summary>
     protected virtual async ValueTask DisposeAsyncCore()
     {
-        if (_disposed)
+        if (Disposed)
             return;
 
         // Liberar recursos administrados de forma asíncrona
@@ -244,7 +282,7 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
         }
 
         TransactionSemaphore?.Dispose();
-        
+
         if (Connection != null)
         {
             Connection.Dispose();

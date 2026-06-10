@@ -1,6 +1,6 @@
 namespace DevKit.Extensions.DataTableExtension;
 
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Obtiene el nombre de la tabla con un prefijo '#' para tablas temporales locales.</summary>
     /// <param name="table">El <see cref="DataTable"/> de referencia.</param>

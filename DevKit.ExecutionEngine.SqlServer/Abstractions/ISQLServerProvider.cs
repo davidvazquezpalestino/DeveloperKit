@@ -17,6 +17,15 @@ public partial interface ISQLServerProvider
     public string ConnectionString { get; }
 
     /// <summary>
+    /// Cambia la cadena de conexión del repositorio en caliente. Cierra y libera la conexión actual
+    /// (si existe). La próxima operación abrirá una nueva conexión con la cadena indicada.
+    /// </summary>
+    /// <param name="connectionString">Nueva cadena de conexión SQL Server.</param>
+    /// <exception cref="ArgumentException">Si <paramref name="connectionString"/> es <c>null</c> o vacío.</exception>
+    /// <exception cref="InvalidOperationException">Si existe una transacción activa.</exception>
+    void SetConnectionString(string connectionString);
+
+    /// <summary>
     /// Ejecuta una consulta y mapea el primer registro a la entidad indicada.
     /// </summary>
     T ExecuteQueryAsSingle<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null);

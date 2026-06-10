@@ -67,7 +67,7 @@ public partial class SQLServerProvider
     /// <exception cref="ObjectDisposedException">Lanzada si la instancia ha sido dispuesta.</exception>
     private void ThrowIfDisposed()
     {
-        if (_disposed)
+        if (Disposed)
         {
             throw new ObjectDisposedException(nameof(SQLServerProvider));
         }

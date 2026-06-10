@@ -1,7 +1,7 @@
 namespace DevKit.Extensions.DataTableExtension;
 
 /// <summary>Proporciona métodos de extensión para trabajar con DataTables de manera más eficiente.</summary>
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Convierte una colección de objetos en un DataTable.</summary>
     /// <typeparam name="TSource">El tipo de los objetos en la colección.</typeparam>

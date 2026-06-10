@@ -1,6 +1,6 @@
 namespace DevKit.Extensions.DataTableExtension;
 
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Ordena un DataTable por la columna especificada.</summary>
     /// <param name="table">El <see cref="DataTable"/> a ordenar.</param>

@@ -5,9 +5,9 @@
 		<OutputType>Library</OutputType>
 		<Company>David Vázquez Palestino</Company>
 		<Product>CoreUtilerias</Product>
-		<AssemblyVersion>2026.06.09</AssemblyVersion>
-		<FileVersion>2026.06.09</FileVersion>
-		<Version>2026.06.09</Version>
+		<AssemblyVersion>2026.06.10</AssemblyVersion>
+		<FileVersion>2026.06.10</FileVersion>
+		<Version>2026.06.10</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

@@ -1,6 +1,6 @@
 namespace DevKit.Extensions.DataTableExtension;
 
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Genera una representación en cadena del esquema del DataTable.</summary>
     /// <param name="table">El <see cref="DataTable"/> a procesar.</param>

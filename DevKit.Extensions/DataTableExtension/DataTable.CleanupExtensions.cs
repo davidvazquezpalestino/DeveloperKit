@@ -1,6 +1,6 @@
 namespace DevKit.Extensions.DataTableExtension;
 
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Reemplaza todos los valores DBNull en el DataTable por el valor predeterminado especificado.</summary>
     /// <param name="table">El <see cref="DataTable"/> a procesar.</param>

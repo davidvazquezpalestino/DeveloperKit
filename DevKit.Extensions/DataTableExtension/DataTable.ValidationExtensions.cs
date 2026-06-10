@@ -1,6 +1,6 @@
 namespace DevKit.Extensions.DataTableExtension;
 
-public static partial class DataTableExtensions
+public static partial class DataTableExtension
 {
     /// <summary>Verifica si el DataTable contiene una columna con el nombre especificado.</summary>
     /// <param name="table">El <see cref="DataTable"/> a verificar.</param>
