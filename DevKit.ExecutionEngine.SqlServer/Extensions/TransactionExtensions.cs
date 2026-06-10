@@ -1,7 +1,5 @@
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
-using DevKit.ExecutionEngine.SQLServer.Implementations;
-
 /// <summary>
 /// Proporciona métodos de extensión para manejo de transacciones con control de concurrencia.
 /// </summary>
@@ -32,7 +30,7 @@ public static class TransactionExtensions
 
             using SqlTransaction transaction = provider.Connection.BeginTransaction(isolationLevel);
             provider.Transaction = transaction;
-            
+
             try
             {
                 T result = await operation(transaction).ConfigureAwait(false);
@@ -78,7 +76,7 @@ public static class TransactionExtensions
 
             using SqlTransaction transaction = provider.Connection.BeginTransaction(isolationLevel);
             provider.Transaction = transaction;
-            
+
             try
             {
                 T result = operation(transaction);
