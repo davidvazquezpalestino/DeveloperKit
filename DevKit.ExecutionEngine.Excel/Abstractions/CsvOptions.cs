@@ -26,6 +26,14 @@ public sealed class CsvOptions
     /// <summary>Recorta espacios en blanco al inicio y al final de cada campo. Por defecto <c>false</c>.</summary>
     public bool TrimFields { get; set; }
 
+    /// <summary>
+    /// Si es <c>true</c>, se infiere el tipo de cada columna del <see cref="DataTable"/> resultante
+    /// a partir de sus valores (se prueban en orden <see cref="bool"/>, <see cref="int"/>, <see cref="long"/>,
+    /// <see cref="decimal"/>, <see cref="DateTime"/> y, como último recurso, <see cref="string"/>).
+    /// Si es <c>false</c>, todas las columnas se crean como <see cref="string"/>. Por defecto <c>true</c>.
+    /// </summary>
+    public bool InferColumnTypes { get; set; } = true;
+
     /// <summary>Nombre asignado al <see cref="DataTable"/> resultante cuando no es posible inferirlo del origen.</summary>
     public string DefaultTableName { get; set; } = "Csv";
 }

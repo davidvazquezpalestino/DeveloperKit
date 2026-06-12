@@ -126,11 +126,15 @@ public partial class CsvProvider : ICsvProvider
     {
         CsvOptions options = Options ?? new CsvOptions();
         Encoding encoding = options.Encoding ?? Encoding.UTF8;
-        DataTable table = new DataTable(tableName) { Locale = options.Culture ?? System.Globalization.CultureInfo.InvariantCulture };
+        System.Globalization.CultureInfo culture = options.Culture ?? System.Globalization.CultureInfo.InvariantCulture;
+        DataTable table = new DataTable(tableName) { Locale = culture };
 
         using StreamReader reader = new StreamReader(stream, encoding, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: leaveOpen);
 
-        bool headerInitialized = false;
+        List<string> headers = null;
+        List<List<string>> dataRecords = new List<List<string>>();
+        int maxColumns = 0;
+
         foreach (List<string> record in ParseRecords(reader, options))
         {
             if (record.Count == 0)
@@ -142,26 +146,63 @@ public partial class CsvProvider : ICsvProvider
                 continue;
             }
 
-            if (!headerInitialized)
+            if (options.TrimFields)
             {
-                BuildColumns(table, record, options);
-                headerInitialized = true;
-                if (options.HasHeader)
+                for (int i = 0; i < record.Count; i++)
                 {
-                    continue;
+                    if (record[i] is not null)
+                    {
+                        record[i] = record[i].Trim();
+                    }
                 }
             }
 
-            EnsureColumns(table, record.Count);
+            if (headers is null && options.HasHeader)
+            {
+                headers = record;
+                if (record.Count > maxColumns)
+                {
+                    maxColumns = record.Count;
+                }
+                continue;
+            }
+
+            dataRecords.Add(record);
+            if (record.Count > maxColumns)
+            {
+                maxColumns = record.Count;
+            }
+        }
+
+        Type[] columnTypes = new Type[maxColumns];
+        for (int c = 0; c < maxColumns; c++)
+        {
+            columnTypes[c] = options.InferColumnTypes
+                ? InferColumnType(dataRecords, c, culture)
+                : typeof(string);
+        }
+
+        for (int c = 0; c < maxColumns; c++)
+        {
+            string name;
+            if (headers is not null && c < headers.Count && !string.IsNullOrWhiteSpace(headers[c]))
+            {
+                name = headers[c];
+            }
+            else
+            {
+                name = $"Column{c + 1}";
+            }
+            name = MakeUniqueColumnName(table, name);
+            table.Columns.Add(name, columnTypes[c]);
+        }
+
+        foreach (List<string> record in dataRecords)
+        {
             DataRow row = table.NewRow();
             for (int i = 0; i < record.Count && i < table.Columns.Count; i++)
             {
-                string value = record[i];
-                if (options.TrimFields && value is not null)
-                {
-                    value = value.Trim();
-                }
-                row[i] = (object)value ?? DBNull.Value;
+                row[i] = ConvertValue(record[i], columnTypes[i], culture);
             }
             table.Rows.Add(row);
         }
@@ -169,38 +210,108 @@ public partial class CsvProvider : ICsvProvider
         return table;
     }
 
-    private static void BuildColumns(DataTable table, IReadOnlyList<string> firstRecord, CsvOptions options)
+    private static Type InferColumnType(IReadOnlyList<List<string>> rows, int columnIndex, System.Globalization.CultureInfo culture)
     {
-        if (options.HasHeader)
+        bool any = false;
+        bool allBool = true;
+        bool allInt = true;
+        bool allLong = true;
+        bool allDecimal = true;
+        bool allDate = true;
+
+        const System.Globalization.NumberStyles integerStyles = System.Globalization.NumberStyles.Integer;
+        const System.Globalization.NumberStyles decimalStyles = System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowExponent;
+
+        foreach (List<string> record in rows)
         {
-            for (int i = 0; i < firstRecord.Count; i++)
+            if (columnIndex >= record.Count)
             {
-                string name = options.TrimFields ? firstRecord[i]?.Trim() : firstRecord[i];
-                if (string.IsNullOrWhiteSpace(name))
-                {
-                    name = $"Column{i + 1}";
-                }
-                name = MakeUniqueColumnName(table, name);
-                table.Columns.Add(name, typeof(string));
+                continue;
+            }
+            string value = record[columnIndex];
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                continue;
+            }
+            any = true;
+
+            if (allBool && !bool.TryParse(value, out _))
+            {
+                allBool = false;
+            }
+            if (allInt && !int.TryParse(value, integerStyles, culture, out _))
+            {
+                allInt = false;
+            }
+            if (allLong && !long.TryParse(value, integerStyles, culture, out _))
+            {
+                allLong = false;
+            }
+            if (allDecimal && !decimal.TryParse(value, decimalStyles, culture, out _))
+            {
+                allDecimal = false;
+            }
+            if (allDate && !DateTime.TryParse(value, culture, System.Globalization.DateTimeStyles.None, out _))
+            {
+                allDate = false;
+            }
+
+            if (!allBool && !allInt && !allLong && !allDecimal && !allDate)
+            {
+                break;
             }
         }
-        else
-        {
-            for (int i = 0; i < firstRecord.Count; i++)
-            {
-                table.Columns.Add($"Column{i + 1}", typeof(string));
-            }
-        }
+
+        if (!any) return typeof(string);
+        if (allBool) return typeof(bool);
+        if (allInt) return typeof(int);
+        if (allLong) return typeof(long);
+        if (allDecimal) return typeof(decimal);
+        if (allDate) return typeof(DateTime);
+        return typeof(string);
     }
 
-    private static void EnsureColumns(DataTable table, int requiredCount)
+    private static object ConvertValue(string value, Type targetType, System.Globalization.CultureInfo culture)
     {
-        while (table.Columns.Count < requiredCount)
+        if (string.IsNullOrEmpty(value))
         {
-            string name = $"Column{table.Columns.Count + 1}";
-            name = MakeUniqueColumnName(table, name);
-            table.Columns.Add(name, typeof(string));
+            return DBNull.Value;
         }
+        if (targetType == typeof(string))
+        {
+            return value;
+        }
+
+        try
+        {
+            if (targetType == typeof(bool))
+            {
+                return bool.Parse(value);
+            }
+            if (targetType == typeof(int))
+            {
+                return int.Parse(value, System.Globalization.NumberStyles.Integer, culture);
+            }
+            if (targetType == typeof(long))
+            {
+                return long.Parse(value, System.Globalization.NumberStyles.Integer, culture);
+            }
+            if (targetType == typeof(decimal))
+            {
+                return decimal.Parse(value, System.Globalization.NumberStyles.Number | System.Globalization.NumberStyles.AllowExponent, culture);
+            }
+            if (targetType == typeof(DateTime))
+            {
+                return DateTime.Parse(value, culture, System.Globalization.DateTimeStyles.None);
+            }
+        }
+        catch
+        {
+            // Si el valor no puede convertirse, se trata como nulo para preservar la tipificación de la columna.
+            return DBNull.Value;
+        }
+
+        return value;
     }
 
     private static string MakeUniqueColumnName(DataTable table, string baseName)
