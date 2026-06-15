@@ -7,6 +7,7 @@ public partial class ExcelProvider : IExcelProvider
     /// <inheritdoc/>
     public string ConnectionString { get; private set; }
     private Stream FileStream;
+    private readonly IExcelReader Reader;
 
     /// <inheritdoc/>
     public void SetDatabaseLogon(string connectionString)
@@ -36,56 +37,57 @@ public partial class ExcelProvider : IExcelProvider
     public List<DataTable> GetTables()
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-        if (string.IsNullOrWhiteSpace(ConnectionString) && FileStream is not null)
+
+        // La sobrecarga de SetDatabaseLogon usada determina la fuente de lectura:
+        // - Stream  -> IExcelReader.ReadTables(Stream)
+        // - string  -> IExcelReader.ReadTables(string)
+        if (string.IsNullOrWhiteSpace(ConnectionString) && FileStream is not null && FileStream != Stream.Null)
         {
-            return ReadWorksheetTables(FileStream);
+            return Reader.ReadTables(FileStream);
         }
-        return GetWorksheetTables();
+
+        if (string.IsNullOrWhiteSpace(ConnectionString))
+        {
+            throw new InvalidOperationException(
+                "No se ha configurado un origen para el archivo Excel. Use SetDatabaseLogon antes de leer.");
+        }
+
+        return Reader.ReadTables(ConnectionString);
     }
 
     /// <summary>Inicializa una nueva instancia predeterminada de <see cref="ExcelProvider"/>.</summary>
-    public ExcelProvider() { }
+    public ExcelProvider() : this((IExcelReader)null) { }
 
     /// <summary>Inicializa una nueva instancia de <see cref="ExcelProvider"/> usando una cadena de conexión al archivo Excel.</summary>
     /// <param name="connectionString">Cadena de conexión que apunta al archivo Excel que se leerá.</param>
-    public ExcelProvider(string connectionString) => SetDatabaseLogon(connectionString);
+    public ExcelProvider(string connectionString) : this(connectionString, null) { }
 
     /// <summary>Inicializa una nueva instancia de <see cref="ExcelProvider"/> usando un flujo que contiene el archivo Excel.</summary>
     /// <param name="stream">Stream con el contenido del archivo Excel.</param>
-    public ExcelProvider(Stream stream) => SetDatabaseLogon(stream);
+    public ExcelProvider(Stream stream) : this(stream, null) { }
+
+    /// <summary>Inicializa una nueva instancia de <see cref="ExcelProvider"/> con un lector personalizado.</summary>
+    /// <param name="reader">Implementación de <see cref="IExcelReader"/> a usar. Si es <c>null</c>, se usa <see cref="ExcelReader"/>.</param>
+    public ExcelProvider(IExcelReader reader)
+    {
+        Reader = reader ?? new ExcelReader();
+    }
+
+    /// <summary>Inicializa una nueva instancia de <see cref="ExcelProvider"/> usando una cadena de conexión y un lector personalizado.</summary>
+    /// <param name="connectionString">Cadena de conexión que apunta al archivo Excel que se leerá.</param>
+    /// <param name="reader">Implementación de <see cref="IExcelReader"/> a usar. Si es <c>null</c>, se usa <see cref="ExcelReader"/>.</param>
+    public ExcelProvider(string connectionString, IExcelReader reader) : this(reader)
+        => SetDatabaseLogon(connectionString);
+
+    /// <summary>Inicializa una nueva instancia de <see cref="ExcelProvider"/> usando un flujo y un lector personalizado.</summary>
+    /// <param name="stream">Stream con el contenido del archivo Excel.</param>
+    /// <param name="reader">Implementación de <see cref="IExcelReader"/> a usar. Si es <c>null</c>, se usa <see cref="ExcelReader"/>.</param>
+    public ExcelProvider(Stream stream, IExcelReader reader) : this(reader)
+        => SetDatabaseLogon(stream);
 
     /// <inheritdoc/>
     public IReadOnlyList<string> GetSheetNames() =>
         GetTables().Select(t => t.TableName).ToList();
-    private List<DataTable> GetWorksheetTables()
-    {
-        using (FileStream stream = new FileStream(
-                   ConnectionString,
-                   FileMode.Open,
-                   FileAccess.Read,
-                   FileShare.ReadWrite | FileShare.Delete,
-                   4096,
-                   FileOptions.SequentialScan))
-        {
-            return ReadWorksheetTables(stream);
-        }
-    }
-
-    private static List<DataTable> ReadWorksheetTables(Stream stream)
-    {
-        // Implementación simplificada sin dependencias externas
-        DataTable table = new DataTable("Sheet1");
-
-        // Agregar algunas columnas de ejemplo
-        table.Columns.Add("Column1", typeof(string));
-        table.Columns.Add("Column2", typeof(string));
-        table.Columns.Add("Column3", typeof(string));
-
-        // Agregar una fila de ejemplo
-        table.Rows.Add("Sample1", "Sample2", "Sample3");
-
-        return new List<DataTable> { table };
-    }
 
     /// <summary>Libera los recursos administrados utilizados por la instancia de forma asíncrona.</summary>
     public ValueTask DisposeAsync()

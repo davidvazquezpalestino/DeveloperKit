@@ -11,9 +11,9 @@
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright © David Vázquez Palestino</Copyright>
 		<AssemblyName>CoreExcelPackage</AssemblyName>
-		<AssemblyVersion>2026.06.12</AssemblyVersion>
-		<FileVersion>2026.06.12</FileVersion>
-		<Version>2026.06.12</Version>
+		<AssemblyVersion>2026.06.13</AssemblyVersion>
+		<FileVersion>2026.06.13</FileVersion>
+		<Version>2026.06.13</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
