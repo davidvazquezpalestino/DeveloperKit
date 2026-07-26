@@ -84,7 +84,7 @@ public partial class AppNotificationProvider
     /// <summary>
     /// Maneja el cierre del diálogo con la tecla Escape (WCAG 2.1.2).
     /// </summary>
-    private void OnDialogKeyDown(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    private void OnDialogKeyDown(KeyboardEventArgs e)
     {
         if (e.Key != "Escape" || CurrentDialog == null) return;
 

@@ -116,7 +116,7 @@ namespace DevKit.Rfc
         /// <returns>Base del RFC (4 caracteres).</returns>
         public string ConstruirRfcBasePersonaFisica(DatosPersonaFisica datos)
         {
-            StringBuilder rfc = new System.Text.StringBuilder();
+            StringBuilder rfc = new StringBuilder();
 
             // Primera letra del apellido paterno
             rfc.Append(datos.ApellidoPaterno[0]);
@@ -144,7 +144,7 @@ namespace DevKit.Rfc
 
         private string CompletarRfcPersonaFisica(string rfcBase, DatosPersonaFisica datos, DateTime fechaNacimiento)
         {
-            StringBuilder rfc = new System.Text.StringBuilder(rfcBase);
+            StringBuilder rfc = new StringBuilder(rfcBase);
 
             // Agregar fecha de nacimiento
             rfc.Append(ObtenerFechaRfc(fechaNacimiento));
@@ -162,7 +162,7 @@ namespace DevKit.Rfc
 
         private string CompletarRfcPersonaMoral(string rfcBase, string razonSocial, DateTime fechaConstitucion)
         {
-            StringBuilder rfc = new System.Text.StringBuilder(rfcBase);
+            StringBuilder rfc = new StringBuilder(rfcBase);
 
             // Agregar fecha de constitución
             rfc.Append(ObtenerFechaRfc(fechaConstitucion));

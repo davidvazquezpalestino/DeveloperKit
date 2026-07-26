@@ -1,5 +1,4 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
 	<PropertyGroup>
 		<TargetFrameworks>net9.0;net10.0;</TargetFrameworks>
 		<ImplicitUsings>enable</ImplicitUsings>
@@ -7,9 +6,9 @@
 		<Product>DevKit.ExecutionEngine.Redis</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2026.07.26</AssemblyVersion>
-		<FileVersion>2026.07.26</FileVersion>
-		<Version>2026.07.26</Version>
+		<AssemblyVersion>2026.07.27</AssemblyVersion>
+		<FileVersion>2026.07.27</FileVersion>
+		<Version>2026.07.27</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
@@ -65,7 +64,7 @@
 			<PackagePath>\</PackagePath>
 		</None>
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<None Update="LICENSE">
 			<Pack>True</Pack>
