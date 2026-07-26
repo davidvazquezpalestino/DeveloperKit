@@ -128,7 +128,9 @@ public class ExpressionConditionExtractor : ExpressionVisitor
     private static List<string> ExtractArgumentParts(IEnumerable<Expression> arguments)
     {
         return arguments
-            .Select(argument => FormatValue(GetValue(argument)))
+            .Select(GetValue)
+            .Where(value => value is not System.Threading.CancellationToken)
+            .Select(FormatValue)
             .ToList();
     }
 
@@ -444,6 +446,11 @@ public class ExpressionConditionExtractor : ExpressionVisitor
 
         foreach (PropertyInfo propertyInfo in objectType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
+            if (propertyInfo.PropertyType == typeof(System.Threading.CancellationToken))
+            {
+                continue;
+            }
+
             try
             {
                 object propertyValue = propertyInfo.GetValue(sourceObject);
