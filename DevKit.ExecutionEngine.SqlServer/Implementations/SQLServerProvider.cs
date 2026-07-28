@@ -3,33 +3,22 @@ namespace DevKit.ExecutionEngine.SQLServer.Implementations;
 /// <summary>Implementación de <see cref="ISQLServerProvider"/> para SQL Server.</summary>
 public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
 {
-    private readonly ISqlConnectionFactory ConnectionFactory;
+
     public SqlConnection Connection { get; set; }
     public SqlTransaction Transaction { get; set; }
     private readonly SqlOptions SqlOptions;
     public SemaphoreSlim TransactionSemaphore { get; private set; }
     private bool Disposed = false;
+    private string FieldConnectionString;
 
     /// <summary>Estado actual de la conexión.</summary>
     public ConnectionState ConnectionState => Connection?.State ?? ConnectionState.Closed;
 
     /// <summary>Cadena de conexión utilizada por el repositorio.</summary>
-    public string ConnectionString => Connection?.ConnectionString;
+    public string ConnectionString => FieldConnectionString;
 
     /// <summary>Devuelve la cadena de conexión actual.</summary>
     public override string ToString() => ConnectionString;
-
-    /// <summary>
-    /// Obtiene la conexión actual, creándola si es necesario.
-    /// </summary>
-    private SqlConnection GetConnection()
-    {
-        if (Connection == null)
-        {
-            Connection = ConnectionFactory.CreateConnection(ConnectionString);
-        }
-        return Connection;
-    }
 
     /// <summary>Ejecuta una consulta y mapea el primer registro a la entidad indicada.</summary>
     public T ExecuteQueryAsSingle<T>(string query, Func<IDataReader, T> expression, Action<IDataParameterCollection> dbParameters = null) =>
@@ -146,7 +135,6 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
     public SQLServerProvider(IOptions<SqlOptions> options, ISqlConnectionFactory connectionFactory = null)
     {
         SqlOptions = options.Value;
-        ConnectionFactory = connectionFactory ?? new DefaultSqlConnectionFactory();
 
         if (SqlOptions == null)
         {
@@ -159,7 +147,8 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
         }
 
         // Construir y aplicar la cadena de conexión usando los ajustes de SqlOptions.
-        Connection = new SqlConnection(BuildConnectionString(SqlOptions.ConnectionString));
+        FieldConnectionString = BuildConnectionString(SqlOptions.ConnectionString);
+        Connection = new SqlConnection(FieldConnectionString);
 
         // Inicializar semáforo para control de concurrencia en transacciones
         // Permitir hasta 3 transacciones concurrentes por defecto
@@ -191,7 +180,8 @@ public partial class SQLServerProvider : ISQLServerProvider, IAsyncDisposable
             Connection = null;
         }
 
-        Connection = new SqlConnection(BuildConnectionString(connectionString));
+        FieldConnectionString = BuildConnectionString(connectionString);
+        Connection = new SqlConnection(FieldConnectionString);
     }
 
     /// <summary>

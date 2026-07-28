@@ -9,9 +9,9 @@
 		<Product>DevKit.ExecutionEngine.SqlServer</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2026.06.11</AssemblyVersion>
-		<FileVersion>2026.06.11</FileVersion>
-		<Version>2026.06.11</Version>
+		<AssemblyVersion>2026.07.28</AssemblyVersion>
+		<FileVersion>2026.07.28</FileVersion>
+		<Version>2026.07.28</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>

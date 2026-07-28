@@ -1,8 +1,6 @@
 namespace DevKit.ExecutionEngine.SQLServer.Extensions;
 
-/// <summary>
-/// Proporciona métodos de extensión optimizados con Span<T> y Memory<T> para reducir asignaciones.
-/// </summary>
+/// Proporciona métodos de extensión optimizados con Span<T/> y Memory<T> para reducir asignaciones.</T>
 public static class SpanOptimizedExtensions
 {
     /// <summary>
@@ -15,12 +13,12 @@ public static class SpanOptimizedExtensions
     {
         if (reader.IsDBNull(ordinal))
             return null;
-            
+
         // Para strings grandes, usar GetString directamente
         // Para strings pequeños, podríamos usar Span en el futuro con GetChars
         return reader.GetString(ordinal);
     }
-    
+
     /// <summary>
     /// Lee un valor del DataReader usando conversión optimizada con Span.
     /// </summary>
@@ -36,7 +34,7 @@ public static class SpanOptimizedExtensions
         object value = reader.GetValue(ordinal);
         return value.ConvertToType<T>();
     }
-    
+
     /// <summary>
     /// Lee múltiples valores del DataReader de forma optimizada usando Span.
     /// </summary>
@@ -52,7 +50,7 @@ public static class SpanOptimizedExtensions
         }
         return values;
     }
-    
+
     /// <summary>
     /// Mapea un DataReader a una entidad usando Span para optimizar el acceso a columnas.
     /// </summary>
@@ -63,7 +61,7 @@ public static class SpanOptimizedExtensions
     public static T MapToEntityOptimized<T>(this IDataRecord reader, (PropertyInfo Property, int Ordinal)[] propertyMap) where T : class, new()
     {
         var item = new T();
-        
+
         for (int i = 0; i < propertyMap.Length; i++)
         {
             (PropertyInfo property, int ordinal) = propertyMap[i];
@@ -76,10 +74,10 @@ public static class SpanOptimizedExtensions
                 }
             }
         }
-        
+
         return item;
     }
-    
+
     /// <summary>
     /// Crea un mapeo de propiedades a índices de columnas usando Span para mejor rendimiento.
     /// </summary>
@@ -98,9 +96,9 @@ public static class SpanOptimizedExtensions
         {
             columnNames[i] = reader.GetName(i);
         }
-        
+
         var propertyMap = new List<(PropertyInfo, int)>();
-        
+
         foreach (PropertyInfo property in properties)
         {
             for (int i = 0; i < columnNames.Length; i++)
@@ -112,10 +110,10 @@ public static class SpanOptimizedExtensions
                 }
             }
         }
-        
+
         return propertyMap.ToArray();
     }
-    
+
     /// <summary>
     /// Procesa un lote de filas usando Memory para reducir asignaciones.
     /// </summary>
@@ -125,29 +123,29 @@ public static class SpanOptimizedExtensions
     /// <param name="cancellationToken">Token de cancelación.</param>
     /// <returns>Memory con las entidades procesadas.</returns>
     public static async ValueTask<Memory<T>> ProcessBatchAsync<T>(
-        this DbDataReader reader, 
-        int batchSize, 
+        this DbDataReader reader,
+        int batchSize,
         CancellationToken cancellationToken = default) where T : class, new()
     {
         var entities = new T[batchSize];
         int count = 0;
 
         (PropertyInfo Property, int Ordinal)[] propertyMap = reader.CreatePropertyMap<T>();
-        
+
         while (count < batchSize && await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
             entities[count] = reader.MapToEntityOptimized<T>(propertyMap);
             count++;
         }
-        
+
         if (count < batchSize)
         {
             Array.Resize(ref entities, count);
         }
-        
+
         return entities.AsMemory();
     }
-    
+
     /// <summary>
     /// Convierte un string a ReadOnlySpan para procesamiento eficiente.
     /// </summary>
@@ -157,7 +155,7 @@ public static class SpanOptimizedExtensions
     {
         return value.AsSpan();
     }
-    
+
     /// <summary>
     /// Compara dos strings usando ReadOnlySpan para mejor rendimiento.
     /// </summary>

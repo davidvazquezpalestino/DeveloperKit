@@ -47,11 +47,11 @@ public partial class SQLServerProvider
             throw new ArgumentException("Nombre de tabla destino inválido", nameof(target));
         }
 
-        bool shouldCloseConnection = Connection.State != ConnectionState.Open;
+        bool connection = Connection.State != ConnectionState.Open;
 
         try
         {
-            if (shouldCloseConnection)
+            if (connection)
             {
                 await Connection.OpenAsync(cancellationToken).ConfigureAwait(false);
             }
@@ -61,7 +61,7 @@ public partial class SQLServerProvider
         }
         finally
         {
-            if (shouldCloseConnection && Connection?.State == ConnectionState.Open)
+            if (connection && Connection?.State == ConnectionState.Open)
             {
                 Connection.Close();
             }
