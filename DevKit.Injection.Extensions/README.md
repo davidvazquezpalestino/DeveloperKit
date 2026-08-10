@@ -42,7 +42,7 @@ dotnet add package DevKit.Injection.Extensions
 
 ## 🚀 Uso Rápido
 
-### **📋 Registro Automático (Único método disponible)**
+### **📋 Registro Automático**
 
 ```csharp
 // 1. Marcar servicios con atributos (opcional)
@@ -61,7 +61,7 @@ public class UserService : IUserService
 // 2. Registrar automáticamente
 public void ConfigureServices(IServiceCollection services)
 {
-    services.AddFromAssembly(Assembly.GetExecutingAssembly());
+    services.AddServicesFromAssembly(Assembly.GetExecutingAssembly());
 }
 ```
 
@@ -71,10 +71,10 @@ public void ConfigureServices(IServiceCollection services)
 public void ConfigureServices(IServiceCollection services)
 {
     // Registro simple desde ensamblado
-    services.AddFromAssembly(Assembly.GetExecutingAssembly());
+    services.AddServicesFromAssembly(Assembly.GetExecutingAssembly());
     
     // Con filtros personalizados
-    services.AddFromAssembly(
+    services.AddServicesFromAssembly(
         assembly: Assembly.GetExecutingAssembly(),
         filter: type => type.Name.EndsWith("Service"),
         logTo: message => Console.WriteLine($"[DI] {message}"),
@@ -82,14 +82,14 @@ public void ConfigureServices(IServiceCollection services)
     );
     
     // Registro del ensamblado actual
-    services.AddCurrentAssembly(message => Console.WriteLine($"[DI] {message}"));
+    services.AddServicesCurrentAssembly(message => Console.WriteLine($"[DI] {message}"));
     
     // Múltiples ensamblados
     var assemblies = new[] { 
         Assembly.GetExecutingAssembly(),
         typeof(ExternalService).Assembly 
     };
-    services.AddFromAssemblies(assemblies);
+    services.AddServicesFromAssemblies(assemblies);
 }
 ```
 
@@ -105,13 +105,13 @@ public void ConfigureServices(IServiceCollection services)
         Assembly.GetExecutingAssembly(),
         typeof(ExternalService).Assembly 
     };
-    services.AddFromAssemblies(assemblies);
+    services.AddServicesFromAssemblies(assemblies);
     
     // Registro con filtros personalizados
-    services.AddFromAssembly(
+    services.AddServicesFromAssembly(
         Assembly.GetExecutingAssembly(),
         filter: type => type.Name.EndsWith("Service"),
-        LogTo: message => Console.WriteLine($"[DI] {message}"),
+        logTo: message => Console.WriteLine($"[DI] {message}"),
         lifetime: ServiceLifetime.Scoped
     );
 }
@@ -125,17 +125,17 @@ var assemblies = new[] {
     Assembly.GetExecutingAssembly(),
     typeof(ExternalService).Assembly 
 };
-services.AddFromAssemblies(assemblies);
+services.AddServicesFromAssemblies(assemblies);
 
 // Registro del ensamblado actual
-services.AddCurrentAssembly(message => Console.WriteLine($"[DI] {message}"));
+services.AddServicesCurrentAssembly(message => Console.WriteLine($"[DI] {message}"));
 ```
 
 ### **🔍 Inspección de Ensamblados**
 
 ```csharp
 // Listar tipos en un ensamblado sin registrarlos
-var types = DependencyInjectionExtensions.ListTypesInAssembly(
+var types = RegisterServices.ListTypesInAssembly(
     Assembly.GetExecutingAssembly(),
     filter: type => type.Name.EndsWith("Service"),
     logTo: message => Console.WriteLine($"[DEBUG] {message}")
@@ -161,9 +161,9 @@ foreach (var typeName in types)
 
 | Método | Descripción |
 |--------|-------------|
-| `AddFromAssembly` | Registro desde un ensamblado |
-| `AddFromAssemblies` | Registro desde múltiples ensamblados |
-| `AddCurrentAssembly` | Registro automático del ensamblado actual |
+| `AddServicesFromAssembly` | Registro desde un ensamblado |
+| `AddServicesFromAssemblies` | Registro desde múltiples ensamblados |
+| `AddServicesCurrentAssembly` | Registro automático del ensamblado actual |
 | `ListTypesInAssembly` | Lista los nombres de las clases en un ensamblado sin registrarlas |
 
 ## 🔍 Inspección de Ensamblados
@@ -172,7 +172,7 @@ foreach (var typeName in types)
 
 ```csharp
 // Obtener lista de tipos en un ensamblado
-var types = DependencyInjectionExtensions.ListTypesInAssembly(
+var types = RegisterServices.ListTypesInAssembly(
     assembly: Assembly.GetExecutingAssembly(),
     filter: type => type.Name.EndsWith("Service"),
     logTo: message => Console.WriteLine($"[DEBUG] {message}")
@@ -189,7 +189,7 @@ foreach (var typeName in types)
 
 ### **🎯 Uso de Filtros**
 ```csharp
-services.AddFromAssembly(
+services.AddServicesFromAssembly(
     Assembly.GetExecutingAssembly(),
     filter: type => 
         type.Name.EndsWith("Service") || 
@@ -201,16 +201,16 @@ services.AddFromAssembly(
 ### **📊 Organización por Módulos**
 ```csharp
 // Program.cs o Startup.cs
-services.AddFromAssembly(typeof(BusinessLogic.IUserService).Assembly);
-services.AddFromAssembly(typeof(DataAccess.IUserRepository).Assembly);
-services.AddFromAssembly(typeof(Infrastructure.IEmailService).Assembly);
+services.AddServicesFromAssembly(typeof(BusinessLogic.IUserService).Assembly);
+services.AddServicesFromAssembly(typeof(DataAccess.IUserRepository).Assembly);
+services.AddServicesFromAssembly(typeof(Infrastructure.IEmailService).Assembly);
 ```
 
 ## 🔧 Casos de Uso Avanzados
 
 ### **Registro Condicional**
 ```csharp
-services.AddFromAssembly(
+services.AddServicesFromAssembly(
     Assembly.GetExecutingAssembly(),
     filter: type => 
     {

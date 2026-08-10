@@ -3,7 +3,7 @@ namespace DevKit.Injection.Extensions;
 /// <summary>
 /// Proporciona métodos de extensión avanzados para el registro automático de dependencias.
 /// </summary>
-public static class DependencyInjectionExtensions
+public static class RegisterServices
 {
     /// <summary>
     /// Registra automáticamente las clases de un ensamblado en el contenedor de servicios.
@@ -15,7 +15,7 @@ public static class DependencyInjectionExtensions
     /// <param name="onlyClass">Si es verdadero, registra la clase directamente. Si es falso (por defecto), registra por sus interfaces.</param>
     /// <param name="lifetime">El tiempo de vida del servicio (Scoped por defecto).</param>
     /// <returns>La misma colección de servicios para encadenar llamadas.</returns>
-    public static IServiceCollection AddFromAssembly(this IServiceCollection services,
+    public static IServiceCollection AddServicesFromAssembly(this IServiceCollection services,
         Assembly assembly,
         Func<Type, bool> filter = null,
         Action<string> logTo = null,
@@ -61,7 +61,7 @@ public static class DependencyInjectionExtensions
             {
                 return false;
             }
-           
+
             if (filter is not null && filter(type) == false)
             {
                 return false;
@@ -108,7 +108,7 @@ public static class DependencyInjectionExtensions
     /// <param name="logTo">Acción de registro opcional.</param>
     /// <param name="lifetime">Tiempo de vida del servicio.</param>
     /// <returns>La misma colección de servicios.</returns>
-    public static IServiceCollection AddFromAssemblies(this IServiceCollection services,
+    public static IServiceCollection AddServicesFromAssemblies(this IServiceCollection services,
         IEnumerable<Assembly> assemblies,
         Func<Type, bool> filter = null,
         Action<string> logTo = null,
@@ -121,7 +121,7 @@ public static class DependencyInjectionExtensions
 
         foreach (Assembly assembly in assemblies)
         {
-            services.AddFromAssembly(assembly, filter, logTo, false, lifetime);
+            services.AddServicesFromAssembly(assembly, filter, logTo, false, lifetime);
         }
         return services;
     }
@@ -135,7 +135,7 @@ public static class DependencyInjectionExtensions
     /// <param name="onlyClass"></param>
     /// <param name="lifetime"></param>
     /// <returns>La misma colección de servicios.</returns>
-    public static IServiceCollection AddCurrentAssembly(this IServiceCollection services,
+    public static IServiceCollection AddServicesCurrentAssembly(this IServiceCollection services,
         Func<Type, bool> filter = null,
         Action<string> logTo = null,
         bool onlyClass = false,
@@ -147,7 +147,7 @@ public static class DependencyInjectionExtensions
         }
 
         Assembly callingAssembly = Assembly.GetCallingAssembly();
-        return services.AddFromAssembly(callingAssembly, filter, logTo, onlyClass, lifetime);
+        return services.AddServicesFromAssembly(callingAssembly, filter, logTo, onlyClass, lifetime);
     }
 
     /// <summary>

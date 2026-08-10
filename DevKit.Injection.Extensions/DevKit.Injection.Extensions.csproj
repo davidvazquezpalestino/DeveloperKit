@@ -10,9 +10,9 @@
 		<Product>DotNet.Injection.Extensions</Product>
 		<LangVersion>latest</LangVersion>
 		<Copyright>Copyright David Vázquez Palestino</Copyright>
-		<AssemblyVersion>2026.06.02</AssemblyVersion>
-		<FileVersion>2026.06.02</FileVersion>
-		<Version>2026.06.02</Version>
+		<AssemblyVersion>2026.08.10</AssemblyVersion>
+		<FileVersion>2026.08.10</FileVersion>
+		<Version>2026.08.10</Version>
 		<GeneratePackageOnBuild>True</GeneratePackageOnBuild>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
